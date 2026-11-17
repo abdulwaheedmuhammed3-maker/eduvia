@@ -1,8 +1,8 @@
 # Eduvia student planner
 
-Eduvia is a school-, course-, and level-neutral study planner for secondary and high school learners, college and university students, postgraduate learners, and people in vocational or professional training.
+Eduvia is a school-, course-, and level-neutral study planner for primary and high school learners, college and university students, postgraduate learners, and people in vocational or professional training.
 
-At first use, each learner enters their own school or provider, country, programme, level, term, study days, and available hours. They can import a course list and class timetable, add study materials, generate a weekly plan, create local study guides, and practise with questions based on their own course details.
+At first use, each learner enters their own school or provider, country, programme, level, term, study days, and available hours. They can import a course list and class timetable, add study materials, generate a weekly plan, create local study guides, and practise with questions based on their own course details. My education lets learners backfill past school years, semesters, and sessions with their subjects and results, then save current results when they archive a term and move forward.
 
 ## Start Eduvia locally
 
@@ -20,7 +20,7 @@ Eduvia creates study guides and practice questions on the device from course top
 
 ## Materials and privacy
 
-Uploaded files are read in the browser. Extracted text and planner details stay in that browser on that device. The original files are not uploaded to an Eduvia server. Settings can download a planner JSON backup; Personal documents can create a portable ZIP with files and archived education records. The ZIP is not encrypted, so keep it private. There are no accounts or automatic cloud sync in this version.
+Uploaded files are read in the browser. Extracted text and planner details stay in that browser on that device. The original files are not uploaded to an Eduvia server. Settings can download a planner JSON backup; Personal documents can create a portable ZIP with files, education history, and recorded results. The ZIP is not encrypted, so keep it private. There are no accounts or automatic cloud sync in this version.
 
 ## Phone calendar alerts
 

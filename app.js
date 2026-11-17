@@ -5,6 +5,25 @@ const SHORT_DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const todayISO = () => new Date().toLocaleDateString('en-CA');
 const id = () => Math.random().toString(36).slice(2,10);
 const defaultData = () => ({profile:{name:'Student',goal:'Build a consistent study habit',weeklyGoal:5,sessionMinutes:25,studyReminder:true},courses:[],events:[],resources:[],completed:[],academicHistory:[],personalDocuments:[],createdAt:Date.now()});
+const MOTIVATION_QUOTES = [
+  'Every page you study today brings tomorrow’s goal closer.',
+  'Small study steps build big academic wins.',
+  'Your future self will thank you for the effort you put in today.',
+  'One focused session is progress worth celebrating.',
+  'Learning grows each time you choose to keep going.',
+  'You don’t need to know it all today—just take the next step.',
+  'Your goals deserve the time you give them.',
+  'A little revision today can make exam day feel lighter.',
+  'Stay curious, keep showing up, and trust your progress.',
+  'Every lesson mastered starts with the courage to begin.',
+  'Build your future one study session at a time.',
+  'Be proud of the work no one else sees.',
+  'Your pace is valid. Keep making steady progress.',
+  'Today’s effort is tomorrow’s confidence.',
+  'You can learn hard things one concept at a time.'
+];
+function chooseEntryMotivationQuote(){let previous=-1;try{const value=localStorage.getItem('eduvia-entry-quote-v1'),saved=value===null?-1:Number(value);if(Number.isInteger(saved))previous=saved}catch{}const choices=MOTIVATION_QUOTES.map((_,index)=>index).filter(index=>index!==previous);const selected=choices[Math.floor(Math.random()*choices.length)];try{localStorage.setItem('eduvia-entry-quote-v1',String(selected))}catch{}return MOTIVATION_QUOTES[selected]}
+const entryMotivationQuote = chooseEntryMotivationQuote();
 let data = loadData();
 let currentPage = location.hash.replace('#','') || 'today';
 let selectedDate = todayISO();
@@ -48,7 +67,7 @@ document.addEventListener('visibilitychange',refreshTodayWhenVisible);
 function updateSidebarGoal(){const stats=getWeekStats();const goal=Math.max(1,Number(data.profile.weeklyGoal)||5);document.getElementById('sideGoal').textContent=`${stats.total} / ${goal}`;document.getElementById('sideGoalFill').style.width=`${Math.min(100,stats.total/goal*100)}%`}
 
 function renderToday(){const today=todayISO(),date=parseISO(today),events=dayEvents(today),done=completedForDate(today),now=new Date(),plan=todayPlanDisplay(today,now),planDate=parseISO(plan.date),planEvents=dayEvents(plan.date);const study=events.filter(e=>e.type==='study'),classes=events.filter(e=>e.type==='class');const minutesDone=done.reduce((sum,x)=>sum+(x.minutes||data.profile.sessionMinutes),0);const week=getWeekStats();const pct=Math.min(100,week.total/Math.max(1,data.profile.weeklyGoal)*100);const nowMinutes=now.getHours()*60+now.getMinutes(),completedIds=new Set(done.map(item=>item.eventId));const next=events.find(e=>minutes(e.start)>nowMinutes&&!completedIds.has(e.id));const coursesMarkup=data.courses.length?`<div class="course-list">${data.courses.slice(0,3).map(c=>`<div class="course-mini"><i class="course-swatch" style="background:${safe(c.color)}"></i><div><strong>${safe(c.name)}</strong><span class="course-code">${safe(c.code||'COURSE')}</span></div></div>`).join('')}</div>`:emptyState('▦','Your course list starts here','Add the courses or training you’re taking. You can attach classes and reading sessions to each one.','Add a course','add-course');
-return `${pageHead(formatDate(date,{weekday:'long',month:'long',day:'numeric'}),`Hi, ${safe(data.profile.name||'Student')} 👋`,'A little progress today makes a big difference by exam time.','<button class="primary-btn" data-action="add-session"><span class="btn-icon">＋</span>Plan a study session</button>')}
+return `${pageHead(formatDate(date,{weekday:'long',month:'long',day:'numeric'}),`Hi, ${safe(data.profile.name||'Student')} 👋`,entryMotivationQuote,'<button class="primary-btn" data-action="add-session"><span class="btn-icon">＋</span>Plan a study session</button>')}
 <div class="hero-grid"><section class="welcome-card"><div class="eyebrow">YOUR NEXT SMALL WIN</div><h2>${next?`You’ve got ${next.type==='study'?'reading time':'class'} at ${timeLabel(next.start)}.`:'Make a little time for the goal you care about.'}</h2><p>${next?`${safe(next.title)}${next.location?` · ${safe(next.location)}`:''}`:'A short, focused session is enough to keep your study habit moving.'}</p><button class="primary-btn" data-action="${next?.type==='study'?'start-focus':'add-session'}">${next?.type==='study'?'Start a focus session':'Plan a session'} <span>→</span></button></section>
 <section class="habit-card"><div class="habit-top"><div><div class="card-kicker">THIS WEEK'S STUDY HABIT</div><div class="habit-value">${week.total}<small> / ${data.profile.weeklyGoal} sessions</small></div><p>${week.total>=data.profile.weeklyGoal?'You reached your weekly target. Great work!':'Every session counts, even a short one.'}</p></div><div class="habit-badge">✳</div></div><div class="habit-bottom"><div class="progress-track"><i style="width:${pct}%"></i></div><span class="streak-pill">🔥 ${streakCount()} day streak</span></div></section></div>
 <div class="stats-row"><div class="stat-card"><span class="stat-mark">▦</span><div class="stat-label">MY COURSES</div><div class="stat-value">${data.courses.length}</div><div class="stat-note">courses and training</div></div><div class="stat-card"><span class="stat-mark">◷</span><div class="stat-label">TODAY'S CLASSES</div><div class="stat-value">${classes.length}</div><div class="stat-note">${classes.length?'on your timetable':'nothing scheduled yet'}</div></div><div class="stat-card"><span class="stat-mark">✳</span><div class="stat-label">READING SESSIONS</div><div class="stat-value">${done.length}</div><div class="stat-note">${minutesDone?`${minutesDone} focused minutes`: 'complete a session to log it'}</div></div><div class="stat-card"><span class="stat-mark">↗</span><div class="stat-label">WEEKLY GOAL</div><div class="stat-value">${Math.round(pct)}%</div><div class="stat-note">${Math.max(0,data.profile.weeklyGoal-week.total)} to go this week</div></div></div>

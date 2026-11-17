@@ -191,4 +191,4 @@ html[data-theme="dark"] .day-tab strong{color:var(--ink)}
 html[data-theme="dark"] .material-privacy b,
 html[data-theme="dark"] .upload-drop strong{color:var(--ink)}
 html[data-theme="dark"] .resource-card .resource-remove{color:var(--muted)}
-
+html[data-theme="dark"] .mobile-nav{background:rgba(27,36,31,.96);border-top-color:var(--line)}

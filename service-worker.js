@@ -1,5 +1,5 @@
-const CACHE = 'eduvia-v17';
-const CORE = ['./', './index.html', './styles.css?v=native-android-1', './native-bridge.js?v=native-android-1', './push-config.js?v=phone-push-1', './app.js?v=feature-release-2', './study-studio.js?v=feature-release-2', './feature-hub.js?v=feature-release-2', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+const CACHE = 'eduvia-v18';
+const CORE = ['./', './index.html', './styles.css?v=native-android-1', './native-bridge.js?v=native-android-1', './push-config.js?v=phone-push-1', './app.js?v=feature-release-3', './study-studio.js?v=feature-release-3', './feature-hub.js?v=feature-release-3', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting())));
 self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('eduvia-') && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', event => {

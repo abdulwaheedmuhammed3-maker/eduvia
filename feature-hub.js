@@ -49,58 +49,6 @@
       cardBox('Topic progress',rows||'<p class="privacy-note-inline">Add topics in the course details to see them here.</p>')+
       '<div class="note-callout">Quiz scores are student-entered in this first version. A score of 80% or above can guide you toward Confident, but you remain in control of each topic status.</div>';
   }
-  async function dbOpen(){
-    return new Promise((resolve,reject)=>{if(!('indexedDB'in window)){reject(new Error('IndexedDB is unavailable'));return}const req=indexedDB.open('daymark-materials-v1',2);req.onupgradeneeded=()=>{const db=req.result;for(const s of ['materials','academicRecords','personalDocuments'])if(!db.objectStoreNames.contains(s))db.createObjectStore(s,{keyPath:'id'})};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});
-  }
-  function blobToDataURL(blob){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error);reader.readAsDataURL(blob)})}
-  async function jsonSafe(value){
-    if(value instanceof Blob)return {$eduviaBlob:await blobToDataURL(value),type:value.type};
-    if(Array.isArray(value))return Promise.all(value.map(jsonSafe));
-    if(value&&typeof value==='object'){const out={};for(const [k,v] of Object.entries(value))out[k]=await jsonSafe(v);return out}
-    return value;
-  }
-  async function restoreBlobs(value){
-    if(Array.isArray(value))return Promise.all(value.map(restoreBlobs));
-    if(value&&typeof value==='object'){
-      if(value.$eduviaBlob){const response=await fetch(value.$eduviaBlob);return response.blob()}
-      const out={};for(const [k,v] of Object.entries(value))out[k]=await restoreBlobs(v);return out
-    }
-    return value;
-  }
-  async function readAllStore(db,name){
-    if(!db.objectStoreNames.contains(name))return [];
-    return new Promise((resolve,reject)=>{const tx=db.transaction(name,'readonly'),req=tx.objectStore(name).getAll();req.onsuccess=()=>resolve(req.result||[]);req.onerror=()=>reject(req.error)});
-  }
-  async function portableSnapshot(){
-    const db=await dbOpen();const stores={};
-    try{for(const name of ['materials','academicRecords','personalDocuments'])stores[name]=await Promise.all((await readAllStore(db,name)).map(jsonSafe))}
-    finally{db.close()}
-    return {format:'eduvia-portable-backup',version:1,createdAt:new Date().toISOString(),data:JSON.parse(JSON.stringify(data)),stores};
-  }
-  async function downloadBackup(snapshot,name='eduvia-portable-backup.json'){
-    const blob=new Blob([JSON.stringify(snapshot)],{type:'application/json'});
-    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
-  }
-  function validBackup(value){
-    return value&&value.format==='eduvia-portable-backup'&&value.version===1&&value.data&&value.data.profile&&Array.isArray(value.data.courses)&&Array.isArray(value.data.events)&&value.stores&&typeof value.stores==='object';
-  }
-  async function restoreBackupFile(file){
-    if(!file||file.size>250*1024*1024){toast('Choose a backup smaller than 250 MB.');return}
-    let backup;try{backup=JSON.parse(await file.text())}catch{toast('This file is not valid Eduvia backup JSON.');return}
-    if(!validBackup(backup)){toast('This backup is incomplete or from an unsupported format. Nothing was changed.');return}
-    const summary='Courses: '+backup.data.courses.length+' · Timetable items: '+backup.data.events.length+' · Study cards: '+(backup.data.flashcards||[]).length+' · Documents: '+(backup.data.personalDocuments||[]).length;
-    openModal('Review backup before restoring','Created '+new Date(backup.createdAt).toLocaleString()+' · '+summary,'<p>Eduvia will first download a safety copy of your current data, then replace this device’s planner and local document stores.</p><p><b>Do not close Eduvia while restoration is running.</b></p>','Restore safely',async()=>{
-      try{
-        const safety=await portableSnapshot();await downloadBackup(safety,'eduvia-safety-copy-before-restore.json');
-        const next=JSON.parse(JSON.stringify(backup.data));data=next;
-        localStorage.setItem(STORE_KEY,JSON.stringify(data));
-        const db=await dbOpen();
-        try{for(const name of ['materials','academicRecords','personalDocuments']){if(!db.objectStoreNames.contains(name))continue;const rows=await Promise.all((backup.stores[name]||[]).map(restoreBlobs));await new Promise((resolve,reject)=>{const tx=db.transaction(name,'readwrite'),store=tx.objectStore(name);store.clear();for(const row of rows)store.put(row);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Restore transaction failed'))})}}
-        finally{db.close()}
-        closeModal();toast('Backup restored. Your previous data safety copy was downloaded.');render();
-      }catch(error){toast('Restore failed: '+(error.message||'unknown error')+'. Keep the safety copy before trying again.')}
-    });
-  }
   function renderDocumentTools(){
     const docs=data.personalDocuments||[];
     return cardBox('Document search and reminders','<input id="documentSearch" type="search" placeholder="Search document names, tags or categories…"><div class="resource-list" id="documentMetaList">'+(docs.length?docs.map(d=>'<article class="resource-card" data-doc-search="'+esc([d.name,d.title,d.category,...(d.tags||[])].join(' ').toLowerCase())+'"><div class="resource-icon">▣</div><div style="flex:1;min-width:0"><h4>'+esc(d.name||d.title||'Saved document')+'</h4><p>'+esc(d.category||'Document')+' · '+esc((d.tags||[]).join(', ')||'No tags')+(d.expiryDate?' · Expires '+esc(d.expiryDate):'')+'</p><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="secondary-btn" data-feature="edit-document-meta" data-id="'+esc(d.id)+'">Edit tags / reminder</button></div></div></article>').join(''):'<p class="privacy-note-inline">Your saved documents will appear here when added in Personal documents.</p>')+'</div>');
@@ -203,6 +151,4 @@
     const key=masteryKey(b.dataset.course,b.dataset.topic);data.topicMastery[key]=data.topicMastery[key]||{};data.topicMastery[key].score=n;if(n>=80)data.topicMastery[key].status='confident';else if(n>=50)data.topicMastery[key].status='learning';else data.topicMastery[key].status='not-started';save();
   });
   document.addEventListener('change',e=>{if(e.target.id==='documentSearch'){const q=e.target.value.toLowerCase();document.querySelectorAll('[data-doc-search]').forEach(el=>el.hidden=!el.dataset.docSearch.includes(q))}});
-  const backupInputHandler=async e=>{if(e.target.id!=='portableBackupFile')return;await restoreBackupFile(e.target.files?.[0]);e.target.value=''};
-  document.addEventListener('change',backupInputHandler);
 })();

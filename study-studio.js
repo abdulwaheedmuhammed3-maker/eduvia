@@ -87,6 +87,25 @@ function renderGeneratedCard(result,type){return `<section class="panel generate
 function studioDb(){return new Promise((resolve,reject)=>{if(!('indexedDB'in window)){reject(new Error('This browser does not support local document storage.'));return}const request=indexedDB.open(STUDIO_DB,2);request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains(STUDIO_STORE))db.createObjectStore(STUDIO_STORE,{keyPath:'id'});if(!db.objectStoreNames.contains('academicRecords'))db.createObjectStore('academicRecords',{keyPath:'id'});if(!db.objectStoreNames.contains('personalDocuments'))db.createObjectStore('personalDocuments',{keyPath:'id'})};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)})}
 async function storeMaterial(record){const db=await studioDb();return new Promise((resolve,reject)=>{const tx=db.transaction(STUDIO_STORE,'readwrite');tx.objectStore(STUDIO_STORE).put(record);tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)}})}
 async function readMaterial(materialId){try{const db=await studioDb();return await new Promise((resolve,reject)=>{const tx=db.transaction(STUDIO_STORE,'readonly'),req=tx.objectStore(STUDIO_STORE).get(materialId);req.onsuccess=()=>{db.close();resolve(req.result||null)};req.onerror=()=>{db.close();reject(req.error)}})}catch{return (data.materialText||[]).find(m=>m.id===materialId)||null}}
+window.eduOpenCourseMaterial=async function(materialId){
+ try{
+  const record=await readMaterial(materialId);
+  if(!record){toast('This material is not available on this device. Restore the portable backup that contains it.');return}
+  const content=String(record.text||'');
+  const preview=content.slice(0,30000);
+  const note=content.length>preview.length?'<p class="privacy-note-inline">Showing the first 30,000 characters. Download the extracted text to read the remainder.</p>':'';
+  openModal('Course material',String(record.name||'Saved material'),'<div class="course-material-reader"><pre>'+safe(preview||'No extracted text was saved for this file.')+'</pre></div>'+note,'Close',()=>closeModal());
+ }catch(error){toast('Could not open this material: '+(error.message||'storage is unavailable'))}
+};
+window.eduDownloadCourseMaterial=async function(materialId){
+ try{
+  const record=await readMaterial(materialId);
+  if(!record){toast('This material is not available on this device.');return}
+  const blob=new Blob([String(record.text||'')],{type:'text/plain;charset=utf-8'});
+  download(blob,(String(record.name||'course-material').replace(/\.[^.]+$/,'')||'course-material')+'-extracted.txt');
+ }catch(error){toast('Could not download this material: '+(error.message||'storage is unavailable'))}
+};
+
 async function removeStoredMaterial(materialId){try{const db=await studioDb();await new Promise((resolve,reject)=>{const tx=db.transaction(STUDIO_STORE,'readwrite');tx.objectStore(STUDIO_STORE).delete(materialId);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});db.close()}catch{} }
 async function getStudioRecord(storeName,recordId){const db=await studioDb();return await new Promise((resolve,reject)=>{const tx=db.transaction(storeName,'readonly'),req=tx.objectStore(storeName).get(recordId);req.onsuccess=()=>{db.close();resolve(req.result||null)};req.onerror=()=>{db.close();reject(req.error)}})}
 async function putStudioRecord(storeName,record){const db=await studioDb();return await new Promise((resolve,reject)=>{const tx=db.transaction(storeName,'readwrite');tx.objectStore(storeName).put(record);tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)};tx.onabort=()=>{db.close();reject(tx.error||new Error('Could not save this item.'))}})}
@@ -268,7 +287,7 @@ function showImportPreview(kind,fileName,rows){const isCourses=kind==='courses';
 function matchCourse(value){const v=String(value||'').toLowerCase().replace(/\s+/g,'');return data.courses.find(c=>String(c.code||'').toLowerCase().replace(/\s+/g,'')===v||String(c.name||'').toLowerCase()===String(value||'').toLowerCase())}
 function commitStudioImport(){if(!pendingStudioImport)return;const {kind,rows,fileName}=pendingStudioImport;let count=0;if(kind==='courses'){for(const row of rows){let course=matchCourse(row.code||row.name);if(course){if(row.name)course.name=row.name;if(row.code)course.code=row.code;if(row.topics?.length)course.topics=row.topics;if(row.credits)course.credits=Number(row.credits)||row.credits}else{data.courses.push({id:id(),name:row.name||`Course ${row.code}`,code:row.code||'',instructor:'',note:'',color:COLORS[data.courses.length%COLORS.length],credits:Number(row.credits)||0,topics:row.topics||[]})}count++}data.imports.courses.push({name:fileName,count,at:Date.now()});currentPage='courses'}else{data.events=data.events.filter(e=>!e.importedTimetable);for(const row of rows){const c=matchCourse(row.courseCode||row.title);const existing=data.events.some(e=>e.type==='class'&&e.day===row.day&&e.start===row.start&&e.title.toLowerCase()===row.title.toLowerCase());if(existing)continue;data.events.push({id:id(),title:row.title,type:'class',courseId:c?.id||'',date:'',day:row.day,start:row.start,end:row.end,location:row.location||'',remind:true,duration:minutes(row.end)-minutes(row.start),importedTimetable:true});count++}data.imports.timetable.push({name:fileName,count,at:Date.now()});currentPage='timetable'}location.hash=currentPage;pendingStudioImport=null;studioNotice=kind==='courses'?`${count} courses added to My Courses.`:`${count} class times added to Timetable.`;save();toast(studioNotice)}
 
-async function previewMaterial(file,text){const courseOptionsHtml=courseOptions();const materialId=id(),ext=fileExt(file),content=text.slice(0,1200000);pendingStudioImport={kind:'material',material:{id:materialId,name:file.name,ext,characters:content.length},text:content};openModal('Add course material',file.name,`<div class="form-field full"><label for="materialCourseSelect">Link it to a course</label><select id="materialCourseSelect">${courseOptionsHtml}</select></div><p class="preview-note">${content.length.toLocaleString()} characters of text extracted. A 40 MB upload limit applies. The original file is not uploaded to a server.</p><div class="material-excerpt">${safe(content.slice(0,520))}${content.length>520?'…':''}</div>`,'Save material',async()=>{const m=pendingStudioImport?.material;if(!m)return;const select=document.getElementById('materialCourseSelect');m.courseId=select?.value||'';try{await storeMaterial({id:m.id,name:m.name,ext:m.ext,text:pendingStudioImport.text,courseId:m.courseId,createdAt:Date.now()})}catch{data.materialText=data.materialText||[];data.materialText.push({id:m.id,name:m.name,ext:m.ext,text:pendingStudioImport.text,courseId:m.courseId});m.warning='stored in browser backup instead'}data.materials.push(m);pendingStudioImport=null;closeModal();studioNotice='Material saved. Tutorials and practice use this material locally on your device.';save();toast('Course material saved')})}
+async function previewMaterial(file,text){const courseOptionsHtml=courseOptions(window.eduTargetCourseId||'');const materialId=id(),ext=fileExt(file),content=text.slice(0,1200000);pendingStudioImport={kind:'material',material:{id:materialId,name:file.name,ext,characters:content.length},text:content};openModal('Add course material',file.name,`<div class="form-field full"><label for="materialCourseSelect">Link it to a course</label><select id="materialCourseSelect">${courseOptionsHtml}</select></div><p class="preview-note">${content.length.toLocaleString()} characters of text extracted. A 40 MB upload limit applies. The original file is not uploaded to a server.</p><div class="material-excerpt">${safe(content.slice(0,520))}${content.length>520?'…':''}</div>`,'Save material',async()=>{const m=pendingStudioImport?.material;if(!m)return;const select=document.getElementById('materialCourseSelect');m.courseId=select?.value||'';try{await storeMaterial({id:m.id,name:m.name,ext:m.ext,text:pendingStudioImport.text,courseId:m.courseId,createdAt:Date.now()})}catch{data.materialText=data.materialText||[];data.materialText.push({id:m.id,name:m.name,ext:m.ext,text:pendingStudioImport.text,courseId:m.courseId});m.warning='stored in browser backup instead'}data.materials.push(m);pendingStudioImport=null;closeModal();studioNotice='Material saved. Tutorials and practice use this material locally on your device.';save();toast('Course material saved')})}
 
 function downloadCsv(content,name){const blob=new Blob([content],{type:'text/csv;charset=utf-8'});download(blob,name)}
 function courseTemplate(){downloadCsv('code,name,credits,topics\nSUBJ 101,Sample course,3,"Topic one; Topic two; Topic three"\n','eduvia-course-list-template.csv')}
@@ -561,16 +580,16 @@ function renderVault(){
     '<div class="section-title-row"><h3>Saved documents</h3><span>'+documents.length+' files</span></div>'+
     (documents.length?'<div class="schedule-list">'+cards+'</div>':emptyState('▤','Your document cabinet is empty','Upload a photo or file and choose a category for it.','', ''));
 }
-function addPersonalDocument(file){
+function addPersonalDocument(file,courseIdOverride=''){
   if(!file)return;
   if(file.size>40*1024*1024){toast('That file is over 40 MB. Choose a smaller file.');return}
   const categories=['School ID','Receipt','Certificate','Transcript','Admission or registration','Other'];
   const options=categories.map(category=>'<option value="'+safe(category)+'">'+safe(category)+'</option>').join('');
-  const body=field('Name to show','documentTitle','<input id="f-documentTitle" name="documentTitle" required maxlength="100" value="'+safe(file.name)+'">')+field('Document type','documentCategory','<select id="f-documentCategory" name="documentCategory">'+options+'</select>')+'<p class="preview-note">This file is saved on this browser and device. It is not uploaded to an online account.</p>';
+  const linkedCourse=String(courseIdOverride||window.eduTargetDocumentCourseId||'');const body=field('Name to show','documentTitle','<input id="f-documentTitle" name="documentTitle" required maxlength="100" value="'+safe(file.name)+'">')+field('Document type','documentCategory','<select id="f-documentCategory" name="documentCategory">'+options+'</select>')+field('Link to course','documentCourseId','<select id="f-documentCourseId" name="documentCourseId">'+courseOptions(linkedCourse)+'</select>')+'<p class="preview-note">This file is saved on this browser and device. It is not uploaded to an online account.</p>';
   openModal('Save a personal document',file.name,body,'Save document',async fd=>{
-    const documentId=id(),metadata={id:documentId,title:String(fd.get('documentTitle')||file.name).trim(),name:file.name,category:String(fd.get('documentCategory')||'Other'),type:file.type||'application/octet-stream',size:file.size,addedAt:Date.now()};
+    const documentId=id(),metadata={id:documentId,title:String(fd.get('documentTitle')||file.name).trim(),name:file.name,category:String(fd.get('documentCategory')||'Other'),courseId:String(fd.get('documentCourseId')||''),type:file.type||'application/octet-stream',size:file.size,addedAt:Date.now()};
     try{await putStudioRecord('personalDocuments',{id:documentId,blob:file,name:file.name,type:metadata.type})}catch(error){toast('Could not save this file: '+(error.message||'local storage is unavailable'));return}
-    data.personalDocuments.unshift(metadata);closeModal();save();toast('Document saved on this device');
+    data.personalDocuments.unshift(metadata);window.eduTargetDocumentCourseId='';closeModal();save();toast('Document saved on this device');
   });
 }
 async function openPersonalDocument(documentId){
@@ -671,7 +690,7 @@ function clearData(){
 }
 document.addEventListener('change',e=>{
   if(e.target.id==='setupBackupFile'){const file=e.target.files?.[0];e.target.value='';if(file){if(file.type==='application/zip'||file.name.toLowerCase().endsWith('.zip'))importPortableBackup(file);else importPlannerJsonBackup(file)}}
-  if(e.target.id==='personalDocumentFile'){const file=e.target.files?.[0];e.target.value='';addPersonalDocument(file)}
+  if(e.target.id==='personalDocumentFile'){const file=e.target.files?.[0];e.target.value='';addPersonalDocument(file)}if(e.target.id==='courseMaterialFile'){const file=e.target.files?.[0];e.target.value='';if(file){window.eduTargetCourseId=e.target.dataset.courseId||window.eduTargetCourseId||'';handleStudioFile('material',file)}}if(e.target.id==='courseDocumentFile'){const file=e.target.files?.[0];e.target.value='';if(file)addPersonalDocument(file,e.target.dataset.courseId||'')}
   if(e.target.id==='plannerJsonBackupFile'){const file=e.target.files?.[0];e.target.value='';importPlannerJsonBackup(file)}
   if(e.target.id==='portableBackupFile'){const file=e.target.files?.[0];e.target.value='';importPortableBackup(file)}
 });

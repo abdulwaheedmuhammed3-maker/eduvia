@@ -5,6 +5,10 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 if (!existsSync('android')) execFileSync(npx, ['cap', 'add', 'android'], { stdio: 'inherit' });
 execFileSync(npx, ['cap', 'sync', 'android'], { stdio: 'inherit' });
+execFileSync(npx, [
+  'capacitor-assets', 'generate', '--android', '--assetPath', 'assets',
+  '--iconBackgroundColor', '#147e83', '--splashBackgroundColor', '#f3f6f8'
+], { stdio: 'inherit' });
 
 const manifestPath = 'android/app/src/main/AndroidManifest.xml';
 let manifest = await readFile(manifestPath, 'utf8');

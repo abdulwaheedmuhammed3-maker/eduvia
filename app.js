@@ -118,7 +118,7 @@ function addCourseDeadline(courseId){
   field('Title','title','<input id="f-title" name="title" required maxlength="100" placeholder="e.g. Submit lab report">',true)+
   '<div class="form-grid">'+
   field('Type','kind','<select id="f-kind" name="kind"><option value="assignment">Assignment</option><option value="classwork">Classwork</option><option value="test">Test</option><option value="exam">Examination</option><option value="project">Project</option></select>')+
-  field('Due date','dueDate','<input id="f-dueDate" name="dueDate" type="date" required>')+'</div>'+
+  field('Due date','dueDate','<input id="f-dueDate" name="dueDate" type="date" value="'+todayISO()+'" required>')+'</div>'+
   field('Instructions / notes','notes','<textarea id="f-notes" name="notes" maxlength="500" placeholder="Add submission instructions or reminders"></textarea>',true),
   'Save task',fd=>{
    const dueDate=String(fd.get('dueDate')||'');if(!dueDate){toast('Choose a due date for this task.');return}

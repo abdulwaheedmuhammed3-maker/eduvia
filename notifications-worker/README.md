@@ -26,4 +26,6 @@ The schedule is sent only when reminders or the phone subscription change. The W
 
 ## Cloudflare dashboard deployment
 
-For Workers Builds, connect the GitHub repository on production branch `main`, set the root directory to `notifications-worker`, leave the build command blank, and use `npm run db:migrate && npm run deploy` as the production deploy command. The Worker name must be `eduvia-notifications`. The D1 database ID is already set in `wrangler.jsonc`. Preview builds use a separate preview command and should have isolated preview variables and a separate D1 database; do not point previews at the production database.
+For Workers Builds, connect the GitHub repository on production branch `main`, set the root directory to `notifications-worker`, leave the build command blank, and use `npm run db:migrate && npm run deploy` as the production deploy command. The Worker name must be `eduvia-notifications`. The D1 database ID is already set in `wrangler.jsonc`.
+
+This service only needs a production deployment, so disable Preview builds. If you later enable previews for testing, configure a separate Preview command, Preview-safe variables, and a separate D1 database. Do not point Preview builds at the production database.

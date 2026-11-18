@@ -1,5 +1,5 @@
-const CACHE = 'eduvia-v12';
-const CORE = ['./', './index.html', './styles.css?v=phone-push-1', './push-config.js?v=phone-push-1', './app.js?v=phone-push-1', './study-studio.js?v=phone-push-1', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+const CACHE = 'eduvia-v13';
+const CORE = ['./', './index.html', './styles.css?v=phone-push-1', './push-config.js?v=phone-push-1', './app.js?v=restore-backup-1', './study-studio.js?v=phone-push-1', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting())));
 self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('eduvia-') && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', event => {

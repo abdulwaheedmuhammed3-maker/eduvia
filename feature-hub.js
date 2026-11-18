@@ -26,7 +26,7 @@
   function reviewInterval(card, remembered){
     const steps=[1,3,7,14,30];
     const level=remembered?Math.min(4,(Number(card.level)||0)+1):0;
-    return {level,nextReview:new Date(Date.now()+(remembered?steps[level]:1)*86400000).toLocaleDateString('en-CA')};
+    return {level,nextReview:new Date(Date.now()+(remembered?steps[Math.max(0,level-1)]:1)*86400000).toLocaleDateString('en-CA')};
   }
   function renderFlashcards(){
     const due=data.flashcards.filter(c=>!c.nextReview||c.nextReview<=today());
@@ -143,7 +143,7 @@
       }else{incoming=JSON.parse(await file.text());if(!incoming?.profile||!Array.isArray(incoming.courses)||!Array.isArray(incoming.events))throw new Error('This is not a valid Eduvia JSON backup.');summary='Courses '+incoming.courses.length+' · timetable items '+incoming.events.length+' · study records '+(incoming.studyRecords||[]).length;}
     }catch(error){toast('Backup preview failed: '+error.message+'. Nothing was changed.');return}
     openModal('Preview backup','Selected file: '+file.name+' · '+summary,'<p>Eduvia will first download a portable safety copy of the data currently on this device.</p><p>The selected backup will only be restored after you confirm the next step. Keep both files private because they may contain personal documents.</p>','Continue to restore',async()=>{
-      try{await safetyPortableZip();closeModal();if(isZip&&typeof originalImportZip==='function')await originalImportZip(file);else if(!isZip&&typeof originalImportJson==='function')await originalImportJson(file);else throw new Error('The existing restore handler is unavailable.');}
+      try{await safetyPortableZip();closeModal();if(isZip&&typeof originalImportZip==='function')await originalImportZip(file);else if(!isZip&&typeof originalImportJson==='function')await originalImportJson(file);else throw new Error('The existing restore handler is unavailable.');data.deadlines=Array.isArray(data.deadlines)?data.deadlines:[];data.flashcards=Array.isArray(data.flashcards)?data.flashcards:[];data.topicMastery=data.topicMastery&&typeof data.topicMastery==='object'?data.topicMastery:{};save();}
       catch(error){toast('Restore stopped: '+error.message+'. Your current data was not intentionally replaced.');}
     });
   }

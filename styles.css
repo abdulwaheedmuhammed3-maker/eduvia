@@ -220,3 +220,88 @@ html.native-app .material-privacy{grid-column:1/-1}
 .habit-card:hover,.stat-card:hover,.course-mini:hover,.agenda-item:hover{border-color:var(--green);filter:brightness(1.025)}
 .habit-card:focus-visible,.stat-card:focus-visible,.course-mini:focus-visible,.agenda-item:focus-visible{outline:2px solid var(--green);outline-offset:3px}
 .course-mini-copy{display:block;min-width:0}
+
+
+/* Eduvia Studio Refresh — expressive, calm and mobile-first */
+:root{
+ --bg:#f5f6fb;--paper:#fff;--ink:#20243a;--muted:#788096;--line:#e9eaf2;
+ --green:#5a56d6;--green-dark:#4641bd;--mint:#eeedff;--lime:#d9f56d;
+ --orange:#ffb879;--lav:#eeeaff;--shadow:0 16px 42px rgba(42,43,91,.075);
+ --radius:22px;
+}
+body{background:radial-gradient(ellipse at 85% -10%,rgba(218,215,255,.32),transparent 38%),var(--bg);color:var(--ink)}
+button{ -webkit-tap-highlight-color:transparent}
+.brand{font-size:22px;letter-spacing:-1.2px}
+.brand-mark{background:linear-gradient(145deg,#7772f1,#514bd0);border-radius:12px;box-shadow:0 7px 16px rgba(90,86,214,.23)}
+.sidebar{background:rgba(255,255,255,.92);border-color:#ececf4}
+.nav-item{border-radius:13px;transition:background .18s,color .18s,transform .18s}
+.nav-item.active{background:#efeeff;color:#514cc9}
+.nav-item.active .nav-icon{color:#6b66e6}
+.topbar{background:rgba(247,247,252,.88);border-color:#e9eaf2}
+.avatar{background:#eeeaff;color:#5b55cb}
+.page-heading h1{letter-spacing:-1.5px}
+.eyebrow{color:#6963d9}
+.primary-btn{background:linear-gradient(135deg,#6964e6,#514bd0);border-radius:12px;box-shadow:0 7px 16px rgba(90,86,214,.18)}
+.primary-btn:hover{background:linear-gradient(135deg,#5d58d9,#4540bd)}
+.secondary-btn{background:#f0efff;color:#5550c5;border-radius:11px}
+.welcome-card{background:linear-gradient(125deg,#514bc9 0%,#716be9 68%,#8984f3 100%);border-radius:24px;box-shadow:0 14px 30px rgba(83,77,202,.17)}
+.welcome-card:after{border-color:rgba(255,255,255,.18);box-shadow:0 0 0 29px rgba(255,255,255,.05),0 0 0 59px rgba(255,255,255,.035)}
+.welcome-card .eyebrow{color:#d8d6ff}
+.welcome-card .primary-btn{background:#e1f66e;color:#333b20}
+.habit-card,.stat-card,.panel,.course-card,.focus-card{border-color:#e9eaf2;box-shadow:0 7px 24px rgba(42,43,91,.035);border-radius:20px;transition:transform .18s,box-shadow .18s}
+.habit-card:hover,.stat-card:hover,.course-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(42,43,91,.08)}
+.habit-badge{background:#f0efff;color:#6862db;border-radius:12px}
+.streak-pill{background:#fff2e5;color:#a66c35}
+.stat-card .stat-mark{background:#f0efff;color:#625cdc;border-radius:10px}
+.progress-track i,.mini-track i{background:linear-gradient(90deg,#6c66e9,#9a94ff)}
+.agenda-item,.course-mini{background:#f8f8fc;border-radius:13px}
+.agenda-bar{background:#6c66e9}
+.agenda-tag{background:#efeeff;color:#5a54cb}
+.tag-study{background:#fff0e6;color:#a56c3b}
+.tag-class{background:#e9f7f0;color:#428567}
+.empty-icon{background:#efeeff;color:#625cdc;border-radius:15px}
+.course-swatch{border-radius:11px}
+.day-tab.selected{background:linear-gradient(145deg,#6e68e9,#514bc9);border-color:#625cdc;box-shadow:0 6px 15px rgba(90,86,214,.18)}
+.day-tab{border-radius:13px}
+.goal-banner,.progress-hero{background:linear-gradient(120deg,#f0efff,#f8f7ff);border:1px solid #e8e6ff;border-radius:18px}
+.goal-number,.progress-score{color:#5c56d3}
+.focus-ring{border-color:#e7e5ff;box-shadow:inset 0 0 0 5px #f7f6ff;color:#5c56d3}
+.modal{border-radius:22px}
+.toast{background:#282747;border-radius:13px}
+.mobile-nav{
+ background:rgba(255,255,255,.94);backdrop-filter:blur(22px) saturate(1.5);
+ border-top:1px solid rgba(224,225,239,.9);
+ box-shadow:0 -10px 32px rgba(44,43,88,.07);
+ padding:9px 9px calc(9px + env(safe-area-inset-bottom));
+ gap:4px;
+}
+.mobile-nav-item{
+ min-width:0;min-height:57px;border:0;background:transparent;color:#9296aa;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+ border-radius:15px;font-size:9px;font-weight:700;letter-spacing:.1px;
+ transition:background .18s,color .18s,transform .18s;
+}
+.mobile-nav-icon{width:31px;height:29px;display:grid;place-items:center;border-radius:11px;transition:all .18s}
+.mobile-nav-icon svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.mobile-nav-label{line-height:1}
+.mobile-nav-item.active{color:#514bc9;background:transparent}
+.mobile-nav-item.active .mobile-nav-icon{background:#efeeff;color:#5c56d7;transform:translateY(-1px)}
+.mobile-nav-item:active{transform:scale(.96)}
+.mobile-nav-item.active .icon-today{background:#e9e8ff}
+.icon-courses{color:#ed9b54}.mobile-nav-item.active .icon-courses{color:#5d57d5}
+.icon-timetable{color:#4caa91}.mobile-nav-item.active .icon-timetable{color:#514bc9}
+.icon-habit{color:#e18a6c}.mobile-nav-item.active .icon-habit{color:#514bc9}
+.icon-more{color:#9296aa}
+@media(max-width:760px){
+ .page-content{padding-top:22px}
+ .page-heading h1{font-size:27px}
+ .welcome-card{border-radius:22px}
+ .panel{padding:18px;border-radius:19px}
+ .stats-row{gap:9px}
+ .stat-card{border-radius:16px}
+ .mobile-nav{grid-template-columns:repeat(5,minmax(0,1fr))}
+ .mobile-nav-item{font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
+}

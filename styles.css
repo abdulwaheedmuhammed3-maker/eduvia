@@ -326,3 +326,12 @@ button{ -webkit-tap-highlight-color:transparent}
 @media(max-width:380px){
   .mobile-nav-item > .mobile-nav-label{font-size:9px}
 }
+
+.course-card[data-course-open]{cursor:pointer;transition:transform .18s,box-shadow .18s,border-color .18s}
+.course-card[data-course-open]:hover{transform:translateY(-2px);border-color:var(--green);box-shadow:var(--shadow)}
+.course-card[data-course-open]:focus-visible{outline:2px solid var(--green);outline-offset:3px}
+.course-detail-hero .course-card-head h2{font:700 23px Manrope;margin:0 0 5px}
+.course-detail-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
+.course-detail-stats{margin:14px 0}
+.course-topic-list{display:flex;gap:8px;flex-wrap:wrap}
+.course-detail-hero .course-desc{margin-top:15px}

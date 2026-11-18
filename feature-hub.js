@@ -12,13 +12,15 @@
   const cardBox = (title, body, extra='') => '<section class="panel" style="margin-bottom:16px"><div class="panel-head"><div><h3>'+title+'</h3></div>'+extra+'</div>'+body+'</section>';
   const input = (name, type='text', value='', attrs='') => '<input name="'+name+'" type="'+type+'" value="'+esc(value)+'" '+attrs+'>';
   const selectCourse = (name='courseId', selected='') => '<select name="'+name+'"><option value="">Choose a course</option>'+data.courses.map(c=>'<option value="'+esc(c.id)+'" '+(c.id===selected?'selected':'')+'>'+esc(c.name)+'</option>').join('')+'</select>';
+  function reflectionDeadlines(){return (data.studyRecords||[]).flatMap(r=>{const f=r.reflection||{};const raw=f.assignmentDueDate||f.deadline||f.dueDate||f.examDate||f.testDate;const title=f.assignmentTitle||f.deadlineTitle||f.examTitle||f.assignment||'';if(!raw||!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(raw)))return [];return [{id:'reflection-'+r.id,title:String(title||'Class reflection deadline'),dueDate:String(raw),courseId:r.courseId||'',sourceId:r.id}]})}
   function renderPlanner(){
+    const reflected=reflectionDeadlines().filter(r=>!data.deadlines.some(d=>d.sourceId===r.sourceId));
     const items=[...data.deadlines].sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate)));
     const upcoming=items.filter(x=>!x.completed);
     return pageHead('PLAN AHEAD','Planner','Keep assignments, tests and examinations alongside your study schedule.','<button class="primary-btn" data-feature="add-deadline">＋ Add deadline</button>')+
       '<div class="stats-row"><div class="stat-card"><div class="stat-label">UPCOMING</div><div class="stat-value">'+upcoming.length+'</div><div class="stat-note">open deadlines</div></div><div class="stat-card"><div class="stat-label">OVERDUE</div><div class="stat-value">'+upcoming.filter(x=>x.dueDate<today()).length+'</div><div class="stat-note">need attention</div></div><div class="stat-card"><div class="stat-label">COMPLETED</div><div class="stat-value">'+items.filter(x=>x.completed).length+'</div><div class="stat-note">finished items</div></div></div>'+
       cardBox('Add an assignment or exam','<form id="deadlineForm" class="form-grid"><label class="form-field">Title'+input('title','text','','required maxlength="100" placeholder="e.g. CSC 201 assignment"')+'</label><label class="form-field">Type<select name="kind"><option value="assignment">Assignment</option><option value="exam">Examination</option><option value="test">Test</option><option value="project">Project</option></select></label><label class="form-field">Course'+selectCourse()+'</label><label class="form-field">Due date'+input('dueDate','date',today(),'required')+'</label><label class="form-field full">Notes<textarea name="notes" maxlength="500" placeholder="Submission details or revision notes"></textarea></label><div class="form-field full"><button class="primary-btn" type="submit">Save deadline</button></div></form>')+
-      cardBox('Your deadlines',items.length?'<div class="schedule-list">'+items.map(x=>'<div class="schedule-row"><div class="schedule-time">'+esc(x.dueDate)+'</div><div class="schedule-row-main"><i class="course-swatch" style="background:'+(x.kind==='exam'?'#d38887':'#7ba883')+'"></i><div><strong>'+esc(x.title)+'</strong><span>'+esc(x.kind)+' · '+esc(courseName(x.courseId)||'No course')+(x.dueDate<today()&&!x.completed?' · Overdue':'')+'</span></div></div><div class="schedule-actions"><button class="secondary-btn" data-feature="toggle-deadline" data-id="'+esc(x.id)+'">'+(x.completed?'Reopen':'Complete')+'</button><button class="icon-btn" data-feature="delete-deadline" data-id="'+esc(x.id)+'">×</button></div></div>').join('')+'</div>':emptyState('◷','No deadlines yet','Add your next assignment, test or examination to start planning.','','') )+
+      cardBox('Deadlines found in class reflections',reflected.length?'<div class="schedule-list">'+reflected.map(x=>'<div class="schedule-row"><div class="schedule-time">'+esc(x.dueDate)+'</div><div class="schedule-row-main"><div><strong>'+esc(x.title)+'</strong><span>From a saved class reflection</span></div></div><button class="secondary-btn" data-feature="import-reflection-deadline" data-id="'+esc(x.sourceId)+'" data-date="'+esc(x.dueDate)+'" data-title="'+esc(x.title)+'" data-course="'+esc(x.courseId)+'">Add to planner</button></div>').join('')+'</div>':'<p class="privacy-note-inline">No dated assignment or exam details were found in saved class reflections.</p>')+cardBox('Your deadlines',items.length?'<div class="schedule-list">'+items.map(x=>'<div class="schedule-row"><div class="schedule-time">'+esc(x.dueDate)+'</div><div class="schedule-row-main"><i class="course-swatch" style="background:'+(x.kind==='exam'?'#d38887':'#7ba883')+'"></i><div><strong>'+esc(x.title)+'</strong><span>'+esc(x.kind)+' · '+esc(courseName(x.courseId)||'No course')+(x.dueDate<today()&&!x.completed?' · Overdue':'')+'</span></div></div><div class="schedule-actions"><button class="secondary-btn" data-feature="toggle-deadline" data-id="'+esc(x.id)+'">'+(x.completed?'Reopen':'Complete')+'</button><button class="icon-btn" data-feature="delete-deadline" data-id="'+esc(x.id)+'">×</button></div></div>').join('')+'</div>':emptyState('◷','No deadlines yet','Add your next assignment, test or examination to start planning.','','') )+
       '<div class="note-callout">Class-reflection deadlines can be added here as well. Eduvia keeps these records linked to your course and study plan; it will not invent dates from reflection text.</div>';
   }
   function reviewInterval(card, remembered){
@@ -93,7 +95,7 @@
         const next=JSON.parse(JSON.stringify(backup.data));data=next;
         localStorage.setItem(STORE_KEY,JSON.stringify(data));
         const db=await dbOpen();
-        try{for(const name of ['materials','academicRecords','personalDocuments']){if(!db.objectStoreNames.contains(name))continue;const tx=db.transaction(name,'readwrite'),store=tx.objectStore(name);store.clear();for(const row of (backup.stores[name]||[]))store.put(await restoreBlobs(row));await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Restore transaction failed'))})}}
+        try{for(const name of ['materials','academicRecords','personalDocuments']){if(!db.objectStoreNames.contains(name))continue;const rows=await Promise.all((backup.stores[name]||[]).map(restoreBlobs));await new Promise((resolve,reject)=>{const tx=db.transaction(name,'readwrite'),store=tx.objectStore(name);store.clear();for(const row of rows)store.put(row);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Restore transaction failed'))})}}
         finally{db.close()}
         closeModal();toast('Backup restored. Your previous data safety copy was downloaded.');render();
       }catch(error){toast('Restore failed: '+(error.message||'unknown error')+'. Keep the safety copy before trying again.')}
@@ -113,7 +115,7 @@
   }
   function renderMoreWithFeatures(){
     const original=window.eduOriginalMoreRender?window.eduOriginalMoreRender():renderMore();
-    return original.replace('</div>', '<button class="course-card" style="text-align:left" data-page="planner"><div class="course-card-head"><span class="habit-badge">◷</span><h3>Planner</h3></div><p class="course-desc">Assignments, tests and examinations.</p></button><button class="course-card" style="text-align:left" data-page="flashcards"><div class="course-card-head"><span class="habit-badge">✧</span><h3>Flashcards</h3></div><p class="course-desc">Spaced review from topics and notes.</p></button><button class="course-card" style="text-align:left" data-page="mastery"><div class="course-card-head"><span class="habit-badge">↗</span><h3>Course mastery</h3></div><p class="course-desc">Track confidence by course topic.</p></button></div>');
+    return original.slice(0,original.lastIndexOf('</div>'))+'<button class="course-card" style="text-align:left" data-page="planner"><div class="course-card-head"><span class="habit-badge">◷</span><h3>Planner</h3></div><p class="course-desc">Assignments, tests and examinations.</p></button><button class="course-card" style="text-align:left" data-page="flashcards"><div class="course-card-head"><span class="habit-badge">✧</span><h3>Flashcards</h3></div><p class="course-desc">Spaced review from topics and notes.</p></button><button class="course-card" style="text-align:left" data-page="mastery"><div class="course-card-head"><span class="habit-badge">↗</span><h3>Course mastery</h3></div><p class="course-desc">Track confidence by course topic.</p></button></div>');
   }
   window.eduOriginalVaultRender=window.eduOriginalVaultRender||window.renderVault;
   window.eduOriginalSettingsRender=window.eduOriginalSettingsRender||window.renderSettings;
@@ -122,12 +124,13 @@
   const originalCourses=window.renderCourses;
   if(typeof originalCourses==='function'&&!window.eduCoursesFeatureWrapped){
     window.eduCoursesFeatureWrapped=true;
-    window.renderCourses=function(){return originalCourses().replace(/<\/article>/g,'<div style="margin-top:10px"><button class="text-btn" data-feature="open-mastery" data-course="__COURSE_ID__">Topic mastery →</button></div></article>')};
+    window.renderCourses=function(){return originalCourses().replace(/<\/article>/g,'<div style="margin-top:10px"><button class="text-btn" data-page="mastery">Topic mastery →</button></div></article>')};
   }
   document.addEventListener('click',async event=>{
     const b=event.target.closest('[data-feature]');if(!b)return;
     const action=b.dataset.feature,idValue=b.dataset.id;
     if(action==='add-deadline'){document.getElementById('deadlineForm')?.scrollIntoView({behavior:'smooth'});return}
+    if(action==='import-reflection-deadline'){if(!data.deadlines.some(x=>x.sourceId===idValue)){data.deadlines.push({id:uid(),sourceId:idValue,title:b.dataset.title||'Class reflection deadline',kind:'assignment',courseId:b.dataset.course||'',dueDate:b.dataset.date,completed:false,createdAt:Date.now()});save();}return}
     if(action==='toggle-deadline'){const item=data.deadlines.find(x=>x.id===idValue);if(item)item.completed=!item.completed;save();return}
     if(action==='delete-deadline'){data.deadlines=data.deadlines.filter(x=>x.id!==idValue);save();return}
     if(action==='add-card'){openModal('Create a flashcard','Write a clear prompt and a concise answer.','<label class="form-field">Course'+selectCourse('courseId')+'</label><label class="form-field">Question<input name="front" required maxlength="180"></label><label class="form-field">Answer<textarea name="back" required maxlength="500"></textarea></label>','Save card',fd=>{data.flashcards.push({id:uid(),courseId:fd.get('courseId'),front:fd.get('front').trim(),back:fd.get('back').trim(),level:0,nextReview:today(),createdAt:Date.now()});closeModal();save()});return}
@@ -141,6 +144,7 @@
     if(e.target.id==='deadlineForm'){e.preventDefault();const fd=new FormData(e.target);data.deadlines.push({id:uid(),title:fd.get('title').trim(),kind:fd.get('kind'),courseId:fd.get('courseId'),dueDate:fd.get('dueDate'),notes:fd.get('notes').trim(),completed:false,createdAt:Date.now()});save();return}
     if(e.target.id==='cardGenerateForm'){e.preventDefault();const fd=new FormData(e.target),topic=fd.get('topic').trim(),notes=fd.get('notes').trim(),courseId=fd.get('courseId');const sentences=notes.split(/(?<=[.!?])\s+/).map(s=>s.trim()).filter(s=>s.length>35);if(sentences.length){sentences.slice(0,12).forEach((s,i)=>data.flashcards.push({id:uid(),courseId,front:'Explain: '+(i===0?topic:topic+' — key point '+(i+1)),back:s.slice(0,480),level:0,nextReview:today(),createdAt:Date.now()}))}else data.flashcards.push({id:uid(),courseId,front:'Explain '+topic+' in your own words.',back:'Use your course notes to explain the key definition, main principles and one example of '+topic+'.',level:0,nextReview:today(),createdAt:Date.now()});save();toast('Review cards created from your topic and notes.');return}
   });
+  document.addEventListener('input',e=>{if(e.target.id==='documentSearch'){const q=e.target.value.toLowerCase();document.querySelectorAll('[data-doc-search]').forEach(el=>el.hidden=!el.dataset.docSearch.includes(q));}});
   document.addEventListener('change',e=>{
     if(e.target.id==='masteryCourseSelect'){window.eduMasteryCourse=e.target.value;render();return}
     if(e.target.matches('[data-feature="mastery-status"]')){const key=masteryKey(e.target.dataset.course,e.target.dataset.topic);data.topicMastery[key]=data.topicMastery[key]||{};data.topicMastery[key].status=e.target.value;save();return}
@@ -154,11 +158,6 @@
     const key=masteryKey(b.dataset.course,b.dataset.topic);data.topicMastery[key]=data.topicMastery[key]||{};data.topicMastery[key].score=n;if(n>=80)data.topicMastery[key].status='confident';else if(n>=50)data.topicMastery[key].status='learning';else data.topicMastery[key].status='not-started';save();
   });
   document.addEventListener('change',e=>{if(e.target.id==='documentSearch'){const q=e.target.value.toLowerCase();document.querySelectorAll('[data-doc-search]').forEach(el=>el.hidden=!el.dataset.docSearch.includes(q))}});
-  document.addEventListener('DOMContentLoaded',()=>{});
-  const originalRenderSettings=window.renderSettings;
-  const originalRenderVault=window.renderVault;
-  if(originalRenderSettings)window.renderSettings=originalRenderSettings;
-  if(originalRenderVault)window.renderVault=originalRenderVault;
   const backupInputHandler=async e=>{if(e.target.id!=='portableBackupFile')return;await restoreBackupFile(e.target.files?.[0]);e.target.value=''};
   document.addEventListener('change',backupInputHandler);
 })();

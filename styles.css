@@ -204,3 +204,14 @@ html.native-app .native-only{display:inline-flex!important}
 html.native-app .material-upload-row{grid-template-columns:minmax(0,1fr) auto}
 html.native-app .material-privacy{grid-column:1/-1}
 @media(max-width:760px){html.native-app .material-upload-row{grid-template-columns:1fr}}
+
+@media(max-width:760px){
+  .topbar{
+    --app-top-inset:max(var(--safe-area-inset-top,0px),env(safe-area-inset-top,0px));
+    height:calc(57px + var(--app-top-inset));
+    padding:var(--app-top-inset) 18px 0;
+  }
+  html.native-app .topbar{
+    --app-top-inset:max(24px,var(--safe-area-inset-top,env(safe-area-inset-top,0px)));
+  }
+}

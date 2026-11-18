@@ -25,5 +25,6 @@ jobs:
         run: |
           grep -q 'feature-hub.js' index.html
           grep -q 'feature-hub.js' service-worker.js
-          grep -q 'today-links-1' index.html
+          grep -q 'app.js?v=' index.html
+          grep -q 'app.js?v=' service-worker.js
           grep -q 'eduvia-study-alarms-v2' native-bridge-src.js

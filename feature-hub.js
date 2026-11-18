@@ -124,7 +124,7 @@
   const originalCourses=window.renderCourses;
   if(typeof originalCourses==='function'&&!window.eduCoursesFeatureWrapped){
     window.eduCoursesFeatureWrapped=true;
-    window.renderCourses=function(){return originalCourses().replace(/<\/article>/g,'<div style="margin-top:10px"><button class="text-btn" data-page="mastery">Topic mastery →</button></div></article>')};
+    window.renderCourses=function(){return originalCourses().replace(/(<button class="icon-btn" title="Edit course" data-action="edit-course" data-id="([^"]+)">)/g,'<button class="text-btn" data-feature="open-mastery" data-course="$2">Topic mastery →</button>$1')};
   }
   const originalImportZip=window.importPortableBackup;
   const originalImportJson=window.importPlannerJsonBackup;

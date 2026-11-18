@@ -599,6 +599,41 @@ async function exportPortableBackup(){
     const bundle=await zip.generateAsync({type:'blob',compression:'STORE'});download(bundle,'eduvia-portable-backup-'+todayISO()+'.zip');toast('Portable backup ready. Keep the file private.');
   }catch(error){toast('Could not create the backup: '+(error.message||'storage is unavailable'))}
 }
+async function importPlannerJsonBackup(file){
+  if(!file)return;
+  if(file.size>50*1024*1024){toast('That JSON backup is over 50 MB. Use the portable ZIP backup for large files.');return}
+  let source;
+  try{
+    source=JSON.parse(await file.text());
+    if(!source||typeof source!=='object'||Array.isArray(source)||!source.profile||typeof source.profile!=='object'||Array.isArray(source.profile)||!Array.isArray(source.courses)||!Array.isArray(source.events))throw new Error('This file is not a valid Eduvia planner JSON backup.');
+  }catch(error){toast('Could not read this JSON backup: '+(error.message||'file is invalid'));return}
+  const currentHistory=Array.isArray(data.academicHistory)?data.academicHistory:[];
+  const currentDocuments=Array.isArray(data.personalDocuments)?data.personalDocuments:[];
+  const currentMaterials=Array.isArray(data.materials)?data.materials:[];
+  const currentText=Array.isArray(data.materialText)?data.materialText:[];
+  const defaults=defaultData();
+  const restored={...defaults,...source,profile:{...defaults.profile,...source.profile}};
+  Object.assign(restored.profile,{
+    institution:restored.profile.institution||'',centre:restored.profile.centre||'',programme:restored.profile.programme||'',level:restored.profile.level||'',country:restored.profile.country||'',stage:restored.profile.stage||'',term:restored.profile.term||'',regionOrLanguage:restored.profile.regionOrLanguage||'',greetingStyle:restored.profile.greetingStyle||'neutral',
+    studyDays:Array.isArray(restored.profile.studyDays)?restored.profile.studyDays:[1,2,3,4,5,6],studyStart:restored.profile.studyStart||'17:00',studyEnd:restored.profile.studyEnd||'21:00',planSessionMinutes:Number(restored.profile.planSessionMinutes)||45
+  });
+  for(const key of ['courses','events','resources','completed','studyRecords'])if(!Array.isArray(restored[key]))restored[key]=[];
+  const textById=new Map();
+  for(const item of [...currentText,...(Array.isArray(source.materialText)?source.materialText:[])])if(item&&typeof item==='object'&&item.id)textById.set(item.id,item);
+  restored.materialText=[...textById.values()];
+  const materialsById=new Map(currentMaterials.filter(item=>item&&item.id).map(item=>[item.id,item]));
+  for(const item of Array.isArray(source.materials)?source.materials:[])if(item&&item.id&&textById.has(item.id))materialsById.set(item.id,item);
+  restored.materials=[...materialsById.values()];
+  restored.academicHistory=currentHistory;
+  restored.personalDocuments=currentDocuments;
+  restored.imports=source.imports&&typeof source.imports==='object'&&!Array.isArray(source.imports)?source.imports:{courses:[],timetable:[]};
+  if(!Array.isArray(restored.imports.courses))restored.imports.courses=[];
+  if(!Array.isArray(restored.imports.timetable))restored.imports.timetable=[];
+  if(!confirm('Restore this planner JSON on this PC? It replaces the current profile, courses, timetable, notes, progress, and study records. Existing files and full education records on this PC will be kept. This JSON does not include files or full archived education records from your phone; use the portable ZIP backup for those.'))return;
+  try{localStorage.setItem(STORE_KEY,JSON.stringify(restored))}catch(error){toast('Could not save this backup in this browser. Try the portable ZIP backup or free some browser storage.');return}
+  data=restored;currentPage='today';location.hash='today';save();
+  toast('Planner JSON restored. Use the portable ZIP to move phone documents and full education records.');
+}
 async function importPortableBackup(file){
   if(!file)return;
   if(file.size>500*1024*1024){toast('That backup is over 500 MB.');return}
@@ -636,6 +671,7 @@ function clearData(){
 }
 document.addEventListener('change',e=>{
   if(e.target.id==='personalDocumentFile'){const file=e.target.files?.[0];e.target.value='';addPersonalDocument(file)}
+  if(e.target.id==='plannerJsonBackupFile'){const file=e.target.files?.[0];e.target.value='';importPlannerJsonBackup(file)}
   if(e.target.id==='portableBackupFile'){const file=e.target.files?.[0];e.target.value='';importPortableBackup(file)}
 });
 document.addEventListener('click',e=>{

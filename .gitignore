@@ -1,2 +1,5 @@
 .env
 __pycache__/
+notifications-worker/node_modules/
+notifications-worker/.wrangler/
+notifications-worker/.dev.vars

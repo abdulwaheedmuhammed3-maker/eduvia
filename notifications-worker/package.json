@@ -1,0 +1,15 @@
+{
+  "name": "eduvia-notifications",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply eduvia-notifications --remote"
+  },
+  "dependencies": {
+    "@mmmike/web-push": "1.5.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

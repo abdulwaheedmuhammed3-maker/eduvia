@@ -22,13 +22,15 @@ Eduvia creates study guides and practice questions on the device from course top
 
 Uploaded files are read in the browser. Extracted text and planner details stay in that browser on that device. The original files are not uploaded to an Eduvia server. Settings can download a planner JSON backup; Personal documents can create a portable ZIP with files, education history, and recorded results. The ZIP is not encrypted, so keep it private. There are no accounts or automatic cloud sync in this version.
 
-## Phone calendar alerts
+## Phone notifications
 
-In the timetable, choose **Add to phone calendar** and open the downloaded `.ics` file on your phone. Class and study events include a 10-minute alert by default. If a daily reading reminder is set in Settings, the export includes it as a repeating calendar alert. The phone calendar can alert you while Eduvia is closed. Browser notifications are available while Eduvia is open.
+Eduvia can send class and study alerts about five minutes before they start, plus a daily reading reminder, through its own phone notification service. The free service uses Cloudflare Workers and D1; it does not use Google Calendar. Phone notification permissions and sound settings still apply. iPhone and iPad require Eduvia to be added to the Home Screen (iOS/iPadOS 16.4 or later).
 
+The notification service stores a device subscription and scheduled reminder titles and times so it can deliver alerts while the app is closed. Courses, results, uploaded materials, and personal documents remain on the device.
+
+To deploy the free service, follow `notifications-worker/README.md`, then set its Worker URL in `push-config.js`.
 ## Install on Android or iPhone
 
-Publish the files on an HTTPS host, then install Eduvia from the browser. Android shows an install button when the browser offers installation. On iPhone or iPad, open the site in Safari, tap Share, then **Add to Home Screen**. On either phone, use the phone-calendar export for reminders that should work while Eduvia is closed.
+Publish the files on an HTTPS host, then install Eduvia from the browser. Android shows an install button when the browser offers installation. On iPhone or iPad, open the site in Safari, tap Share, then **Add to Home Screen**. Enable Eduvia phone notifications in Settings for reminders that should work while Eduvia is closed.
 
 The app shell can open offline after its first load, but each phone keeps its own local data. Use the portable backup to move data between devices.
-

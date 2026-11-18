@@ -1,0 +1,8 @@
+{
+  "appId": "com.eduvia.studyplanner",
+  "appName": "Eduvia",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  }
+}

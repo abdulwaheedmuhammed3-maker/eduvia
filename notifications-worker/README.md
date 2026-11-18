@@ -2,7 +2,7 @@
 
 This is a small, serverless push service for Eduvia. It uses Cloudflare Workers and D1 on their free plan. It does not use Google Calendar and does not need an always-on server.
 
-The Worker checks due reminders once per minute and sends one push per run. If several reminders have the same send time, later ones can arrive on the next minute check. Phone operating-system notification settings still control whether an alert makes a sound.
+The Worker checks due reminders once per minute and can send up to ten per run. It claims each reminder before sending so overlapping checks do not send the same alert twice. Alerts more than ten minutes late are discarded. Phone operating-system notification settings still control whether an alert makes a sound.
 
 ## One-time setup
 
@@ -27,4 +27,3 @@ The schedule is sent only when reminders or the phone subscription change. The W
 ## Cloudflare dashboard deployment
 
 For Workers Builds, connect the GitHub repository on branch `feat/free-phone-notifications`, set the root directory to `notifications-worker`, leave the build command blank, and use `npm run db:migrate && npm run deploy` as the deploy command. The Worker name must be `eduvia-notifications`. The D1 database ID is already set in `wrangler.jsonc`.
-

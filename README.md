@@ -24,13 +24,17 @@ Uploaded files are read in the browser. Extracted text and planner details stay 
 
 ## Phone notifications
 
-Eduvia can send class and study alerts about five minutes before they start, plus a daily reading reminder, through its own phone notification service. The free service uses Cloudflare Workers and D1; it does not use Google Calendar. Phone notification permissions and sound settings still apply. iPhone and iPad require Eduvia to be added to the Home Screen (iOS/iPadOS 16.4 or later).
+In the browser and installed PWA, Eduvia can send class and study alerts about five minutes before they start, plus a daily reading reminder, through its own phone notification service. The free service uses Cloudflare Workers and D1; it does not use Google Calendar. Phone notification permissions and sound settings still apply. iPhone and iPad require Eduvia to be added to the Home Screen (iOS/iPadOS 16.4 or later).
 
-The notification service stores a device subscription and scheduled reminder titles and times so it can deliver alerts while the app is closed. Courses, results, uploaded materials, and personal documents remain on the device.
+The browser notification service stores a device subscription and scheduled reminder titles and times so it can deliver alerts while the PWA is closed. In the Android app, alarms are scheduled locally on the phone instead; Android asks for notification access and exact-alarm access, and Eduvia asks for camera access only when the learner taps **Take a photo**. Courses, results, uploaded materials, and personal documents remain on the device.
 
 To deploy the free service, follow `notifications-worker/README.md`, then set its Worker URL in `push-config.js`.
-## Install on Android or iPhone
+## Android APK
 
-Publish the files on an HTTPS host, then install Eduvia from the browser. Android shows an install button when the browser offers installation. On iPhone or iPad, open the site in Safari, tap Share, then **Add to Home Screen**. Enable Eduvia phone notifications in Settings for reminders that should work while Eduvia is closed.
+GitHub Actions builds an installable Android beta APK from the main branch and publishes it on the Eduvia Android beta release page. It is debug-signed for direct installation and is not a Google Play release. On the first run, open **Settings → Eduvia phone notifications** and allow notification and exact-alarm access. To take a document photo, use a **Take a photo** button in the study studio or document cabinet.
+
+## Install the web app on iPhone
+
+Publish the files on an HTTPS host, then open Eduvia in Safari, tap Share, and choose **Add to Home Screen**. The Android APK is not an iPhone app; iOS needs its own signed app build.
 
 The app shell can open offline after its first load, but each phone keeps its own local data. Use the portable backup to move data between devices.

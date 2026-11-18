@@ -59,7 +59,7 @@
   }
   function renderSettingsWithBackup(){
     const original=window.eduOriginalSettingsRender?window.eduOriginalSettingsRender():renderSettings();
-    return original+cardBox('Portable backup and restore','<p>Use the existing portable ZIP backup to move courses, results, class reflections, study materials and personal documents between devices.</p><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="primary-btn" data-action="export-portable-backup">Download full backup</button><button class="secondary-btn" data-page="vault">Open restore and documents</button></div><p class="privacy-note-inline">Before restoring, Eduvia will preview the backup and download a safety copy of the current device data.</p>');
+    return original+cardBox('Separate course and timetable backups','<p>Export or restore either section independently. Restores merge records into this device and skip duplicates; they never delete existing courses or timetable entries.</p><div class="backup-actions" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="primary-btn" data-action="export-category-backup" data-kind="courses">Download courses</button><label class="secondary-btn backup-file-label">Restore courses<input id="coursesCategoryBackupFile" type="file" accept=".json,application/json"></label></div><p class="privacy-note-inline">Courses are matched by ID first, then course code or name.</p><div class="backup-actions" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px"><button class="primary-btn" data-action="export-category-backup" data-kind="timetable">Download timetable</button><label class="secondary-btn backup-file-label">Restore timetable<input id="timetableCategoryBackupFile" type="file" accept=".json,application/json"></label></div><p class="privacy-note-inline">Timetable entries are matched by ID, then their schedule details. Course links are reconnected to matching courses where possible.</p><hr style="border:0;border-top:1px solid var(--line);margin:16px 0"><p>Need everything in one file? Keep using the full backup options below.</p><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="primary-btn" data-action="export-portable-backup">Download full backup</button><button class="secondary-btn" data-page="vault">Open restore and documents</button></div><p class="privacy-note-inline">Before a category restore, Eduvia downloads a safety copy of the current device data.</p>');
   }
   function renderMoreWithFeatures(){
     const original=window.eduOriginalMoreRender?window.eduOriginalMoreRender():renderMore();
@@ -140,11 +140,41 @@
   });
   document.addEventListener('input',e=>{if(e.target.id==='documentSearch'){const q=e.target.value.toLowerCase();document.querySelectorAll('[data-doc-search]').forEach(el=>el.hidden=!el.dataset.docSearch.includes(q));}});
   document.addEventListener('change',e=>{
+  function categoryKey(value){return String(value??'').trim().toLocaleLowerCase().replace(/\\s+/g,' ')}
+  function courseMatchKey(course){return categoryKey(course?.code)||categoryKey(course?.name)}
+  function eventMatchKey(event,courseId=event?.courseId){return [event?.type,event?.date||'weekly',event?.day??'',event?.start,event?.end,categoryKey(event?.title),categoryKey(event?.location),courseId||''].join('|')}
+  function exportCategoryBackup(kind){
+    const payload={format:'eduvia-category-backup',version:1,kind,createdAt:new Date().toISOString(),items:kind==='courses'?(data.courses||[]):(data.events||[])};
+    if(kind==='timetable')payload.courseReferences=(data.courses||[]).map(c=>({id:c.id,name:c.name,code:c.code||''}));
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    download(blob,'eduvia-'+kind+'-backup-'+today()+'.json');toast((kind==='courses'?'Courses':'Timetable')+' backup downloaded.');
+  }
+  async function importCategoryBackup(file,expectedKind){
+    if(!file)return;if(file.size>25*1024*1024){toast('This backup is too large for a category restore.');return}
+    let source;
+    try{source=JSON.parse(await file.text());if(source?.format!=='eduvia-category-backup'||source.kind!==expectedKind||!Array.isArray(source.items))throw new Error('Choose a valid '+expectedKind+' backup exported by Eduvia.');if(source.items.some(item=>!item||typeof item!=='object'||Array.isArray(item)||!item.id))throw new Error('The backup contains an invalid record.');if(expectedKind==='courses'&&source.items.some(item=>typeof item.name!=='string'||!item.name.trim()))throw new Error('A course is missing its name.');if(expectedKind==='timetable'&&source.items.some(item=>typeof item.title!=='string'||!item.title.trim()))throw new Error('A timetable item is missing its title.')}catch(error){toast('Backup could not be read: '+error.message+'. Nothing was changed.');return}
+    openModal('Preview '+(expectedKind==='courses'?'courses':'timetable')+' restore',file.name+' · '+source.items.length+' record'+(source.items.length===1?'':'s'),'<p>Eduvia will merge these records with the existing '+(expectedKind==='courses'?'courses':'timetable')+'. Matching records will be skipped. Nothing already saved will be deleted or overwritten.</p><p>A full safety copy of the current device data will be downloaded before importing.</p>','Merge backup',async()=>{
+      try{await safetyPortableZip();let added=0,duplicates=0,unlinked=0;
+        if(expectedKind==='courses'){
+          const byId=new Map((data.courses||[]).map(c=>[String(c.id),c])),byKey=new Map((data.courses||[]).map(c=>[courseMatchKey(c),c]).filter(([key])=>key));
+          for(const course of source.items){const match=byId.get(String(course.id))||byKey.get(courseMatchKey(course));if(match){duplicates++;continue}const copy={...course,id:String(course.id)};data.courses.push(copy);byId.set(String(copy.id),copy);const key=courseMatchKey(copy);if(key)byKey.set(key,copy);added++}
+        }else{
+          const refs=new Map((Array.isArray(source.courseReferences)?source.courseReferences:[]).map(c=>[String(c.id),c])),courses=data.courses||[];
+          const resolveCourse=oldId=>{if(!oldId)return '';const exact=courses.find(c=>String(c.id)===String(oldId));if(exact)return exact.id;const ref=refs.get(String(oldId)),key=courseMatchKey(ref);return courses.find(c=>key&&courseMatchKey(c)===key)?.id||''};
+          const ids=new Set((data.events||[]).map(e=>String(e.id))),signatures=new Set((data.events||[]).map(e=>eventMatchKey(e,e.courseId)));
+          for(const event of source.items){const mappedCourse=resolveCourse(event.courseId),copy={...event,id:String(event.id),courseId:mappedCourse};if(event.courseId&&!mappedCourse)unlinked++;const signature=eventMatchKey(copy,mappedCourse);if(ids.has(String(copy.id))||signatures.has(signature)){duplicates++;continue}data.events.push(copy);ids.add(String(copy.id));signatures.add(signature);added++}
+        }
+        save();closeModal();render();toast('Restore complete: '+added+' added, '+duplicates+' duplicates skipped'+(unlinked?'; '+unlinked+' timetable item(s) have no matching course link.':''));
+      }catch(error){toast('Restore failed: '+(error.message||'unknown error'))}
+    });
+  }
+    if(e.target.id==='coursesCategoryBackupFile'||e.target.id==='timetableCategoryBackupFile'){const file=e.target.files?.[0],kind=e.target.id==='coursesCategoryBackupFile'?'courses':'timetable';e.target.value='';if(file)importCategoryBackup(file,kind);return}
     if(e.target.id==='masteryCourseSelect'){window.eduMasteryCourse=e.target.value;render();return}
     if(e.target.matches('[data-feature="mastery-status"]')){const key=masteryKey(e.target.dataset.course,e.target.dataset.topic);data.topicMastery[key]=data.topicMastery[key]||{};data.topicMastery[key].status=e.target.value;save();return}
     if(e.target.id==='documentSearch'){const q=e.target.value.toLowerCase();document.querySelectorAll('[data-doc-search]').forEach(el=>el.hidden=!el.dataset.docSearch.includes(q));return}
   });
   document.addEventListener('click',e=>{
+    const categoryButton=e.target.closest('[data-action="export-category-backup"]');if(categoryButton){exportCategoryBackup(categoryButton.dataset.kind);return}
     const b=e.target.closest('[data-feature="topic-score"]');if(!b)return;
     const score=prompt('Enter the latest quiz score for '+b.dataset.topic+' (0–100):');if(score===null)return;
     const n=Number(score);if(!Number.isFinite(n)||n<0||n>100){toast('Enter a score between 0 and 100.');return}

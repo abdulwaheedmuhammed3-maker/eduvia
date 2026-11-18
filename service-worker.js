@@ -1,5 +1,5 @@
-const CACHE = 'eduvia-v9';
-const CORE = ['./', './index.html', './styles.css?v=dark-theme-2', './app.js?v=dark-theme-2', './study-studio.js?v=dark-theme-2', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+const CACHE = 'eduvia-v10';
+const CORE = ['./', './index.html', './styles.css?v=session-records-1', './app.js?v=session-records-1', './study-studio.js?v=session-records-1', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting())));
 self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('eduvia-') && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', event => {
@@ -8,3 +8,4 @@ self.addEventListener('fetch', event => {
     const copy = response.clone(); caches.open(CACHE).then(cache => cache.put(event.request, copy)); return response;
   }).catch(() => caches.match('./index.html'))));
 });
+

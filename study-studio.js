@@ -79,7 +79,7 @@ function renderSetup(){
   return `${pageHead('WELCOME TO EDUVIA','Let’s set up your study planner','Eduvia is for students across schools, courses, and levels. Tell it what you are studying so your timetable, lessons, and practice can fit your programme.','')}<section class="panel onboarding-panel"><div class="onboarding-intro"><span class="habit-badge">✳</span><div><h2>Your learning, your plan</h2><p>You can change these details at any time. Add your real course list and school timetable after setup.</p></div></div><form id="onboardingForm"><div class="form-grid">${field('Country or region (optional)','country',`<input id="f-country" name="country" maxlength="60" placeholder="e.g. Nigeria" value="${safe(data.profile.country)}">`)}${field('School, university, or training provider (optional)','institution',`<input id="f-institution" name="institution" maxlength="100" placeholder="Your school or provider" value="${safe(data.profile.institution)}">`)}</div><div class="form-grid">${field('Your level of study','stage',`<select id="f-stage" name="stage"><option value="">Choose one</option>${stages.map(([v,t])=>`<option value="${v}" ${data.profile.stage===v?'selected':''}>${t}</option>`).join('')}</select>`)}${field('Programme, course, class, or subject (optional)','programme',`<input id="f-programme" name="programme" maxlength="100" placeholder="e.g. your subject, programme, or class" value="${safe(data.profile.programme)}">`)}</div><div class="form-grid">${field('Level, grade, or year (optional)','level',`<input id="f-level" name="level" maxlength="40" placeholder="e.g. Year 2 or Grade 10" value="${safe(data.profile.level)}">`)}${field('Term, semester, or session (optional)','term',`<input id="f-term" name="term" maxlength="60" placeholder="e.g. Semester 1, 2026/27" value="${safe(data.profile.term)}">`)}</div><div class="form-field full"><label for="f-examStyle">How are your tests or exams usually set? (optional)</label><input id="f-examStyle" name="examStyle" maxlength="160" placeholder="e.g. Multiple choice, short answers, essays, practicals" value="${safe(data.profile.examStyle||"")}"><small>Upload a sample or past paper too, and practice can use its format.</small></div><div class="form-grid">${field('Study goal per week','weeklyGoal',`<input id="f-weeklyGoal" name="weeklyGoal" type="number" min="1" max="30" value="${Number(data.profile.weeklyGoal)||5}">`)}${field('Preferred session length','planSessionMinutes',`<select id="f-planSessionMinutes" name="planSessionMinutes">${[25,30,45,60,75,90].map(n=>`<option value="${n}" ${Number(data.profile.planSessionMinutes)===n?'selected':''}>${n} minutes</option>`).join('')}</select>`)}</div><div class="form-grid">${field('When can you study?','studyStart',`<input id="f-studyStart" name="studyStart" type="time" value="${safe(data.profile.studyStart)}">`)}${field('Until','studyEnd',`<input id="f-studyEnd" name="studyEnd" type="time" value="${safe(data.profile.studyEnd)}">`)}</div><div class="onboarding-days"><strong>Choose study days</strong><div class="availability-days">${STUDIO_DAYS.map((day,i)=>`<label class="day-check"><input type="checkbox" name="studyDay" value="${i}" ${(data.profile.studyDays||[]).includes(i)?'checked':''}><span>${day.slice(0,3)}</span></label>`).join('')}</div></div><div class="onboarding-foot"><span>Course materials and study drafts stay on this device.</span><button class="primary-btn" type="submit">Set up my planner →</button></div></form></section>`;
 }
 
-function renderMore(){return `${pageHead('MORE TOOLS','Your planner','Open your study studio, tutorials, practice, progress, and settings.','')}<div class="course-grid">${[['study','✧','Study studio','Import your courses and school timetable; generate a study week.'],['practice','✓','Practice & tests','Create course questions from your study materials.'],['habit','✳','Study habit','Build a steady reading rhythm.'],['tutorials','▷','Tutorials & notes','Keep useful learning materials together.'],['progress','↗','My progress','See the effort you have put in.'],['education','▤','Education history','Keep every level, semester, and session in your history.'],['vault','▣','Personal documents','Keep IDs, receipts, certificates, and other files together.'],['settings','⚙','Settings','Set your weekly goal and reminder.']].map(x=>`<button class="course-card" style="text-align:left;border:1px solid var(--line)" data-page="${x[0]}"><div class="course-card-head"><span class="habit-badge">${x[1]}</span><h3>${x[2]}</h3></div><p class="course-desc">${x[3]}</p></button>`).join('')}</div>`}
+function renderMore(){return `${pageHead('MORE TOOLS','Your planner','Open your study studio, tutorials, practice, progress, and settings.','')}<div class="course-grid">${[['study','✧','Study studio','Import your courses and school timetable; generate a study week.'],['practice','✓','Practice & tests','Create course questions from your study materials.'],['habit','✳','Study habit','Build a steady reading rhythm.'],['tutorials','▷','Tutorials & notes','Keep useful learning materials together.'],['progress','↗','My progress','See the effort you have put in.'],['education','▤','Education history','Keep every level, semester, and session in your history.'],['vault','▣','Personal documents','Keep IDs, receipts, certificates, and other files together.'],['records','▤','Session records','Review class reflections and study quiz scores.'],['settings','⚙','Settings','Set your weekly goal and reminder.']].map(x=>`<button class="course-card" style="text-align:left;border:1px solid var(--line)" data-page="${x[0]}"><div class="course-card-head"><span class="habit-badge">${x[1]}</span><h3>${x[2]}</h3></div><p class="course-desc">${x[3]}</p></button>`).join('')}</div>`}
 
 function renderGeneratedCard(result,type){return `<section class="panel generated-card"><div class="panel-head"><div><h3>${safe(result.title||'Study session')}</h3><p>${safe(result.course||'Your course')} · ${safe(result.source||'Study guide')}</p></div><button class="panel-link" data-action="go-practice">Practice this →</button></div><div class="generated-content">${resultHtml(result.text||'')}</div><div class="ai-caption">Local study draft based on your selected material and course details. Verify details with your teacher’s or instructor’s notes.</div></section>`}function resultHtml(text){const escaped=safe(text);return escaped.split(/\n{2,}/).map(block=>{if(/^#{1,3} /.test(block))return `<h4>${block.replace(/^#{1,3} /,'')}</h4>`;if(/^[-*] /m.test(block))return `<ul>${block.split('\n').map(line=>`<li>${line.replace(/^[-*] /,'')}</li>`).join('')}</ul>`;return `<p>${block.replace(/\n/g,'<br>')}</p>`}).join('')}
 
@@ -652,7 +652,153 @@ document.addEventListener('click',e=>{
   if(action==='export-portable-backup')exportPortableBackup();
 });
 window.eduPageRenderers=window.eduPageRenderers||{};
-Object.assign(window.eduPageRenderers,{study:renderStudyStudio,practice:renderPractice,setup:renderSetup,education:renderEducation,vault:renderVault,more:renderMore});
+Object.assign(window.eduPageRenderers,{study:renderStudyStudio,practice:renderPractice,setup:renderSetup,education:renderEducation,vault:renderVault,more:renderMore,records:renderStudyRecords});
+function renderStudyRecords(){
+  const records=(data.studyRecords||[]).slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  const cards=records.map(record=>{
+    const attempts=record.quizAttempts||[],course=data.courses.find(item=>item.id===record.courseId);
+    const kind=record.type==='class'?'Class reflection':'Study session';
+    const last=attempts[0];
+    const score=last?' · Latest quiz '+last.score+'/'+last.total:'';
+    return '<article class="course-card session-record-card"><div class="course-card-head"><span class="habit-badge">'+(record.type==='class'?'▤':'✓')+'</span><div><h3>'+safe(record.title||course?.name||kind)+'</h3><span class="course-code">'+kind+' · '+safe(record.date||'')+'</span></div></div><p class="course-desc">'+safe(record.reflection?.topics||'Session reflection saved')+score+'</p><div class="course-card-foot"><span>'+attempts.length+' quiz attempt'+(attempts.length===1?'':'s')+'</span><button class="secondary-btn" data-action="view-session-record" data-record-id="'+safe(record.id)+'">Open record</button></div></article>'
+  }).join('');
+  return pageHead('YOUR LEARNING HISTORY','Session records','Keep class reflections, assignments, study notes, quiz scores, and retake counts together.','')+(records.length?'<div class="course-grid session-record-grid">'+cards+'</div>':emptyState('▤','Your session records will appear here','Complete a class or study session from your plan to start building your learning record.','',''));
+}
+function splitSessionList(value){return String(value||'').split(/\r?\n+|[,;]+/).map(item=>item.replace(/^\s*\d+[.)-]\s*/,'').trim()).filter(Boolean)}
+function saveCompletedSession(event,date,reflection){
+  const record={id:id(),eventId:event.id,date,type:event.type,courseId:event.courseId||'',courseName:data.courses.find(item=>item.id===event.courseId)?.name||'',title:event.title||'Study session',minutes:event.duration||data.profile.sessionMinutes,createdAt:Date.now(),reflection,quizQuestions:[],quizAttempts:[]};
+  data.studyRecords=Array.isArray(data.studyRecords)?data.studyRecords:[];
+  data.studyRecords.unshift(record);
+  data.completed.push({id:id(),eventId:event.id,date,courseId:event.courseId||'',type:event.type,minutes:record.minutes,recordId:record.id});
+  closeModal();save();return record;
+}
+function beginSessionCompletion(event,date){
+  const course=data.courses.find(item=>item.id===event.courseId),subtitle=(course?.code?course.code+' · ':'')+(event.title||'Planned session');
+  if(event.type==='class'){
+    const body='<p class="session-modal-intro">Add what happened in this lecture before marking it complete.</p>'+
+      field('Topics covered','topics','<textarea id="f-topics" name="topics" required placeholder="List the lecture topics"></textarea>',true)+
+      field('Five things you learned','learned','<textarea id="f-learned" name="learned" required placeholder="Write exactly five items, one per line"></textarea>',true)+
+      field('Study areas to review','studyAreas','<textarea id="f-studyAreas" name="studyAreas" placeholder="Topics or skills you want to revisit"></textarea>',true)+
+      '<div class="form-grid">'+field('Assignment (optional)','assignment','<input id="f-assignment" name="assignment" maxlength="180" placeholder="Assignment or task">')+field('Assignment deadline','assignmentDue','<input id="f-assignmentDue" name="assignmentDue" type="date">')+'</div>'+
+      '<div class="form-grid">'+field('Classwork (optional)','classwork','<input id="f-classwork" name="classwork" maxlength="180" placeholder="Classwork or in-class task">')+field('Classwork deadline','classworkDue','<input id="f-classworkDue" name="classworkDue" type="date">')+'</div>';
+    openModal('Class reflection',subtitle,body,'Save and complete class',fd=>{
+      const learned=String(fd.get('learned')||'').split(/\r?\n+/).map(item=>item.replace(/^\s*\d+[.)-]\s*/,'').trim()).filter(Boolean),assignment=String(fd.get('assignment')||'').trim(),assignmentDue=String(fd.get('assignmentDue')||''),classwork=String(fd.get('classwork')||'').trim(),classworkDue=String(fd.get('classworkDue')||'');
+      if(learned.length!==5){toast('Please enter exactly five learning points, one per line.');return}
+      if(assignment&&!assignmentDue){toast('Add a deadline for the assignment.');return}
+      if(classwork&&!classworkDue){toast('Add a deadline for the classwork.');return}
+      const tasks=[];if(assignment)tasks.push({type:'Assignment',title:assignment,dueDate:assignmentDue});if(classwork)tasks.push({type:'Classwork',title:classwork,dueDate:classworkDue});
+      saveCompletedSession(event,date,{topics:String(fd.get('topics')||'').trim(),learned,studyAreas:String(fd.get('studyAreas')||'').trim(),tasks});
+      toast('Class reflection saved and class completed');
+    });
+    return;
+  }
+  const body='<p class="session-modal-intro">Save what you studied, then take a 10-question recall quiz.</p>'+
+    field('Topics studied','topics','<textarea id="f-topics" name="topics" required placeholder="List the topics you reviewed"></textarea>',true)+
+    field('What you gained from the study hour','gained','<textarea id="f-gained" name="gained" required placeholder="Write key ideas you learned, one per line if possible"></textarea>',true);
+  openModal('Study reflection',subtitle,body,'Save and start 10-question quiz',fd=>{
+    const record=saveCompletedSession(event,date,{topics:String(fd.get('topics')||'').trim(),gained:String(fd.get('gained')||'').trim()});
+    toast('Study reflection saved');
+    openSessionQuiz(record.id);
+  });
+}
+function sessionQuizSources(courseId){
+  return (async()=>{
+    let sources=[];
+    try{if(typeof loadCourseText==='function')sources=await loadCourseText(courseId)}catch{}
+    if(!sources.length)sources=(data.materialText||[]).filter(item=>!item.courseId||item.courseId===courseId).map(item=>({name:item.name||'Saved study material',text:item.text||''})).filter(item=>item.text);
+    return sources;
+  })();
+}
+function buildSessionQuiz(record,sources){
+  const course=data.courses.find(item=>item.id===record.courseId),reflection=record.reflection||{};
+  const topics=[...splitSessionList(reflection.topics),...(course?.topics||[])].filter(Boolean).sort((a,b)=>b.length-a.length);
+  const stop=new Set('about after again also another because before being between could course during each from have into more most other over should some such than that their there these they this those through under very what when where which while with would your lecture material process learn learned theory using used into'.split(' '));
+  const questions=[],seen=new Set();
+  const sentenceList=sources.flatMap(source=>String(source.text||'').replace(/\s+/g,' ').split(/(?<=[.!?])\s+|(?<=:)\s+|\n+/).map(sentence=>({sentence:sentence.trim(),source:source.name||'Course material'}))).filter(item=>item.sentence.length>=35&&item.sentence.length<=360);
+  const addQuestion=(prompt,answer,mode,source)=>{
+    const key=prompt.toLowerCase();if(seen.has(key))return;seen.add(key);questions.push({prompt,answer,mode,source});
+  };
+  for(const item of sentenceList){
+    if(questions.length>=10)break;
+    const topic=topics.find(value=>value.length>2&&item.sentence.toLowerCase().includes(value.toLowerCase()));
+    let answer='',masked='';
+    if(topic){answer=topic;const escaped=topic.replace(/[.*+?^$()|[\]\\]/g,'\\$&');masked=item.sentence.replace(new RegExp(escaped,'i'),'_____')}
+    else{
+      const words=item.sentence.match(/[A-Za-z][A-Za-z'-]{5,}/g)||[];
+      const term=words.find(word=>!stop.has(word.toLowerCase()));
+      if(!term)continue;
+      answer=term;const escaped=term.replace(/[.*+?^$()|[\]\\]/g,'\\$&');masked=item.sentence.replace(new RegExp('\\b'+escaped+'\\b','i'),'_____');
+    }
+    addQuestion('Complete the missing topic or key term: “'+masked+'”',answer,'term',item.source);
+  }
+  const learned=splitSessionList(reflection.gained);
+  if(questions.length<10&&learned.length){
+    const templates=['What key point did you record about ','State one detail you learned about ','How would you explain your main takeaway on ','What idea from your study notes can you recall about ','Which important point did you gain about '];
+    for(let index=0;questions.length<10;index++){
+      const point=learned[index%learned.length],topic=topics[index%Math.max(1,topics.length)]||record.title||'your topic';
+      addQuestion(templates[index%templates.length]+'“'+topic+'”?',point,'keywords','Your study reflection');
+      if(index>50)break;
+    }
+  }
+
+  return questions.slice(0,10);
+}
+function normalizeQuizText(value){return String(value||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim()}
+function gradeSessionAnswer(question,response){
+  const actual=normalizeQuizText(response),expected=normalizeQuizText(question.answer);
+  if(!actual||!expected)return false;
+  if(question.mode==='term')return (' '+actual+' ').includes(' '+expected+' ');
+  const skip=new Set('about after again also because before being between could each from have into more most other should some than that their there these they this those through under very what when where which while with would your'.split(' '));
+  const keywords=expected.split(' ').filter(word=>word.length>2&&!skip.has(word));
+  const matched=keywords.filter(word=>(' '+actual+' ').includes(' '+word+' ')).length;
+  return matched>=Math.max(1,Math.ceil(keywords.length*0.4));
+}
+async function openSessionQuiz(recordId){
+  const record=(data.studyRecords||[]).find(item=>item.id===recordId);if(!record||record.type!=='study')return;
+  if(!Array.isArray(record.quizQuestions)||record.quizQuestions.length!==10){
+    const sources=await sessionQuizSources(record.courseId);
+    record.quizQuestions=buildSessionQuiz(record,sources);
+    const fallbackPoints=splitSessionList(record.reflection?.gained),fallbackTopics=splitSessionList(record.reflection?.topics);while(record.quizQuestions.length<10){const number=record.quizQuestions.length+1,topic=fallbackTopics[(number-1)%Math.max(1,fallbackTopics.length)]||record.title||'your topic',answer=fallbackPoints[(number-1)%Math.max(1,fallbackPoints.length)]||record.reflection?.gained||topic;record.quizQuestions.push({prompt:'Recall check '+number+': Write one key idea you learned about '+topic+'.',answer,mode:'keywords',source:'Your study reflection'})}
+    save();
+  }
+  const questions=record.quizQuestions;
+  const content='<p class="session-modal-intro">10 questions · on-device grading checks key terms from your course notes or study reflection.</p><div class="quick-quiz-list">'+questions.map((question,index)=>'<div class="form-field full"><label for="f-quiz-'+index+'">'+String(index+1).padStart(2,'0')+'. '+safe(question.prompt)+'</label><input id="f-quiz-'+index+'" name="answer'+index+'" required autocomplete="off" placeholder="Your short answer"></div>').join('')+'</div>';
+  openModal('10-question study quiz',record.title,content,'Grade my quiz',fd=>{
+    const responses=questions.map((question,index)=>{const answer=String(fd.get('answer'+index)||'').trim();return {question:question.prompt,answer,key:question.answer,source:question.source,correct:gradeSessionAnswer(question,answer)}});
+    const score=responses.filter(item=>item.correct).length,attempts=record.quizAttempts=Array.isArray(record.quizAttempts)?record.quizAttempts:[];
+    const attempt={number:attempts.length+1,completedAt:Date.now(),score,total:questions.length,responses};attempts.unshift(attempt);save();showSessionQuizResult(record.id,attempt);
+  });
+}
+function showSessionQuizResult(recordId,attempt){
+  const record=(data.studyRecords||[]).find(item=>item.id===recordId);if(!record)return;
+  const rows=attempt.responses.map((result,index)=>'<article class="quiz-result-row '+(result.correct?'correct':'incorrect')+'"><div><strong>'+String(index+1).padStart(2,'0')+'. '+(result.correct?'Correct':'Review this answer')+'</strong><p>'+safe(result.question)+'</p><small>Your answer: '+safe(result.answer||'No answer')+'</small><small>Answer key: '+safe(result.key)+'</small></div></article>').join('');
+  const body='<div class="quiz-score-banner"><strong>'+attempt.score+'/'+attempt.total+'</strong><span>Attempt '+attempt.number+' · '+Math.round(attempt.score/attempt.total*100)+'%</span></div><div class="quiz-result-list">'+rows+'</div><button type="button" class="secondary-btn quiz-retake-btn" data-action="retake-session-quiz" data-record-id="'+safe(record.id)+'">Retake this quiz</button>';
+  openModal('Quiz result',record.title,body,'Close',()=>closeModal());
+}
+function showSessionRecord(recordId){
+  const record=(data.studyRecords||[]).find(item=>item.id===recordId);if(!record)return;
+  const reflection=record.reflection||{},attempts=record.quizAttempts||[],course=data.courses.find(item=>item.id===record.courseId);
+  const when=record.date?formatDate(parseISO(record.date),{weekday:'long',month:'long',day:'numeric',year:'numeric'}):'Session record';
+  let body='<div class="session-record-detail"><p><strong>'+safe(when)+'</strong> · '+safe(course?.name||record.courseName||'Course')+'</p><h3>Topics</h3><p>'+safe(reflection.topics||'None saved')+'</p>';
+  if(record.type==='class'){
+    body+='<h3>Five things learned</h3><ol>'+(reflection.learned||[]).map(item=>'<li>'+safe(item)+'</li>').join('')+'</ol><h3>Study areas to revisit</h3><p>'+safe(reflection.studyAreas||'None listed')+'</p>';
+    const tasks=reflection.tasks||[];body+='<h3>Assignments and classwork</h3>'+(tasks.length?'<ul>'+tasks.map(task=>'<li><strong>'+safe(task.type)+':</strong> '+safe(task.title)+' · due '+safe(task.dueDate)+'</li>').join('')+'</ul>':'<p>No assignments or classwork recorded.</p>');
+  }else{
+    body+='<h3>What you gained</h3><p>'+safe(reflection.gained||'None saved')+'</p><h3>10-question quiz attempts: '+attempts.length+'</h3>';
+    body+=attempts.length?'<div class="quiz-attempt-list">'+attempts.map(item=>'<div><strong>Attempt '+item.number+': '+item.score+'/'+item.total+'</strong><span>'+new Date(item.completedAt).toLocaleString()+'</span></div>').join('')+'</div>':'<p>No quiz taken yet.</p>';
+    body+='<button type="button" class="secondary-btn quiz-retake-btn" data-action="retake-session-quiz" data-record-id="'+safe(record.id)+'">'+(attempts.length?'Retake quiz':'Take 10-question quiz')+'</button>';
+  }
+  openModal(record.type==='class'?'Class record':'Study record',record.title,body,'Close',()=>closeModal());
+}
+document.addEventListener('click',event=>{
+  const button=event.target.closest('[data-action]');if(!button)return;
+  if(button.dataset.action==='view-session-record'){showSessionRecord(button.dataset.recordId);return}
+  if(button.dataset.action==='retake-session-quiz'){closeModal();openSessionQuiz(button.dataset.recordId)}
+});
+window.eduBeginSessionCompletion=beginSessionCompletion;
+window.eduShowSessionRecord=showSessionRecord;
+window.eduPageRenderers=window.eduPageRenderers||{};
+window.eduPageRenderers.records=renderStudyRecords;
 if(!data.profile.setupComplete)currentPage='setup';
 render();
 

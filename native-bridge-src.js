@@ -7,7 +7,7 @@ const isNative = Capacitor.isNativePlatform();
 const CAMERA_TARGET_KEY = 'eduvia-camera-target-v1';
 const TEST_NOTIFICATION_ID = 2147480000;
 const MAX_LOCAL_REMINDERS = 300;
-const CHANNEL_ID = 'eduvia-study-alerts';
+const CHANNEL_ID = 'eduvia-study-alarms-v2';
 
 if (isNative) document.documentElement.classList.add('native-app');
 
@@ -23,11 +23,12 @@ function hashedId(value, used) {
 async function createReminderChannel() {
   await LocalNotifications.createChannel({
     id: CHANNEL_ID,
-    name: 'Eduvia study reminders',
-    description: 'Class and study session alerts',
+    name: 'Eduvia lecture and study alarms',
+    description: 'Audible alarms for scheduled lectures and study sessions',
     importance: 5,
-    sound: 'eduvia_beep',
-    vibration: true
+    sound: 'eduvia_alarm',
+    vibration: true,
+    vibrationPattern: [0, 500, 250, 500, 250, 900]
   });
 }
 
@@ -94,7 +95,7 @@ const EduviaNative = {
     await LocalNotifications.schedule({ notifications: [{
       id: TEST_NOTIFICATION_ID,
       title: 'Eduvia alerts are on',
-      body: 'Class and study reminders will appear on this phone.',
+      body: 'Lecture and study alarms will sound at their scheduled start times when phone settings permit.',
       schedule: { at: new Date(Date.now() + 2000), allowWhileIdle: true },
       channelId: CHANNEL_ID
     }] });

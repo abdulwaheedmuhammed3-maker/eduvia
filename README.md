@@ -38,3 +38,8 @@ GitHub Actions builds an installable Android beta APK from the main branch and p
 Publish the files on an HTTPS host, then open Eduvia in Safari, tap Share, and choose **Add to Home Screen**. The Android APK is not an iPhone app; iOS needs its own signed app build.
 
 The app shell can open offline after its first load, but each phone keeps its own local data. Use the portable backup to move data between devices.
+
+
+## Scheduled lecture and study alarms
+
+Eduvia schedules lecture and study notifications for the event's actual start time. The Android app uses local notifications with an audible multi-pulse sound and requests notification and exact-alarm permissions. Android notification-channel settings, silent mode, battery policies, and Do Not Disturb can still affect delivery or sound. Eduvia does not silently bypass Do Not Disturb; Android requires separate user-granted special access for apps that are allowed to override it. The browser version depends on the configured push service for delivery while closed; foreground browser timers alone are not guaranteed in the background.

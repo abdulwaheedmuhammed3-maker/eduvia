@@ -17,7 +17,13 @@ jobs:
           node --check app.js
           node --check study-studio.js
           node --check feature-hub.js
+          node --check native-bridge-src.js
+          node --check scripts/prepare-android.mjs
+          node --check service-worker.js
+          node --check notifications-worker/src/index.js
       - name: Verify feature bundle is loaded and cached
         run: |
           grep -q 'feature-hub.js' index.html
           grep -q 'feature-hub.js' service-worker.js
+          grep -q 'alarm-release-1' index.html
+          grep -q 'eduvia-study-alarms-v2' native-bridge-src.js

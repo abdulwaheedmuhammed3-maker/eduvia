@@ -12,7 +12,7 @@
   const cardBox = (title, body, extra='') => '<section class="panel" style="margin-bottom:16px"><div class="panel-head"><div><h3>'+title+'</h3></div>'+extra+'</div>'+body+'</section>';
   const input = (name, type='text', value='', attrs='') => '<input name="'+name+'" type="'+type+'" value="'+esc(value)+'" '+attrs+'>';
   const selectCourse = (name='courseId', selected='') => '<select name="'+name+'"><option value="">Choose a course</option>'+data.courses.map(c=>'<option value="'+esc(c.id)+'" '+(c.id===selected?'selected':'')+'>'+esc(c.name)+'</option>').join('')+'</select>';
-  function reflectionDeadlines(){return (data.studyRecords||[]).flatMap(r=>(r.reflection?.tasks||[]).filter(t=>t.dueDate&&/^\d{4}-\d{2}-\d{2}$/.test(String(t.dueDate))).map((t,i)=>({id:'reflection-'+r.id+'-'+i,title:String(t.title||t.type||'Class task'),kind:String(t.type||'Assignment').toLowerCase()==='classwork'?'assignment':'assignment',dueDate:String(t.dueDate),courseId:r.courseId||'',sourceId:r.id+'-'+i}))))}
+  function reflectionDeadlines(){return (data.studyRecords||[]).flatMap(r=>(r.reflection?.tasks||[]).filter(t=>t.dueDate&&/^\d{4}-\d{2}-\d{2}$/.test(String(t.dueDate))).map((t,i)=>({id:'reflection-'+r.id+'-'+i,title:String(t.title||t.type||'Class task'),kind:String(t.type||'Assignment').toLowerCase()==='classwork'?'assignment':'assignment',dueDate:String(t.dueDate),courseId:r.courseId||'',sourceId:r.id+'-'+i})))}
   function renderPlanner(){
     const reflected=reflectionDeadlines().filter(r=>!data.deadlines.some(d=>d.sourceId===r.sourceId));
     const items=[...data.deadlines].sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate)));
@@ -63,7 +63,7 @@
   }
   function renderMoreWithFeatures(){
     const original=window.eduOriginalMoreRender?window.eduOriginalMoreRender():renderMore();
-    return original.slice(0,original.lastIndexOf('</div>'))+'<button class="course-card" style="text-align:left" data-page="planner"><div class="course-card-head"><span class="habit-badge">◷</span><h3>Planner</h3></div><p class="course-desc">Assignments, tests and examinations.</p></button><button class="course-card" style="text-align:left" data-page="flashcards"><div class="course-card-head"><span class="habit-badge">✧</span><h3>Flashcards</h3></div><p class="course-desc">Spaced review from topics and notes.</p></button><button class="course-card" style="text-align:left" data-page="mastery"><div class="course-card-head"><span class="habit-badge">↗</span><h3>Course mastery</h3></div><p class="course-desc">Track confidence by course topic.</p></button></div>');
+    return original.slice(0,original.lastIndexOf('</div>'))+'<button class="course-card" style="text-align:left" data-page="planner"><div class="course-card-head"><span class="habit-badge">◷</span><h3>Planner</h3></div><p class="course-desc">Assignments, tests and examinations.</p></button><button class="course-card" style="text-align:left" data-page="flashcards"><div class="course-card-head"><span class="habit-badge">✧</span><h3>Flashcards</h3></div><p class="course-desc">Spaced review from topics and notes.</p></button><button class="course-card" style="text-align:left" data-page="mastery"><div class="course-card-head"><span class="habit-badge">↗</span><h3>Course mastery</h3></div><p class="course-desc">Track confidence by course topic.</p></button></div>';
   }
   const originalSyncNav=window.syncNav;
   if(typeof originalSyncNav==='function'&&!window.eduFeatureNavWrapped){

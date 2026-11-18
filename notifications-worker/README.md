@@ -10,7 +10,7 @@ The Worker checks due reminders once per minute and sends one push per run. If s
 2. Install Node.js, then open a terminal in this folder (`notifications-worker`).
 3. Run `npm install` and `npx wrangler login`.
 4. Create the free D1 database with `npx wrangler d1 create eduvia-notifications`.
-5. Copy the database ID printed by Wrangler into `wrangler.jsonc`, replacing `REPLACE_WITH_D1_DATABASE_ID`.
+5. Copy the database ID printed by Wrangler into `wrangler.jsonc`, replacing the zero ID currently in `wrangler.jsonc` (Wrangler may update it automatically).
 6. Run `npm run db:migrate`, then `npm run deploy`.
 7. Wrangler prints the Worker URL, similar to `https://eduvia-notifications.<your-workers-subdomain>.workers.dev`. Set that full URL in the root `push-config.js` file, then deploy the Eduvia site.
 

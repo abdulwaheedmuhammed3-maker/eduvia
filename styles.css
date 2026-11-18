@@ -342,3 +342,17 @@ button{ -webkit-tap-highlight-color:transparent}
 .course-open-button .course-desc{margin:12px 0 5px}
 .course-open-label{display:inline-block;margin-top:5px;color:var(--green);font-size:12px;font-weight:750}
 .course-mini[data-action="open-course"]{cursor:pointer}
+
+
+/* Course workspace: grouped course-owned learning content. */
+.course-detail-section{margin-bottom:14px;min-width:0}
+.course-detail-section .panel-head{align-items:flex-start}
+.course-detail-section .panel-head p{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
+.course-section-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.course-item-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.course-file-button{display:inline-flex;align-items:center;cursor:pointer}
+.course-file-button input{display:none}
+.course-detail-hero{margin-bottom:14px}
+.course-material-reader{max-height:58vh;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface-soft,#f7f8f5)}
+.course-material-reader pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.65 inherit;color:var(--text)}
+@media(max-width:640px){.course-detail-section{padding:14px}.course-item-actions{width:100%;margin-top:8px}.course-item-actions .secondary-btn{flex:1}}

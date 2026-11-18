@@ -665,14 +665,21 @@ function renderStudyRecords(){
   return pageHead('YOUR LEARNING HISTORY','Session records','Keep class reflections, assignments, study notes, quiz scores, and retake counts together.','')+(records.length?'<div class="course-grid session-record-grid">'+cards+'</div>':emptyState('▤','Your session records will appear here','Complete a class or study session from your plan to start building your learning record.','',''));
 }
 function splitSessionList(value){return String(value||'').split(/\r?\n+|[,;]+/).map(item=>item.replace(/^\s*\d+[.)-]\s*/,'').trim()).filter(Boolean)}
-function saveCompletedSession(event,date,reflection){
+function completeSessionRecord(record){
+  if(record.completedAt)return;
+  record.completedAt=Date.now();
+  if(!data.completed.some(item=>item.eventId===record.eventId&&item.date===record.date))data.completed.push({id:id(),eventId:record.eventId,date:record.date,courseId:record.courseId,type:record.type,minutes:record.minutes,recordId:record.id});
+}
+function saveCompletedSession(event,date,reflection,complete=true){
   const record={id:id(),eventId:event.id,date,type:event.type,courseId:event.courseId||'',courseName:data.courses.find(item=>item.id===event.courseId)?.name||'',title:event.title||'Study session',minutes:event.duration||data.profile.sessionMinutes,createdAt:Date.now(),reflection,quizQuestions:[],quizAttempts:[]};
   data.studyRecords=Array.isArray(data.studyRecords)?data.studyRecords:[];
   data.studyRecords.unshift(record);
-  data.completed.push({id:id(),eventId:event.id,date,courseId:event.courseId||'',type:event.type,minutes:record.minutes,recordId:record.id});
+  if(complete)completeSessionRecord(record);
   closeModal();save();return record;
 }
 function beginSessionCompletion(event,date){
+  const unfinished=(data.studyRecords||[]).find(record=>record.eventId===event.id&&record.date===date&&record.type==='study'&&!record.completedAt);
+  if(unfinished){openSessionQuiz(unfinished.id);return}
   const course=data.courses.find(item=>item.id===event.courseId),subtitle=(course?.code?course.code+' · ':'')+(event.title||'Planned session');
   if(event.type==='class'){
     const body='<p class="session-modal-intro">Add what happened in this lecture before marking it complete.</p>'+
@@ -696,7 +703,7 @@ function beginSessionCompletion(event,date){
     field('Topics studied','topics','<textarea id="f-topics" name="topics" required placeholder="List the topics you reviewed"></textarea>',true)+
     field('What you gained from the study hour','gained','<textarea id="f-gained" name="gained" required placeholder="Write key ideas you learned, one per line if possible"></textarea>',true);
   openModal('Study reflection',subtitle,body,'Save and start 10-question quiz',fd=>{
-    const record=saveCompletedSession(event,date,{topics:String(fd.get('topics')||'').trim(),gained:String(fd.get('gained')||'').trim()});
+    const record=saveCompletedSession(event,date,{topics:String(fd.get('topics')||'').trim(),gained:String(fd.get('gained')||'').trim()},false);
     toast('Study reflection saved');
     openSessionQuiz(record.id);
   });
@@ -766,7 +773,7 @@ async function openSessionQuiz(recordId){
   openModal('10-question study quiz',record.title,content,'Grade my quiz',fd=>{
     const responses=questions.map((question,index)=>{const answer=String(fd.get('answer'+index)||'').trim();return {question:question.prompt,answer,key:question.answer,source:question.source,correct:gradeSessionAnswer(question,answer)}});
     const score=responses.filter(item=>item.correct).length,attempts=record.quizAttempts=Array.isArray(record.quizAttempts)?record.quizAttempts:[];
-    const attempt={number:attempts.length+1,completedAt:Date.now(),score,total:questions.length,responses};attempts.unshift(attempt);save();showSessionQuizResult(record.id,attempt);
+    const attempt={number:attempts.length+1,completedAt:Date.now(),score,total:questions.length,responses};attempts.unshift(attempt);completeSessionRecord(record);save();showSessionQuizResult(record.id,attempt);
   });
 }
 function showSessionQuizResult(recordId,attempt){
@@ -801,4 +808,3 @@ window.eduPageRenderers=window.eduPageRenderers||{};
 window.eduPageRenderers.records=renderStudyRecords;
 if(!data.profile.setupComplete)currentPage='setup';
 render();
-

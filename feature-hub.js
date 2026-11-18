@@ -117,6 +117,11 @@
     const original=window.eduOriginalMoreRender?window.eduOriginalMoreRender():renderMore();
     return original.slice(0,original.lastIndexOf('</div>'))+'<button class="course-card" style="text-align:left" data-page="planner"><div class="course-card-head"><span class="habit-badge">◷</span><h3>Planner</h3></div><p class="course-desc">Assignments, tests and examinations.</p></button><button class="course-card" style="text-align:left" data-page="flashcards"><div class="course-card-head"><span class="habit-badge">✧</span><h3>Flashcards</h3></div><p class="course-desc">Spaced review from topics and notes.</p></button><button class="course-card" style="text-align:left" data-page="mastery"><div class="course-card-head"><span class="habit-badge">↗</span><h3>Course mastery</h3></div><p class="course-desc">Track confidence by course topic.</p></button></div>');
   }
+  const originalSyncNav=window.syncNav;
+  if(typeof originalSyncNav==='function'&&!window.eduFeatureNavWrapped){
+    window.eduFeatureNavWrapped=true;
+    window.syncNav=function(){originalSyncNav();if(['planner','flashcards','mastery'].includes(currentPage)){document.querySelectorAll('[data-page="more"]').forEach(el=>el.classList.add('active'));const labels={planner:'Planner',flashcards:'Flashcards',mastery:'Course mastery'};document.getElementById('crumbCurrent').textContent=labels[currentPage];}};
+  }
   window.eduOriginalVaultRender=window.eduOriginalVaultRender||window.renderVault;
   window.eduOriginalSettingsRender=window.eduOriginalSettingsRender||window.renderSettings;
   window.eduOriginalMoreRender=window.eduOriginalMoreRender||window.renderMore;

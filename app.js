@@ -195,18 +195,32 @@ function deleteCourse(courseId){if(!confirm('Remove this course and its linked t
 function deleteEvent(eventId){data.events=data.events.filter(e=>e.id!==eventId);save();toast('Timetable item removed')}
 function clearData(){if(!confirm('This will permanently remove your courses, schedule, resources, and progress from this device. Download a backup first if you want to keep them.'))return;data=defaultData();save();toast('Planner data cleared')}
 
-// Course cards use a window-level capture handler so navigation cannot be swallowed by nested UI handlers.
+// Course navigation supports touch, pointer and click input on mobile browsers and installed PWAs.
+function openCourseFromCard(card,event){
+ if(!card)return false;
+ const courseId=card.getAttribute('data-open-course');
+ if(!courseId)return false;
+ const course=data.courses.find(item=>String(item.id)===String(courseId));
+ if(!course)return false;
+ if(event){event.preventDefault();event.stopPropagation();if(event.stopImmediatePropagation)event.stopImmediatePropagation()}
+ selectedCourseId=course.id;
+ setPage('course-detail');
+ return true;
+}
+window.addEventListener('pointerup',event=>{
+ const target=event.target instanceof Element?event.target:null;
+ const card=target?.closest('[data-open-course]');
+ if(card)openCourseFromCard(card,event);
+},true);
+window.addEventListener('touchend',event=>{
+ const target=event.target instanceof Element?event.target:null;
+ const card=target?.closest('[data-open-course]');
+ if(card)openCourseFromCard(card,event);
+},{capture:true,passive:false});
 window.addEventListener('click',event=>{
  const target=event.target instanceof Element?event.target:null;
  const card=target?.closest('[data-open-course]');
- if(!card)return;
- const courseId=card.getAttribute('data-open-course');
- if(!courseId||!courseById(courseId))return;
- event.preventDefault();
- event.stopPropagation();
- event.stopImmediatePropagation();
- selectedCourseId=courseId;
- setPage('course-detail');
+ if(card)openCourseFromCard(card,event);
 },true);
 document.addEventListener('click',e=>{const nav=e.target.closest('[data-page]');if(nav){if(nav.dataset.page==='mastery'&&nav.dataset.course)window.eduMasteryCourse=nav.dataset.course;setPage(nav.dataset.page);return}const b=e.target.closest('[data-action]');if(b){const a=b.dataset.action;switch(a){case'add-course':addCourse();break;case'open-course':selectedCourseId=b.dataset.id;setPage('course-detail');break;case'add-course-session':selectedDate=todayISO();addEvent(null,'study',b.dataset.id);break;case'edit-course':addCourse(courseById(b.dataset.id));break;case'delete-course':deleteCourse(b.dataset.id);break;case'add-session':addEvent(null,'study');break;case'add-class':addEvent(null,'class');break;case'edit-event':addEvent(data.events.find(x=>x.id===b.dataset.id));break;case'delete-event':deleteEvent(b.dataset.id);break;case'select-date':selectedDate=b.dataset.date;render();break;case'week-back':weekOffset--;selectedDate=addDays(parseISO(selectedDate),-7).toLocaleDateString('en-CA');render();break;case'week-forward':weekOffset++;selectedDate=addDays(parseISO(selectedDate),7).toLocaleDateString('en-CA');render();break;case'complete-event':completeEvent(b.dataset.id,b.dataset.date);break;case'add-resource':addResource();break;case'delete-resource':data.resources=data.resources.filter(x=>x.id!==b.dataset.id);save();toast('Resource removed');break;case'focus-toggle':focusRunning?stopFocus():startFocus();break;case'focus-reset':resetFocus();break;case'save-settings':saveSettings();break;case'toggle-theme':data.profile.theme=data.profile.theme==="dark"?"light":"dark";applyTheme();save();toast(data.profile.theme==="dark"?"Dark mode is on":"Light mode is on");break;case'remove-profile-photo':delete data.profile.avatarData;save();toast('Profile photo removed');break;case'capture-profile-photo':capturePhonePhoto('profile');break;case'enable-notifications':enableNotifications();break;case'disable-notifications':disableNotifications();break;case'export-data':exportData();break;case'clear-data':clearData();break;case'close-modal':closeModal();break;case'start-focus':setPage('habit');startFocus();break;case'filter-resource':document.querySelectorAll('.filter-chip').forEach(x=>x.classList.toggle('active',x===b));const f=b.dataset.filter;document.getElementById('resourceList').innerHTML=resourceMarkup(f==='all'?data.resources:data.resources.filter(x=>x.kind===f));break;}return;}});
 document.getElementById('profileButton').addEventListener('click',()=>setPage('settings'));

@@ -23,3 +23,8 @@ D1 stores a random device token hash, the phone push subscription, and reminder 
 ## Free-tier fit
 
 The schedule is sent only when reminders or the phone subscription change. The Worker runs 1,440 scheduled checks per day. Cloudflare publishes free daily limits for Workers and D1; exceeding a free limit can pause or reject requests, so the service does not silently switch to a paid Render plan.
+
+## Cloudflare dashboard deployment
+
+For Workers Builds, connect the GitHub repository on branch `feat/free-phone-notifications`, set the root directory to `notifications-worker`, leave the build command blank, and use `npm run db:migrate && npm run deploy` as the deploy command. The Worker name must be `eduvia-notifications`. The D1 database ID is already set in `wrangler.jsonc`.
+

@@ -141,7 +141,7 @@
   document.addEventListener('input',e=>{if(e.target.id==='documentSearch'){const q=e.target.value.toLowerCase();document.querySelectorAll('[data-doc-search]').forEach(el=>el.hidden=!el.dataset.docSearch.includes(q));}});
   document.addEventListener('change',e=>{
   function categoryKey(value){return String(value??'').trim().toLocaleLowerCase().replace(/\\s+/g,' ')}
-  function courseMatchKey(course){return categoryKey(course?.code)||categoryKey(course?.name)}
+  function courseMatchKeys(course){return [categoryKey(course?.code),categoryKey(course?.name)].filter(Boolean)}
   function eventMatchKey(event,courseId=event?.courseId){return [event?.type,event?.date||'weekly',event?.day??'',event?.start,event?.end,categoryKey(event?.title),categoryKey(event?.location),courseId||''].join('|')}
   function exportCategoryBackup(kind){
     const payload={format:'eduvia-category-backup',version:1,kind,createdAt:new Date().toISOString(),items:kind==='courses'?(data.courses||[]):(data.events||[])};
@@ -156,8 +156,8 @@
     openModal('Preview '+(expectedKind==='courses'?'courses':'timetable')+' restore',file.name+' · '+source.items.length+' record'+(source.items.length===1?'':'s'),'<p>Eduvia will merge these records with the existing '+(expectedKind==='courses'?'courses':'timetable')+'. Matching records will be skipped. Nothing already saved will be deleted or overwritten.</p><p>A full safety copy of the current device data will be downloaded before importing.</p>','Merge backup',async()=>{
       try{await safetyPortableZip();let added=0,duplicates=0,unlinked=0;
         if(expectedKind==='courses'){
-          const byId=new Map((data.courses||[]).map(c=>[String(c.id),c])),byKey=new Map((data.courses||[]).map(c=>[courseMatchKey(c),c]).filter(([key])=>key));
-          for(const course of source.items){const match=byId.get(String(course.id))||byKey.get(courseMatchKey(course));if(match){duplicates++;continue}const copy={...course,id:String(course.id)};data.courses.push(copy);byId.set(String(copy.id),copy);const key=courseMatchKey(copy);if(key)byKey.set(key,copy);added++}
+          const byId=new Map((data.courses||[]).map(c=>[String(c.id),c])),byKey=new Map();for(const c of data.courses||[])for(const key of courseMatchKeys(c))if(!byKey.has(key))byKey.set(key,c);
+          for(const course of source.items){const match=byId.get(String(course.id))||courseMatchKeys(course).map(key=>byKey.get(key)).find(Boolean);if(match){duplicates++;continue}const copy={...course,id:String(course.id)};data.courses.push(copy);byId.set(String(copy.id),copy);for(const key of courseMatchKeys(copy))if(!byKey.has(key))byKey.set(key,copy);added++}
         }else{
           const refs=new Map((Array.isArray(source.courseReferences)?source.courseReferences:[]).map(c=>[String(c.id),c])),courses=data.courses||[];
           const resolveCourse=oldId=>{if(!oldId)return '';const exact=courses.find(c=>String(c.id)===String(oldId));if(exact)return exact.id;const ref=refs.get(String(oldId)),key=courseMatchKey(ref);return courses.find(c=>key&&courseMatchKey(c)===key)?.id||''};

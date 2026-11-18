@@ -1,2 +1,2 @@
-// Set this to the free Cloudflare Worker URL after the notification service is deployed.
-window.EDUVIA_PUSH_API_URL = '';
+// Cloudflare Worker endpoint for direct Eduvia phone notifications.
+window.EDUVIA_PUSH_API_URL = 'https://eduvia-notifications.abdulwaheedmuhammed3-996.workers.dev';

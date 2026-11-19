@@ -67,10 +67,10 @@
     window.eduFeatureNavWrapped=true;
     window.syncNav=function(){
       originalSyncNav();
-      const destinations={planner:'timetable',flashcards:'courses',mastery:'courses',practice:'courses',tutorials:'courses',progress:'habit',records:'habit'};
-      const destination=destinations[currentPage];
-      if(destination)document.querySelectorAll('[data-page="'+destination+'"]').forEach(el=>el.classList.add('active'));
-      const labels={planner:'Assignments & deadlines',flashcards:'Flashcards',mastery:'Course mastery',practice:'Practice & tests',tutorials:'Tutorials & notes',progress:'Study progress',records:'Session records'};
+      const destinations={planner:'timetable',flashcards:'courses',mastery:'courses',practice:'courses',tutorials:'courses',progress:'habit',records:'habit',education:'more',vault:'more',profile:'more',study:'more',settings:'more',setup:'more'};
+      const destination=destinations[currentPage]||currentPage;
+      document.querySelectorAll('.mobile-nav-item[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page===destination));
+      const labels={planner:'Assignments & deadlines',flashcards:'Flashcards',mastery:'Course mastery',practice:'Practice & tests',tutorials:'Tutorials & notes',progress:'Study progress',records:'Session records',education:'Academic history',vault:'Student documents'};
       if(labels[currentPage])document.getElementById('crumbCurrent').textContent=labels[currentPage];
     };
   }

@@ -36,13 +36,13 @@ data.personalDocuments = data.personalDocuments || [];
 
 function syncNav(){
   document.querySelectorAll('[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page===currentPage||(el.dataset.page==='more'&&['settings','study','practice','education','vault'].includes(currentPage))));
-  const labels={today:'Today',courses:'My courses',timetable:'Timetable',habit:'Study habit',tutorials:'Tutorials & notes',study:'Study studio',practice:'Practice',setup:'Set up your planner',progress:'My progress',education:'Education history',vault:'Document vault',settings:'Settings',more:'More'};
+  const labels={today:'Today',courses:'My courses','course-detail':'Course workspace',timetable:'Timetable',habit:'Study habit',tutorials:'Tutorials & notes',study:'Study studio',practice:'Practice',setup:'Set up your planner',progress:'My progress',education:'Education history',vault:'Document vault',settings:'Settings',more:'More'};
   document.getElementById('crumbCurrent').textContent=labels[currentPage]||'Today';
 }
 function render(){
   if(!data.profile.setupComplete&&currentPage!=='setup')currentPage='setup';
   syncNav();updateSidebarGoal();
-  const pages={today:renderToday,courses:renderCourses,timetable:renderTimetable,habit:renderHabit,tutorials:renderTutorials,study:renderStudyStudio,practice:renderPractice,setup:renderSetup,progress:renderProgress,education:renderEducation,vault:renderVault,settings:renderSettings,more:renderMore};
+  const pages={today:renderToday,courses:renderCourses,'course-detail':renderCourseDetail,timetable:renderTimetable,habit:renderHabit,tutorials:renderTutorials,study:renderStudyStudio,practice:renderPractice,setup:renderSetup,progress:renderProgress,education:renderEducation,vault:renderVault,settings:renderSettings,more:renderMore};
   Object.assign(pages,window.eduPageRenderers||{});
   document.getElementById('pageContent').innerHTML=(pages[currentPage]||renderToday)();scheduleTodayRefresh();
   for(const event of data.events||[])event.createdAt=event.createdAt||todayISO();

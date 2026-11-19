@@ -43,7 +43,7 @@ function syncNav(){
 }
 function render(){
   if(!data.profile.setupComplete&&currentPage!=='setup')currentPage='setup';
-  syncNav();updateSidebarGoal();
+  syncNav();updateSidebarGoal();updateProfileAvatar();
   const pages={today:renderToday,courses:renderCourses,'course-detail':renderCourseDetail,timetable:renderTimetable,habit:renderHabit,tutorials:renderTutorials,study:renderStudyStudio,practice:renderPractice,setup:renderSetup,progress:renderProgress,education:renderEducation,vault:renderVault,settings:renderSettings,profile:renderProfile,more:renderMore};
   Object.assign(pages,window.eduPageRenderers||{});
   document.getElementById('pageContent').innerHTML=(pages[currentPage]||renderToday)();scheduleTodayRefresh();

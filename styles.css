@@ -361,3 +361,13 @@ button{ -webkit-tap-highlight-color:transparent}
 /* Remove link underlines from course shortcuts on the Today dashboard. */
 .course-list .course-mini{text-decoration:none!important}
 .course-list .course-mini *{text-decoration:none!important}
+
+
+/* My Courses: keep the course-card link clickable without underlining its text. */
+.course-grid .course-open-button,
+.course-grid .course-open-button *,
+.course-grid .course-open-button:visited,
+.course-grid .course-open-button:hover,
+.course-grid .course-open-button:active {
+  text-decoration: none !important;
+}

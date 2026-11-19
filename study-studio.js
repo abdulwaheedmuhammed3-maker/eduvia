@@ -541,7 +541,7 @@ function renderProfile(){
       info('▦','Semester',profile.semester,'purple')+
     '</div>'+
   '</section>';
-  const editForm='<details class="profile-edit-details panel"><summary><span>Edit student details</span><small>Update your photo and academic information</small></summary>'+
+  const editForm='<details class="profile-edit-details"><summary><span>Edit student details</span><small>Update your photo and academic information</small></summary>'+
     '<form id="studentProfileForm" class="profile-edit-panel">'+
       profilePhotoSettingsMarkup()+
       '<div class="form-grid">'+
@@ -567,9 +567,7 @@ function renderProfile(){
         field('Email address (optional)','email','<input id="f-email" name="email" type="email" maxlength="120" autocomplete="email" value="'+safe(profile.email||'')+'" placeholder="you@example.com">')+
       '</div><div class="profile-form-actions"><button class="primary-btn" type="submit">Save student details</button></div>'+
     '</form></details>';
-  return card+
-    '<div class="student-profile-actions"><button class="secondary-btn" data-page="settings">Study preferences</button><span>Your profile details are saved in your Eduvia planner on this device.</span></div>'+
-    editForm;
+  return card.slice(0,-'</section>'.length)+editForm+'</section>';
 }
 function renderEducation(){
   const profile=data.profile,history=[...(data.academicHistory||[])].sort((a,b)=>(b.archivedAt||0)-(a.archivedAt||0));

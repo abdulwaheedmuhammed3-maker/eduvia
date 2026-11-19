@@ -760,3 +760,64 @@ html[data-theme="dark"] .student-id-card .profile-edit-details{border-color:var(
   .student-id-card .profile-edit-details>summary{padding:11px 1px 1px}
   .student-id-card .profile-edit-details .profile-edit-panel{padding:12px 0 1px}
 }
+
+
+/* Main-tab sections relocated from More: compact, expandable, and visually consistent. */
+.integrated-tab-section{
+  margin:12px 0;
+  padding:0;
+  overflow:hidden;
+  border-radius:16px;
+}
+.integrated-tab-section>summary{
+  list-style:none;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:15px 17px;
+  cursor:pointer;
+  min-height:66px;
+}
+.integrated-tab-section>summary::-webkit-details-marker{display:none}
+.integrated-tab-section>summary>span:first-child{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
+}
+.integrated-tab-section>summary strong{
+  color:var(--ink);
+  font:750 13px/1.35 Manrope;
+}
+.integrated-tab-section>summary small{
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.4;
+}
+.integrated-section-toggle{
+  width:29px;height:29px;flex:0 0 29px;
+  display:grid;place-items:center;
+  border-radius:9px;
+  background:var(--surface-soft,#f3f5f1);
+  color:var(--green);
+  font:700 18px Manrope;
+}
+.integrated-tab-section[open]>summary{
+  border-bottom:1px solid var(--line);
+}
+.integrated-tab-section[open] .integrated-section-toggle{font-size:0}
+.integrated-tab-section[open] .integrated-section-toggle:before{content:'−';font-size:19px}
+.integrated-section-content{padding:14px}
+.integrated-section-content>.panel:first-child{margin-top:0}
+.integrated-section-content>.panel:last-child{margin-bottom:0}
+.courses-integrated-tools{margin:24px 0 18px}
+.courses-integrated-tools>.section-title-row{margin-bottom:10px}
+.courses-integrated-tools>.integrated-tab-section{margin:9px 0}
+.profile-extra-sections{margin-top:16px}
+html[data-theme="dark"] .integrated-section-toggle{background:#27352c;color:#9ec9a8}
+@media(max-width:640px){
+  .integrated-tab-section>summary{padding:13px 14px;min-height:60px}
+  .integrated-section-content{padding:10px}
+  .courses-integrated-tools{margin-top:20px}
+}

@@ -562,8 +562,7 @@ function renderProfile(){
         field('Email address (optional)','email','<input id="f-email" name="email" type="email" maxlength="120" autocomplete="email" value="'+safe(profile.email||'')+'" placeholder="you@example.com">')+
       '</div><div class="profile-form-actions"><button class="primary-btn" type="submit">Save student details</button></div>'+
     '</form></details>';
-  return pageHead('YOUR EDUVIA PROFILE','Student profile','Your academic identity in one place.','')+
-    card+
+  return card+
     '<div class="student-profile-actions"><button class="secondary-btn" data-page="settings">Study preferences</button><span>Your profile details are saved in your Eduvia planner on this device.</span></div>'+
     editForm;
 }

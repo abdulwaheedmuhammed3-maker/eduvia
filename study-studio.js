@@ -12,7 +12,8 @@ const needsGreetingTrackingMigration=!!data.profile.setupComplete&&(!data.profil
 Object.assign(data.profile, {
   institution: data.profile.institution || '',
   email: data.profile.email || '',
-  department: data.profile.department || '',
+  department: data.profile.department || 'Computer Science',
+  degreeProgramme: data.profile.degreeProgramme || 'B.Sc. Computer Science',
   matricNumber: data.profile.matricNumber || '25/01DL097',
   faculty: data.profile.faculty || 'Faculty of Communication and Information Sciences',
   specialization: data.profile.specialization || 'No Specialization',

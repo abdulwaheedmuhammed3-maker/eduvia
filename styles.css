@@ -460,7 +460,7 @@ html[data-theme="dark"] .profile-stage,html[data-theme="dark"] .profile-course-c
 .profile-edit-details>summary::-webkit-details-marker{display:none}
 .profile-edit-details>summary:after{content:'＋';font-size:19px;color:var(--green)}
 .profile-edit-details[open]>summary:after{content:'−'}
-.profile-edit-details>summary small{font:500 11px/1.4 inherit;color:var(--muted);margin-left:auto;text-align:right}
+.profile-edit-details>summary small{font-size:11px;line-height:1.4;font-weight:500;color:var(--muted);margin-left:auto;text-align:right}
 .profile-edit-details .profile-edit-panel{padding:0 19px 20px;border:0;box-shadow:none;margin:0}
 .profile-edit-details .profile-edit-panel .panel-head{margin:0 0 15px}
 .profile-edit-details .student-id-photo-preview{max-width:72px}

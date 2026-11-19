@@ -565,3 +565,42 @@ html[data-theme="dark"] .student-id-divider{background:var(--line)}
   .student-id-photo{position:absolute;inset:0;width:100%;height:100%;min-height:0;max-height:none;aspect-ratio:auto}
   .student-id-photo img{width:100%;height:100%;min-height:0;object-fit:cover;object-position:center center}
 }
+
+
+/* Correct portrait sizing: fixed ID-photo proportions, not stretched to card height. */
+.student-id-photo-col{
+  position:static;
+  align-self:stretch;
+  height:auto;
+  min-height:0;
+}
+.student-id-photo{
+  position:static;
+  inset:auto;
+  width:100%;
+  height:auto;
+  min-height:0;
+  max-height:none;
+  aspect-ratio:3/4;
+  flex:0 0 auto;
+  overflow:hidden;
+}
+.student-id-photo img{
+  width:100%;
+  height:100%;
+  min-height:0;
+  object-fit:cover;
+  object-position:center;
+}
+@media(max-width:760px){
+  .student-id-photo-col{position:static;align-self:start;height:auto;min-height:0}
+  .student-id-photo{
+    position:static;
+    width:100%;
+    height:auto;
+    min-height:0;
+    max-height:none;
+    aspect-ratio:3/4;
+  }
+  .student-id-photo img{height:100%;min-height:0;object-fit:cover}
+}

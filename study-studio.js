@@ -483,7 +483,7 @@ function educationRecordSummary(record){
 function upsertEducationSummary(summary){data.academicHistory=Array.isArray(data.academicHistory)?data.academicHistory:[];const index=data.academicHistory.findIndex(item=>item.id===summary.id);if(index<0)data.academicHistory.unshift(summary);else data.academicHistory[index]=summary}
 
 function academicYearKey(value=''){
-  const match=String(value||'').match(/((?:19|20)\\d{2})\\s*[\\/–-]\\s*((?:(?:19|20)\\d{2})|\\d{2})/);
+  const match=String(value||'').match(/((?:19|20)\d{2})\s*[\/–-]\s*((?:(?:19|20)\d{2})|\d{2})/);
   if(!match)return '';
   const start=Number(match[1]),rawEnd=match[2];
   const end=rawEnd.length===2?Math.floor(start/100)*100+Number(rawEnd):Number(rawEnd);
@@ -664,9 +664,10 @@ function archiveCurrentTerm(){
   const stageOptions=stages.map(([value,label])=>'<option value="'+value+'" '+(profile.stage===value?'selected':'')+'>'+label+'</option>').join('');
   const body=field('Archive label','archiveLabel','<input id="f-archiveLabel" name="archiveLabel" required maxlength="120" value="'+safe(defaultLabel)+'">')+
     '<div class="form-grid">'+field('Next level or year','nextLevel','<input id="f-nextLevel" name="nextLevel" maxlength="40" value="'+safe(profile.level||'')+'" placeholder="e.g. 400 level, MSc, PhD">')+
-    field('Next term, semester, or session','nextTerm','<input id="f-nextTerm" name="nextTerm" maxlength="60" placeholder="e.g. Semester 1, 2027/28">')+'</div>'+
-    field('Next education stage','nextStage','<select id="f-nextStage" name="nextStage">'+stageOptions+'</select>')+
-    '<p class="preview-note">Your current courses, timetable, notes, results, and progress will be saved before the active planner moves to the next term.</p>'+academicResultFields([],data.courses)+field('Overall result note (optional)','resultsNotes','<textarea id="f-resultsNotes" name="resultsNotes" maxlength="1000" placeholder="Honours, teacher comments, or other details"></textarea>',true);
+    field('Next academic year/session','nextAcademicSession','<input id="f-nextAcademicSession" name="nextAcademicSession" maxlength="24" value="'+safe(profile.academicSession||'')+'" placeholder="e.g. 2027/2028">')+'</div>'+
+    '<div class="form-grid">'+field('Next term or semester','nextTerm','<input id="f-nextTerm" name="nextTerm" maxlength="60" placeholder="e.g. Semester 2">')+
+    field('Next education stage','nextStage','<select id="f-nextStage" name="nextStage">'+stageOptions+'</select>')+'</div>'+
+    '<p class="preview-note">Your current courses, timetable, notes, results, and progress will be saved. Courses marked as carryover will remain pending throughout this academic year, including the second semester. They can only be activated when you begin a different academic year.</p>'+academicResultFields([],data.courses)+field('Overall result note (optional)','resultsNotes','<textarea id="f-resultsNotes" name="resultsNotes" maxlength="1000" placeholder="Honours, teacher comments, or other details"></textarea>',true);
   openModal('Finish and archive this term','Save this period before moving up a level or starting a new semester.',body,'Archive and start next term',async fd=>{
     const courses=JSON.parse(JSON.stringify(data.courses||[])),events=JSON.parse(JSON.stringify(data.events||[])),completed=JSON.parse(JSON.stringify(data.completed||[])),resources=JSON.parse(JSON.stringify(data.resources||[])),materials=JSON.parse(JSON.stringify(data.materials||[]));
     const archiveId=id(),label=String(fd.get('archiveLabel')||defaultLabel).trim(),studyItems=completed.filter(item=>item.type==='study'||(!item.type&&String(item.eventId||'').startsWith('focus-')));
@@ -678,7 +679,7 @@ function archiveCurrentTerm(){
     try{await putStudioRecord('academicRecords',archive)}catch(error){toast('Could not save this term to local storage: '+(error.message||'storage is unavailable'));return}
     syncPendingCarryovers(archive);
     data.academicHistory.unshift(summary);data.courses=[];data.events=[];data.completed=[];data.resources=[];data.studyPlan=null;
-    data.profile.stage=String(fd.get('nextStage')||data.profile.stage||'');data.profile.level=String(fd.get('nextLevel')||'').trim();data.profile.term=String(fd.get('nextTerm')||'').trim();data.profile.setupAt=todayISO();
+    data.profile.stage=String(fd.get('nextStage')||data.profile.stage||'');data.profile.level=String(fd.get('nextLevel')||'').trim();data.profile.academicSession=String(fd.get('nextAcademicSession')||data.profile.academicSession||'').trim();data.profile.term=String(fd.get('nextTerm')||'').trim();data.profile.setupAt=todayISO();
     closeModal();save();toast('Term archived. Your next study period is ready.');
   });
 }

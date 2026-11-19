@@ -29,6 +29,12 @@ In the browser and installed PWA, Eduvia can send class and study alerts about f
 The browser notification service stores a device subscription and scheduled reminder titles and times so it can deliver alerts while the PWA is closed. In the Android app, alarms are scheduled locally on the phone instead; Android asks for notification access and exact-alarm access, and Eduvia asks for camera access only when the learner taps **Take a photo**. Courses, results, uploaded materials, and personal documents remain on the device.
 
 To deploy the free service, follow `notifications-worker/README.md`, then set its Worker URL in `push-config.js`.
+## First launch and welcome screens
+
+New installations open with the Eduvia brand splash, a short introduction to learning, practice, and progress, and a country picker. The introduction is shown once per device; the country choice is saved into the existing study profile and prefilled in the planner setup screen. The country screen asks only for a country — it does not ask for ethnicity or a nickname.
+
+The same HTML/CSS/JavaScript entry flow is included in the website and the Capacitor Android build. Existing planner data, local privacy, and study tools are unchanged.
+
 ## Android APK
 
 GitHub Actions builds an installable Android beta APK from the main branch and publishes it on the Eduvia Android beta release page. It is debug-signed for direct installation and is not a Google Play release. On the first run, open **Settings → Eduvia phone notifications** and allow notification and exact-alarm access. To take a document photo, use a **Take a photo** button in the study studio or document cabinet.

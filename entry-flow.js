@@ -1,6 +1,6 @@
 /* Eduvia first-launch intro. Runs after the existing planner scripts are ready. */
 (() => {
-  const INTRO_KEY = 'eduvia-intro-complete-v1';
+  const INTRO_KEY = 'eduvia-intro-complete-v2';
   const COUNTRY_KEY = 'eduvia-selected-country-v1';
   const root = document.getElementById('entryFlow');
   if (!root) return;

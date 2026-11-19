@@ -730,3 +730,33 @@ html[data-theme="dark"] .student-id-divider{background:var(--line)}
 }
 html[data-theme="dark"] .student-id-header{border-color:var(--line)}
 html[data-theme="dark"] .student-id-secondary-grid{border-color:var(--line)}
+
+
+/* Keep editing controls inside the single student ID card section. */
+.student-id-card .profile-edit-details{
+  display:block;
+  margin:0;
+  padding:0;
+  border:0;
+  border-top:1px solid var(--line);
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+.student-id-card .profile-edit-details>summary{
+  padding:12px 2px 2px;
+  min-height:38px;
+  color:var(--muted);
+}
+.student-id-card .profile-edit-details>summary:after{margin-left:8px}
+.student-id-card .profile-edit-details>summary small{font-size:10px}
+.student-id-card .profile-edit-details .profile-edit-panel{
+  padding:14px 0 2px;
+  margin:0;
+  background:transparent;
+}
+html[data-theme="dark"] .student-id-card .profile-edit-details{border-color:var(--line)}
+@media(max-width:760px){
+  .student-id-card .profile-edit-details>summary{padding:11px 1px 1px}
+  .student-id-card .profile-edit-details .profile-edit-panel{padding:12px 0 1px}
+}

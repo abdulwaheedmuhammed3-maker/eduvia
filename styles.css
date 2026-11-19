@@ -843,3 +843,86 @@ html[data-theme="dark"] .integrated-section-toggle{background:#27352c;color:#9ec
 .disclosure-body{padding:0 16px 16px}
 .action-disclosure[open]>summary{border-bottom:1px solid var(--line)}
 @media(max-width:600px){.action-disclosure>summary{padding:14px}.disclosure-cta{padding:9px 11px}}
+
+
+/* Examination calendar, countdown, revision checklist and timed mock papers */
+.exam-intro{margin:0 0 14px;color:var(--muted);font-size:12px;line-height:1.6}
+.exam-list{display:flex;flex-direction:column;gap:10px}
+.exam-list-card{display:flex;align-items:stretch;gap:13px;border:1px solid var(--line);border-radius:14px;padding:13px;background:var(--surface,#fff)}
+.exam-date-block{width:64px;min-width:64px;min-height:64px;border-radius:12px;background:var(--surface-soft,#f3f5f1);display:flex;flex-direction:column;justify-content:center;align-items:center;color:var(--green)}
+.exam-date-block strong{font:800 23px/1 Manrope}
+.exam-date-block small{font-size:8px;font-weight:800;letter-spacing:.7px;margin-top:6px;text-align:center}
+.exam-list-main{min-width:0;flex:1;display:flex;flex-direction:column;gap:5px}
+.exam-list-main>strong{font:750 13px/1.35 Manrope;color:var(--ink)}
+.exam-list-main>span,.exam-list-main>small{font-size:10px;line-height:1.45;color:var(--muted);overflow-wrap:anywhere}
+.exam-list-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:5px}
+.exam-list-actions .text-btn{font-size:10px}
+.exam-empty{padding:20px;text-align:center;border:1px dashed var(--line);border-radius:13px;color:var(--muted);font-size:12px}
+.exam-past-list{margin-top:13px;padding:12px;border:1px solid var(--line);border-radius:12px}
+.exam-past-list summary{cursor:pointer;font-size:11px;font-weight:700}
+.exam-plan-summary{padding:14px;margin-top:12px;border:1px solid var(--line);border-radius:14px}
+.revision-task-list{display:flex;flex-direction:column;gap:8px}
+.revision-task{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.revision-task:first-child{border-top:0}
+.revision-task>div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.revision-task strong{font:650 11px/1.4 Manrope;color:var(--ink)}
+.revision-task small{font-size:9px;color:var(--muted)}
+.revision-task.completed strong{text-decoration:line-through;color:var(--muted)}
+.revision-check{width:23px;height:23px;flex:0 0 23px;border:1px solid var(--line);border-radius:7px;background:transparent;color:var(--green);font-weight:800;cursor:pointer}
+.revision-task.completed .revision-check{background:var(--mint);border-color:var(--mint)}
+.exam-home-widget{margin:0 0 16px;padding:17px}
+.exam-home-head{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.exam-home-head h3{margin:4px 0;font:800 16px/1.3 Manrope;color:var(--ink)}
+.exam-home-head p{margin:0;color:var(--muted);font-size:10px}
+.exam-countdown-number{min-width:68px;height:68px;border-radius:15px;background:var(--surface-soft,#f2f5f0);color:var(--green);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.exam-countdown-number strong{font:800 26px/1 Manrope}
+.exam-countdown-number small{font-size:8px;font-weight:800;margin-top:5px}
+.exam-home-note{font-size:11px;color:var(--muted);margin:13px 0}
+.exam-home-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px}
+.exam-home-tasks{margin-top:15px;padding-top:12px;border-top:1px solid var(--line)}
+.exam-home-tasks .panel-head{margin-bottom:6px}
+.exam-home-tasks h4{font:750 12px Manrope;margin:0}
+.exam-home-tasks p{font-size:10px;color:var(--muted);margin:4px 0 0}
+.mock-exam-hub{display:flex;flex-direction:column;gap:13px}
+.active-mock-banner{padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface-soft,#f3f5f1)}
+.active-mock-banner strong{font:750 13px Manrope}
+.active-mock-banner p{margin:5px 0 12px;color:var(--muted);font-size:11px}
+.mock-timer-panel{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:17px;margin-bottom:14px}
+.mock-timer-panel>div{display:flex;flex-direction:column;gap:5px}
+.mock-timer-panel span{font-size:10px;color:var(--muted)}
+.mock-timer-panel strong{font:850 28px/1 Manrope;color:var(--green);font-variant-numeric:tabular-nums}
+.mock-exam-questions,.mock-result-list{display:flex;flex-direction:column;gap:12px}
+.mock-question,.mock-result-question{padding:15px;border:1px solid var(--line);border-radius:15px;background:var(--surface,#fff)}
+.mock-question-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.mock-question-head span{font-size:9px;font-weight:800;letter-spacing:.8px;color:var(--green)}
+.mock-question-head small{font-size:9px;color:var(--muted);text-align:right}
+.mock-question>strong,.mock-result-question>strong{display:block;font:700 13px/1.6 Manrope;color:var(--ink);margin-bottom:12px}
+.mock-question .form-field span,.mock-result-question .form-field{font-size:10px;color:var(--muted)}
+.mock-question textarea{width:100%;min-height:100px;margin-top:6px}
+.mock-answer-block{padding:11px;border-radius:10px;background:var(--surface-soft,#f3f5f1);margin:10px 0}
+.mock-answer-block span{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:800}
+.mock-answer-block p{font-size:11px;line-height:1.6;margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.mock-result-question details{margin:10px 0}
+.mock-result-question details summary{font-size:10px;font-weight:750;cursor:pointer;color:var(--green)}
+.mock-result-question details p{font-size:11px;line-height:1.6;color:var(--muted);white-space:pre-wrap}
+.mock-result-question select{width:100%;margin-top:6px}
+.mock-finish-row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:15px}
+.mock-finish-row>span{font-size:10px;color:var(--muted)}
+html[data-theme="dark"] .exam-date-block,html[data-theme="dark"] .exam-countdown-number{background:#26362c;color:#b8d9c0}
+html[data-theme="dark"] .revision-check{border-color:var(--line);color:#b8d9c0}
+html[data-theme="dark"] .active-mock-banner,html[data-theme="dark"] .mock-answer-block{background:#202b24}
+@media(max-width:600px){
+ .exam-list-card{gap:9px;padding:10px}
+ .exam-date-block{width:54px;min-width:54px;min-height:60px}
+ .exam-date-block strong{font-size:21px}
+ .exam-list-main>strong{font-size:11px}
+ .exam-home-widget{padding:14px}
+ .exam-home-head h3{font-size:14px}
+ .exam-countdown-number{min-width:60px;height:60px}
+ .exam-countdown-number strong{font-size:23px}
+ .exam-home-actions>*{flex:1}
+ .mock-question,.mock-result-question{padding:12px}
+ .mock-timer-panel strong{font-size:25px}
+ .mock-finish-row{align-items:flex-start;flex-direction:column}
+ .mock-finish-row .primary-btn{width:100%}
+}

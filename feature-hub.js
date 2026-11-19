@@ -89,6 +89,71 @@ function examFormMarkup(){const exam=data.exams.find(item=>item.id===editingExam
 function renderExamTimetable(){const exams=data.exams.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));const upcoming=exams.filter(exam=>examDaysLeft(exam)>=0);const rows=upcoming.map(exam=>{const left=examDaysLeft(exam),course=data.courses.find(item=>String(item.id)===String(exam.courseId));return '<article class="exam-list-card"><div class="exam-date-block"><strong>'+left+'</strong><small>'+(left===0?'TODAY':left===1?'DAY LEFT':'DAYS LEFT')+'</small></div><div class="exam-list-main"><strong>'+esc(exam.title)+'</strong><span>'+esc(course?.code||course?.name||'General examination')+' · '+esc(formatDate(parseISO(exam.date),{month:'short',day:'numeric',year:'numeric'}))+(exam.startTime?' · '+esc(timeLabel(exam.startTime)):'')+'</span><div class="exam-list-actions"><button class="icon-btn" data-exam-action="edit" data-id="'+esc(exam.id)+'">✎</button><button class="icon-btn" data-exam-action="delete" data-id="'+esc(exam.id)+'">×</button></div></div></article>'}).join('');return '<div class="exam-timetable-module"><p class="exam-intro">Add your examination dates and link each paper to a course.</p>'+examFormMarkup()+(rows?'<div class="section-title-row"><h3>Upcoming examinations</h3><span>'+upcoming.length+' scheduled</span></div><div class="exam-list">'+rows+'</div>':'<div class="exam-empty">No examinations scheduled yet.</div>')+'</div>'}
 function upcomingExam(){return data.exams.filter(exam=>examDaysLeft(exam)>=0).sort((a,b)=>String(a.date).localeCompare(String(b.date)))[0]||null}function examHomeWidget(){const exam=upcomingExam();if(!exam)return '';const left=examDaysLeft(exam),course=data.courses.find(item=>String(item.id)===String(exam.courseId));return '<section class="panel exam-home-widget"><div class="exam-home-head"><div><div class="eyebrow">EXAM COUNTDOWN</div><h3>'+esc(exam.title)+'</h3><p>'+esc(course?.name||'General examination')+' · '+esc(exam.date)+'</p></div><div class="exam-countdown-number"><strong>'+left+'</strong><small>'+(left===0?'TODAY':left===1?'DAY LEFT':'DAYS LEFT')+'</small></div></div><button class="secondary-btn" data-page="timetable">Open examination timetable →</button></section>'}
 document.addEventListener('submit',event=>{if(event.target.id!=='examForm')return;event.preventDefault();const fd=new FormData(event.target),title=String(fd.get('title')||'').trim(),date=String(fd.get('date')||'');if(!title||!date){toast('Add an examination title and date.');return}const record={id:editingExamId||uid(),title,courseId:String(fd.get('courseId')||''),date,startTime:String(fd.get('startTime')||''),topics:String(fd.get('topics')||'').trim(),createdAt:Date.now()};if(editingExamId){data.exams=data.exams.map(item=>item.id===editingExamId?record:item);editingExamId=''}else data.exams.push(record);save();toast('Examination saved to your timetable.')});document.addEventListener('click',event=>{const b=event.target.closest('[data-exam-action]');if(!b)return;const idValue=b.dataset.id;if(b.dataset.examAction==='delete'){if(!confirm('Remove this examination?'))return;data.exams=data.exams.filter(item=>item.id!==idValue);save();return}if(b.dataset.examAction==='edit'){editingExamId=idValue;render();document.getElementById('examEntryDetails')?.scrollIntoView({behavior:'smooth',block:'center'})}})
+
+data.revisionTasks=Array.isArray(data.revisionTasks)?data.revisionTasks:[];
+function topicsForExam(exam){
+ const course=data.courses.find(item=>String(item.id)===String(exam.courseId));
+ const typed=String(exam.topics||'').split('\n').map(item=>item.trim()).filter(Boolean);
+ const fromCourse=Array.isArray(course?.topics)?course.topics.map(item=>String(item).trim()).filter(Boolean):[];
+ return [...new Set(typed.concat(fromCourse))];
+}
+function renderRevisionTask(task){
+ return '<div class="revision-task '+(task.completed?'completed':'')+'"><button class="revision-check" data-exam-action="toggle-task" data-id="'+esc(task.id)+'">'+(task.completed?'✓':'')+'</button><div><strong>'+esc(task.title)+'</strong><small>'+esc(task.date)+' · '+esc(task.type)+'</small></div></div>';
+}
+function generateRevisionPlan(examId){
+ const exam=data.exams.find(item=>item.id===examId);if(!exam)return;
+ const left=examDaysLeft(exam);if(left<0){toast('This examination date has passed.');return}
+ const existing=data.revisionTasks.filter(task=>task.examId===examId);
+ if(existing.length&&!confirm('Replace the existing revision plan? Completed checklist items will be replaced.'))return;
+ const topics=topicsForExam(exam),examDate=parseISO(exam.date),studyDays=(data.profile.studyDays||[1,2,3,4,5,6]).map(Number);
+ const firstDate=addDays(examDate,-Math.min(14,Math.max(1,left)));
+ let dates=[];
+ for(let d=new Date(Math.max(parseISO(today()).getTime(),firstDate.getTime()));d<examDate;d=addDays(d,1)){if(studyDays.includes(d.getDay()))dates.push(d.toLocaleDateString('en-CA'))}
+ if(!dates.length)dates=[today()];
+ const work=topics.length?topics.map(topic=>({title:'Review '+topic,topic,type:'Topic review'})):[
+  {title:'Review uploaded course materials',topic:'Course materials',type:'Notes review'},
+  {title:'List key topics from your lecture notes',topic:'Lecture topics',type:'Active recall'}
+ ];
+ work.push({title:'Complete a practice set and review mistakes',topic:topics[0]||exam.title,type:'Practice'});
+ work.push({title:'Final active recall and light revision',topic:'Final review',type:'Final review'});
+ const tasks=work.map((item,index)=>({id:uid(),examId:exam.id,courseId:exam.courseId||'',date:dates[Math.min(dates.length-1,Math.floor(index*dates.length/work.length))],title:item.title,topic:item.topic,type:item.type,completed:false,createdAt:Date.now()}));
+ data.revisionTasks=data.revisionTasks.filter(task=>task.examId!==examId).concat(tasks);
+ save();toast(tasks.length+' revision tasks added to your plan.');
+}
+function renderRevisionPlans(){
+ const exams=data.exams.filter(exam=>examDaysLeft(exam)>=0&&data.revisionTasks.some(task=>task.examId===exam.id));
+ return exams.map(exam=>{
+  const tasks=data.revisionTasks.filter(task=>task.examId===exam.id).sort((a,b)=>a.date.localeCompare(b.date));
+  const done=tasks.filter(task=>task.completed).length;
+  return '<section class="exam-plan-summary"><div class="panel-head"><div><h4>'+esc(exam.title)+'</h4><p>'+done+' of '+tasks.length+' tasks completed</p></div><span class="upload-count">'+Math.round(done/Math.max(1,tasks.length)*100)+'%</span></div><div class="revision-task-list">'+tasks.slice(0,10).map(renderRevisionTask).join('')+(tasks.length>10?'<small>+'+(tasks.length-10)+' more</small>':'')+'</div></section>';
+ }).join('');
+}
+function renderExamTimetable(){
+ const exams=data.exams.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+ const upcoming=exams.filter(exam=>examDaysLeft(exam)>=0),past=exams.filter(exam=>examDaysLeft(exam)<0);
+ const rows=upcoming.map(exam=>{
+  const left=examDaysLeft(exam),course=data.courses.find(item=>String(item.id)===String(exam.courseId)),tasks=data.revisionTasks.filter(task=>task.examId===exam.id);
+  return '<article class="exam-list-card"><div class="exam-date-block"><strong>'+left+'</strong><small>'+(left===0?'TODAY':left===1?'DAY LEFT':'DAYS LEFT')+'</small></div><div class="exam-list-main"><strong>'+esc(exam.title)+'</strong><span>'+esc(course?.code||course?.name||'General examination')+' · '+esc(formatDate(parseISO(exam.date),{month:'short',day:'numeric',year:'numeric'}))+(exam.startTime?' · '+esc(timeLabel(exam.startTime)):'')+'</span><div class="exam-list-actions"><button class="text-btn" data-exam-action="build-plan" data-id="'+esc(exam.id)+'">'+(tasks.length?'Regenerate revision plan':'Build revision plan')+'</button><button class="icon-btn" data-exam-action="edit" data-id="'+esc(exam.id)+'">✎</button><button class="icon-btn" data-exam-action="delete" data-id="'+esc(exam.id)+'">×</button></div></div></article>';
+ }).join('');
+ return '<div class="exam-timetable-module"><p class="exam-intro">Add each examination date and connect the paper to its course. Eduvia uses your listed topics and available study days to organise revision.</p>'+examFormMarkup()+
+  (upcoming.length?'<div class="section-title-row"><h3>Upcoming examinations</h3><span>'+upcoming.length+' scheduled</span></div><div class="exam-list">'+rows+'</div>':'<div class="exam-empty">No examinations scheduled yet.</div>')+
+  (past.length?'<details class="exam-past-list"><summary>Past examinations ('+past.length+')</summary>'+past.map(exam=>'<p>'+esc(exam.date)+' · '+esc(exam.title)+'</p>').join('')+'</details>':'')+'</div>';
+}
+function examHomeWidget(){
+ const exam=upcomingExam();if(!exam)return '';
+ const left=examDaysLeft(exam),course=data.courses.find(item=>String(item.id)===String(exam.courseId));
+ const tasks=data.revisionTasks.filter(task=>task.examId===exam.id),todayTasks=tasks.filter(task=>task.date===today()),pending=todayTasks.filter(task=>!task.completed);
+ return '<section class="panel exam-home-widget"><div class="exam-home-head"><div><div class="eyebrow">EXAM COUNTDOWN</div><h3>'+esc(exam.title)+'</h3><p>'+esc(course?.name||'General examination')+' · '+esc(exam.date)+'</p></div><div class="exam-countdown-number"><strong>'+left+'</strong><small>'+(left===0?'TODAY':left===1?'DAY LEFT':'DAYS LEFT')+'</small></div></div>'+
+  (tasks.length?'<div class="exam-home-tasks"><div class="panel-head"><div><h4>Today’s revision</h4><p>'+pending.length+' tasks remaining</p></div></div>'+todayTasks.map(renderRevisionTask).join('')+'</div>':'<p class="exam-home-note">Build a revision plan for this paper from the Schedule tab.</p>')+
+  '<div class="exam-home-actions">'+(tasks.length?'':'<button class="primary-btn" data-exam-action="build-plan" data-id="'+esc(exam.id)+'">Build revision plan</button>')+'<button class="secondary-btn" data-page="timetable">Open examination timetable →</button></div></section>';
+}
+document.addEventListener('click',event=>{
+ const b=event.target.closest('[data-exam-action]');if(!b)return;
+ const action=b.dataset.examAction,idValue=b.dataset.id;
+ if(action==='build-plan'){generateRevisionPlan(idValue);return}
+ if(action==='toggle-task'){const task=data.revisionTasks.find(item=>item.id===idValue);if(task)task.completed=!task.completed;save()}
+});
+
   const originalCourses=window.renderCourses;
   if(typeof originalCourses==='function'&&!window.eduCoursesFeatureWrapped){
     window.eduCoursesFeatureWrapped=true;
@@ -106,7 +171,7 @@ document.addEventListener('submit',event=>{if(event.target.id!=='examForm')retur
   const originalTimetable=window.renderTimetable;
   if(typeof originalTimetable==='function'&&!window.eduScheduleToolsWrapped){
     window.eduScheduleToolsWrapped=true;
-    window.renderTimetable=function(){return originalTimetable()+integratedSection('Examination timetable','Exam dates and countdowns',renderExamTimetable())+integratedSection('Assignments, tests and deadlines','Plan coursework alongside your classes',renderPlanner())};
+    window.renderTimetable=function(){return originalTimetable()+integratedSection('Examination timetable','Exam dates, revision plans and countdowns',renderExamTimetable()+renderRevisionPlans())+integratedSection('Assignments, tests and deadlines','Plan coursework alongside your classes',renderPlanner())};
   }
   const originalToday=window.renderToday;
   if(typeof originalToday==='function'&&!window.eduExamTodayWrapped){

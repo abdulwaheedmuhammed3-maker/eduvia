@@ -288,3 +288,59 @@
     transition-duration: .01ms !important;
   }
 }
+
+/* Eduvia light welcome palette: white first, restrained violet and blue accents. */
+.entry-flow {
+  color: #20283a;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(103, 128, 221, .10), transparent 48%),
+    radial-gradient(ellipse at 100% 100%, rgba(112, 96, 190, .08), transparent 44%),
+    #f8faff;
+}
+.entry-flow::before,
+.entry-flow::after { border-color: rgba(91, 111, 190, .10); }
+.entry-flow-card {
+  color: #20283a;
+  border: 1px solid #e5e9f3;
+  background: linear-gradient(155deg, #ffffff, #fbfcff 72%, #f7f8ff);
+  box-shadow: 0 24px 75px rgba(39, 52, 90, .10), inset 0 1px rgba(255,255,255,.9);
+}
+.entry-flow-brand { color: #20283a; }
+.entry-flow-skip,
+.entry-flow-back { color: #69738b; }
+.entry-flow-skip:hover,
+.entry-flow-back:hover { color: #4f56a8; }
+.entry-flow-progress i { background: #e8eaf2; }
+.entry-flow-progress i.is-active { background: linear-gradient(90deg, #637bd0, #8b78d5); }
+.entry-flow-art {
+  border-color: #e8eaf5;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(112, 120, 205, .10), transparent 62%),
+    #f7f8fd;
+}
+.entry-flow-kicker { color: #6675bd; }
+.entry-flow-title { color: #20283a; }
+.entry-flow-copy { color: #657086; }
+.entry-flow-dots i { background: #dfe3ee; }
+.entry-flow-dots i.is-active { background: #7180ce; }
+.entry-flow-primary {
+  background: linear-gradient(105deg, #637bd0, #806ac7);
+  color: #fff;
+  box-shadow: 0 9px 22px rgba(92, 111, 194, .18);
+}
+.entry-flow-primary:hover { filter: brightness(1.04); }
+.entry-flow-primary:focus-visible,
+.entry-flow-skip:focus-visible,
+.entry-flow-back:focus-visible,
+.entry-flow-country:focus-visible { outline-color: #8796dc; }
+.entry-flow-privacy { color: #8790a3; }
+.entry-flow-country-label { color: #35405a; }
+.entry-flow-country {
+  border-color: #d9deeb;
+  background: #fff;
+  color: #20283a;
+  color-scheme: light;
+}
+.entry-flow-country option { color: #20283a; background: #fff; }
+.entry-flow-country-hint { color: #7c879a; }
+.entry-flow-error { color: #b54758; }

@@ -516,25 +516,29 @@ function renderProfile(){
   const avatar=profile.avatarData?'<img src="'+safe(profile.avatarData)+'" alt="Student photograph">':'<span>'+safe(Array.from(String(profile.name||'Student').trim())[0]?.toUpperCase()||'S')+'</span>';
   const displayLevel=profile.level?(/^\\d+$/.test(String(profile.level).trim())?String(profile.level).trim()+' Level':profile.level):'Not provided';
   const info=(symbol,label,value,colour='blue')=>'<div class="student-id-field"><span class="student-id-icon '+colour+'">'+symbol+'</span><div class="student-id-copy"><span>'+label+'</span><strong>'+safe(value||'Not provided')+'</strong></div></div>';
+  const institution=profile.institution||'Eduvia';
   const card='<section class="panel student-id-card">'+
-    '<div class="student-id-photo-col"><div class="student-id-photo">'+avatar+'</div></div>'+
-    '<div class="student-id-details">'+
-      '<div class="student-id-main-grid">'+
+    '<header class="student-id-header"><div><strong>'+safe(institution)+'</strong><span>STUDENT IDENTITY CARD</span></div><span class="student-id-mark">ID</span></header>'+
+    '<div class="student-id-top">'+
+      '<div class="student-id-photo-col"><div class="student-id-photo">'+avatar+'</div></div>'+
+      '<div class="student-id-primary-grid">'+
         info('✎','Full Name',profile.name||'Student','navy')+
         info('▣','Matriculation Number',profile.matricNumber,'gold')+
-        info('▦','Faculty',profile.faculty,'green')+
         info('▦','Department',profile.department||profile.programme,'purple')+
         info('▤','Programme',profile.degreeProgramme||profile.programme,'blue')+
-        info('⌕','Specialization',profile.specialization,'rust')+
-        info('♙','Mode',profile.studyMode,'gold')+
-        info('●','Status',profile.studentStatus,'grey')+
       '</div>'+
-      '<div class="student-id-divider"></div>'+
-      '<div class="student-id-bottom-grid">'+
-        info('↗','Level',displayLevel,'navy')+
-        info('▣','Session',profile.academicSession||profile.term,'blue')+
-        info('▦','Semester',profile.semester,'purple')+
-      '</div>'+
+    '</div>'+
+    '<div class="student-id-secondary-grid">'+
+      info('▦','Faculty',profile.faculty,'green')+
+      info('⌕','Specialization',profile.specialization||'No Specialization','rust')+
+      info('♙','Mode',profile.studyMode||'No Mode of Study','gold')+
+      info('●','Status',profile.studentStatus||'Active','grey')+
+    '</div>'+
+    '<div class="student-id-divider"></div>'+
+    '<div class="student-id-bottom-grid">'+
+      info('↗','Level',displayLevel,'navy')+
+      info('▣','Session',profile.academicSession||profile.term,'blue')+
+      info('▦','Semester',profile.semester,'purple')+
     '</div>'+
   '</section>';
   const editForm='<details class="profile-edit-details panel"><summary><span>Edit student details</span><small>Update your photo and academic information</small></summary>'+

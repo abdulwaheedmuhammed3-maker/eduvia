@@ -356,3 +356,8 @@ button{ -webkit-tap-highlight-color:transparent}
 .course-material-reader{max-height:58vh;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface-soft,#f7f8f5)}
 .course-material-reader pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-family:inherit;font-size:13px;line-height:1.65;color:var(--text)}
 @media(max-width:640px){.course-detail-section{padding:14px}.course-item-actions{width:100%;margin-top:8px}.course-item-actions .secondary-btn{flex:1}}
+
+
+/* Remove link underlines from course shortcuts on the Today dashboard. */
+.course-list .course-mini{text-decoration:none!important}
+.course-list .course-mini *{text-decoration:none!important}

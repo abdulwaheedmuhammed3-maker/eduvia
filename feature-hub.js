@@ -181,4 +181,6 @@
     const key=masteryKey(b.dataset.course,b.dataset.topic);data.topicMastery[key]=data.topicMastery[key]||{};data.topicMastery[key].score=n;if(n>=80)data.topicMastery[key].status='confident';else if(n>=50)data.topicMastery[key].status='learning';else data.topicMastery[key].status='not-started';save();
   });
   document.addEventListener('change',e=>{if(e.target.id==='documentSearch'){const q=e.target.value.toLowerCase();document.querySelectorAll('[data-doc-search]').forEach(el=>el.hidden=!el.dataset.docSearch.includes(q))}});
+  // Render once after every page renderer and feature-page override has been registered.
+  if(typeof window.render==='function')window.render();
 })();

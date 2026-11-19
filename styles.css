@@ -510,3 +510,26 @@ html[data-theme="dark"] .student-id-icon.blue{background:#263b50;color:#a8d1f0}
 html[data-theme="dark"] .student-id-icon.rust{background:#4a3028;color:#f2b59b}
 html[data-theme="dark"] .student-id-icon.grey{background:#303a3b;color:#c3cdcf}
 html[data-theme="dark"] .student-id-divider{background:var(--line)}
+
+
+/* Make the portrait occupy the full height of the student ID card. */
+.student-id-card{align-items:stretch}
+.student-id-photo-col{align-self:stretch;align-items:stretch;min-height:100%;height:100%}
+.student-id-photo{
+  align-self:stretch;flex:1 1 auto;
+  width:100%;height:100%;min-height:100%;max-height:none;
+  aspect-ratio:auto;overflow:hidden;
+}
+.student-id-photo img{
+  display:block;width:100%;height:100%;min-height:100%;
+  object-fit:cover;object-position:center center;
+}
+@media(max-width:760px){
+  .student-id-card{align-items:stretch}
+  .student-id-photo-col{align-self:stretch;align-items:stretch;height:100%;min-height:100%}
+  .student-id-photo{
+    flex:1 1 auto;width:100%;height:100%;min-height:100%;
+    max-height:none;aspect-ratio:auto;align-self:stretch;
+  }
+  .student-id-photo img{width:100%;height:100%;min-height:100%;object-fit:cover;object-position:center center}
+}

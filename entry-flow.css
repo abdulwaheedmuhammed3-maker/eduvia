@@ -344,3 +344,8 @@
 .entry-flow-country option { color: #20283a; background: #fff; }
 .entry-flow-country-hint { color: #7c879a; }
 .entry-flow-error { color: #b54758; }
+
+.entry-splash p { color: #68748e; }
+.entry-splash p span { color: #7583ce; }
+.entry-splash-loader { background: #e7eaf2; }
+.entry-splash-loader i { background: linear-gradient(90deg, #657fd0, #8a79cb); }

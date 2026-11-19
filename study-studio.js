@@ -452,7 +452,7 @@ function isYorubaOrSouthwest(){
 function daymarkGreeting(){
   if(studyStreak()>=30)return 'Scholar';
   const consistency=studyConsistency();
-  if(consistency.expected>=3&&consistency.ratio<0.5)return 'Lazy Youth';
+  if(consistency.expected>=3&&consistency.ratio<0.5)return 'Fresh Start';
   const names={masculine:['My Odogwu','Idan','Ace'],feminine:['Big Mama','Queen','My Star'],neutral:['Ace','My Star','Bright Mind']};
   const style=names[data.profile.greetingStyle]?data.profile.greetingStyle:'neutral';
   const rotating=[...names[style]];

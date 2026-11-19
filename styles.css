@@ -371,3 +371,36 @@ button{ -webkit-tap-highlight-color:transparent}
 .course-grid .course-open-button:active {
   text-decoration: none !important;
 }
+
+
+/* Student profile page */
+.profile-hero{display:flex;align-items:center;gap:18px;margin-bottom:14px;padding:22px}
+.profile-avatar-large{width:88px;height:88px;flex:0 0 88px;display:grid;place-items:center;overflow:hidden;border-radius:24px;background:var(--mint);color:var(--green);font:800 32px Manrope}
+.profile-avatar-large img{width:100%;height:100%;object-fit:cover}
+.profile-hero-copy{min-width:0;flex:1}
+.profile-hero-copy h2{font:800 23px Manrope;margin:4px 0}
+.profile-hero-copy p{font-size:12px;color:var(--muted);margin:0 0 8px;overflow-wrap:anywhere}
+.profile-stage{display:inline-flex;border-radius:999px;padding:5px 9px;background:var(--mint);color:var(--green);font-size:10px;font-weight:750}
+.profile-stats{margin:14px 0}
+.profile-edit-panel,.profile-preferences,.profile-courses{margin-bottom:14px}
+.profile-edit-panel .form-grid{margin-bottom:12px}
+.profile-edit-panel .form-field{min-width:0}
+.profile-edit-panel .form-field input,.profile-edit-panel .form-field select{width:100%;min-width:0}
+.profile-form-actions{display:flex;justify-content:flex-end;margin-top:18px}
+.profile-routine-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.profile-routine-grid>div{display:flex;flex-direction:column;gap:6px;padding:13px;border:1px solid var(--line);border-radius:13px;background:var(--surface-soft,#f8f8fc);min-width:0}
+.profile-routine-grid span{font-size:10px;color:var(--muted)}
+.profile-routine-grid strong{font-size:12px;overflow-wrap:anywhere}
+.profile-course-chips{display:flex;flex-wrap:wrap;gap:8px}
+.profile-course-chips span{display:inline-flex;padding:8px 11px;border-radius:999px;background:var(--mint);color:var(--green);font-size:11px;font-weight:750}
+.profile-empty{font-size:12px;color:var(--muted);margin:0}
+@media(max-width:640px){
+ .profile-hero{align-items:flex-start;flex-wrap:wrap;padding:17px;gap:13px}
+ .profile-avatar-large{width:68px;height:68px;flex-basis:68px;border-radius:19px}
+ .profile-hero-copy h2{font-size:19px}
+ .profile-hero>.secondary-btn{width:100%}
+ .profile-routine-grid{grid-template-columns:1fr 1fr}
+ .profile-form-actions .primary-btn{width:100%}
+}
+html[data-theme="dark"] .profile-routine-grid>div{background:#202b24;border-color:var(--line)}
+html[data-theme="dark"] .profile-stage,html[data-theme="dark"] .profile-course-chips span{background:#2c4030;color:#b8dfc1}

@@ -340,8 +340,8 @@ async function generateTutorial(){
   const body='<div class="form-grid">'+field('Country or region','country','<input id="f-country" name="country" value="'+safe(data.profile.country)+'">')+field('School or learning provider','institution','<input id="f-institution" name="institution" value="'+safe(data.profile.institution)+'">')+'</div>'+
     '<div class="form-grid">'+field('Learning stage','stage','<select id="f-stage" name="stage"><option value="">Choose one</option>'+options+'</select>')+field('Centre or study mode (optional)','centre','<input id="f-centre" name="centre" value="'+safe(data.profile.centre)+'">')+'</div>'+
     '<div class="form-grid">'+field('Programme, class, or subject','programme','<input id="f-programme" name="programme" value="'+safe(data.profile.programme)+'">')+field('Level, grade, or year','level','<input id="f-level" name="level" value="'+safe(data.profile.level)+'">')+'</div>'+
-    '<div class="form-grid">'+field('Term or session','term','<input id="f-term" name="term" value="'+safe(data.profile.term)+'">')+field('Usual exam or test style','examStyle','<input id="f-examStyle" name="examStyle" value="'+safe(data.profile.examStyle||'')+'" placeholder="Multiple choice, essays, practicals, etc.">')+'</div>'+greetingPreferencesMarkup();
-  openModal('Study profile','Set the school and study details used to personalize your study plan.',body,'Save profile',fd=>{for(const key of ['country','institution','stage','centre','programme','level','term','examStyle','regionOrLanguage','greetingStyle'])data.profile[key]=String(fd.get(key)||'').trim();closeModal();save();toast('Study profile updated')});
+    '<div class="form-grid">'+field('Term or session','term','<input id="f-term" name="term" value="'+safe(data.profile.term)+'">')+field('Usual exam or test style','examStyle','<input id="f-examStyle" name="examStyle" value="'+safe(data.profile.examStyle||'')+'" placeholder="Multiple choice, essays, practicals, etc.">')+'</div>';
+  openModal('Study profile','Set the school and study details used to personalize your study plan.',body,'Save profile',fd=>{for(const key of ['country','institution','stage','centre','programme','level','term','examStyle' ,'regionOrLanguage'])data.profile[key]=String(fd.get(key)||'').trim();closeModal();save();toast('Study profile updated')});
 }
 function searchUrl(course){const q=[data.profile.institution,data.profile.country,data.profile.stage,data.profile.programme,data.profile.level,course?.code,course?.name,'official syllabus course outline curriculum'].filter(Boolean).join(' ');return`https://www.google.com/search?q=${encodeURIComponent(q)}`}
 
@@ -398,16 +398,7 @@ function findCurriculum(){
   if(searchTab){searchTab.opener=null;studioNotice='Opened a web search for a course outline. Check that the result matches your school, level, and current curriculum.'}
   else studioNotice='Your browser blocked the web search. Allow pop-ups for Eduvia, then try again.';
   render();
-}function greetingPreferencesMarkup(){
-  const styles=[['neutral','Neutral nicknames'],['masculine','Masculine nicknames'],['feminine','Feminine nicknames']];
-  const options=styles.map(([value,label])=>'<option value="'+value+'" '+((data.profile.greetingStyle||'neutral')===value?'selected':'')+'>'+label+'</option>').join('');
-  return '<div class="form-grid">'+
-    field('Greeting style','greetingStyle','<select id="f-greetingStyle" name="greetingStyle">'+options+'</select>')+
-    field('Region or language (optional)','regionOrLanguage','<input id="f-regionOrLanguage" name="regionOrLanguage" maxlength="80" placeholder="e.g. Yoruba, Southwest Nigeria" value="'+safe(data.profile.regionOrLanguage||'')+'">')+
-    '</div><small class="privacy-note-inline">Nicknames rotate daily. Scholar follows a 30-day study streak; Lazy Youth appears below 50% consistency after at least 3 planned sessions.</small>';
 }
-const renderSetupWithGreetingPreferences=renderSetup;
-renderSetup=function(){return renderSetupWithGreetingPreferences().replace('<div class="onboarding-days">',greetingPreferencesMarkup()+'<div class="onboarding-days">')};
 function isStudyCompletion(item){
   if(item.type)return item.type==='study';
   const event=(data.events||[]).find(x=>x.id===item.eventId);
@@ -449,27 +440,18 @@ function isYorubaOrSouthwest(){
   return /\byoruba\b|south[\s-]*west(?:ern)?\b|\b(?:lagos|ogun|oyo|osun|ondo|ekiti)\b/.test(context);
 }
 function daymarkGreeting(){
-  if(studyStreak()>=30)return 'Scholar';
-  const consistency=studyConsistency();
-  if(consistency.expected>=3&&consistency.ratio<0.5)return 'Fresh Start';
-  const names={masculine:['My Odogwu','Idan','Ace'],feminine:['Big Mama','Queen','My Star'],neutral:['Ace','My Star','Bright Mind']};
-  const style=names[data.profile.greetingStyle]?data.profile.greetingStyle:'neutral';
-  const rotating=[...names[style]];
-  if(isYorubaOrSouthwest())rotating.push('Egbon');
-  const day=Math.floor(Date.parse(todayISO()+'T00:00:00')/86400000);
-  return rotating[day%rotating.length];
+  const hour=new Date().getHours();
+  if(hour>=5&&hour<12)return 'Good morning';
+  if(hour>=12&&hour<17)return 'Good afternoon';
+  return 'Good evening';
 }
-function daymarkGreetingTitle(){
-  const name=String(data.profile.name||'').trim();
-  return 'Hi, '+daymarkGreeting()+(name&&name.toLowerCase()!=='student'?' '+name:'')+' 👋';
-}
+function daymarkGreetingTitle(){return daymarkGreeting()}
 window.daymarkGreeting=daymarkGreeting;
 document.addEventListener('submit',e=>{
   if(e.target.id!=='onboardingForm')return;
   const fd=new FormData(e.target);
   if(!fd.get('stage')||!fd.getAll('studyDay').length)return;
   data.profile.regionOrLanguage=String(fd.get('regionOrLanguage')||'').trim();
-  data.profile.greetingStyle=String(fd.get('greetingStyle')||'neutral');
   data.profile.setupAt=todayISO();
 },true);
 function stageLabel(stage){return ({primary:'Primary / elementary',secondary:'Secondary / high school',college:'College / polytechnic',undergraduate:'University / undergraduate',postgraduate:'Postgraduate',vocational:'Vocational / professional training',other:'Other / self-directed learning'})[stage]||stage||'Not set'}

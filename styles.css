@@ -926,3 +926,7 @@ html[data-theme="dark"] .active-mock-banner,html[data-theme="dark"] .mock-answer
  .mock-finish-row{align-items:flex-start;flex-direction:column}
  .mock-finish-row .primary-btn{width:100%}
 }
+
+/* Native-app touch behavior: no accidental viewport zoom, retain scrolling. */
+html, body { touch-action: pan-x pan-y; }
+button, a, .nav-item, .mobile-nav-item { touch-action: manipulation; }

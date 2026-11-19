@@ -46,6 +46,7 @@ data.imports = data.imports || {courses:[], timetable:[]};
 data.materials = data.materials || [];
 if(!data.profile.phoneAlertsMigrationV1){for(const event of data.events||[])if((event.importedTimetable||event.generated)&&event.remind===false)event.remind=true;data.profile.phoneAlertsMigrationV1=true;try{localStorage.setItem(STORE_KEY,JSON.stringify(data))}catch{}}
 data.academicHistory = data.academicHistory || [];
+data.pendingCarryovers = Array.isArray(data.pendingCarryovers) ? data.pendingCarryovers : [];
 data.personalDocuments = data.personalDocuments || [];
 
 function syncNav(){
@@ -481,6 +482,63 @@ function educationRecordSummary(record){
 }
 function upsertEducationSummary(summary){data.academicHistory=Array.isArray(data.academicHistory)?data.academicHistory:[];const index=data.academicHistory.findIndex(item=>item.id===summary.id);if(index<0)data.academicHistory.unshift(summary);else data.academicHistory[index]=summary}
 
+function academicYearKey(value=''){
+  const match=String(value||'').match(/((?:19|20)\\d{2})\\s*[\\/–-]\\s*((?:(?:19|20)\\d{2})|\\d{2})/);
+  if(!match)return '';
+  const start=Number(match[1]),rawEnd=match[2];
+  const end=rawEnd.length===2?Math.floor(start/100)*100+Number(rawEnd):Number(rawEnd);
+  return start+'/'+end;
+}
+function syncPendingCarryovers(record){
+  data.pendingCarryovers=Array.isArray(data.pendingCarryovers)?data.pendingCarryovers:[];
+  data.pendingCarryovers=data.pendingCarryovers.filter(item=>item.sourceRecordId!==record.id);
+  const profile=record.profile||{};
+  const sourceYear=academicYearKey(record.academicYear||profile.academicSession||profile.academicYear||record.term||profile.term);
+  (record.results||[]).forEach((result,index)=>{
+    if(!result.carryover||!result.subject) return;
+    data.pendingCarryovers.push({
+      id:String(record.id)+':'+index,
+      sourceRecordId:record.id,
+      subject:result.subject,
+      code:result.code||'',
+      grade:result.grade||'',
+      sourcePeriod:[record.level||profile.level,record.term||profile.term,sourceYear].filter(Boolean).join(' · ')||record.label||'Previous academic year',
+      sourceAcademicYear:sourceYear,
+      status:'pending',
+      createdAt:Date.now()
+    });
+  });
+}
+function openCarryoverActivation(){
+  const pending=(data.pendingCarryovers||[]).filter(item=>item.status!=='active');
+  if(!pending.length){toast('There are no pending carryover courses.');return}
+  const years=[...new Set(pending.map(item=>item.sourceAcademicYear).filter(Boolean))];
+  const body='<p class="preview-note"><strong>Important:</strong> Use this only when the student is beginning a new academic year after completing the current academic year. Do not use it when moving from first semester to second semester.</p>'+
+    field('New academic year','nextAcademicYear','<input id="f-nextAcademicYear" name="nextAcademicYear" required maxlength="24" placeholder="e.g. 2027/2028">')+
+    '<div class="note-callout">'+pending.length+' carryover course(s) are waiting. They will be added to the active course list only after this confirmation.</div>'+
+    '<label class="form-field"><span><input type="checkbox" name="confirmNewYear" value="yes" required> I confirm that this is a different academic year, not the next semester of the same year.</span></label>';
+  openModal('Start a new academic year','Activate carryover courses for the year the student is now entering.',body,'Add carryovers to new year',fd=>{
+    const entered=String(fd.get('nextAcademicYear')||'').trim(),enteredKey=academicYearKey(entered);
+    if(!entered){toast('Enter the new academic year.');return}
+    if(years.some(year=>!enteredKey||year===enteredKey)){
+      toast('Enter a different academic year from the one in which these carryovers were recorded.');return;
+    }
+    let added=0;
+    for(const item of pending){
+      const exists=data.courses.some(course=>(item.code&&String(course.code||'').toLowerCase()===item.code.toLowerCase())||String(course.name||'').trim().toLowerCase()===item.subject.trim().toLowerCase());
+      if(!exists){
+        data.courses.push({id:id(),name:item.subject,code:item.code||'',instructor:'',note:'Carryover course from '+item.sourcePeriod+'. Retake in academic year '+entered+'.',topics:[],credits:0,color:COLORS[data.courses.length%COLORS.length],carryover:true,carryoverSourceRecordId:item.sourceRecordId});
+        added++;
+      }
+      item.status='active';
+      item.activatedAcademicYear=entered;
+      item.activatedAt=Date.now();
+    }
+    closeModal();save();
+    toast(added?added+' carryover course(s) added for '+entered+'.':'These carryovers are already in the active course list.');
+  });
+}
+
 
 document.addEventListener('submit',event=>{
   if(event.target.id!=='studentProfileForm')return;
@@ -563,8 +621,8 @@ function renderEducation(compact=false){
     return '<article class="course-card"><div class="course-card-head"><span class="habit-badge">▤</span><div><h3>'+safe(record.label||'Education record')+'</h3><span class="course-code">'+safe(period||'Past education record')+'</span></div></div><p class="course-desc">'+safe(description)+'</p><div class="course-card-foot"><span>'+(!isResultEntry&&record.studyMinutes?Number(record.studyMinutes)+' focused minutes':'Education record')+'</span><div class="academic-history-actions"><button class="secondary-btn" data-action="view-academic-record" data-id="'+safe(record.id)+'">View record</button><button class="icon-btn" title="Edit results" aria-label="Edit results" data-action="edit-academic-results" data-id="'+safe(record.id)+'">✎</button>'+(isResultEntry?'<button class="icon-btn" title="Remove record" aria-label="Remove record" data-action="delete-academic-record" data-id="'+safe(record.id)+'">×</button>':'')+'</div></div></article>';
   }).join('');
   const currentStudies=(data.completed||[]).filter(item=>isStudyCompletion(item)).length;
-  const carryovers=history.flatMap(record=>(record.results||[]).filter(result=>result.carryover).map(result=>({...result,recordId:record.id,recordLabel:record.label||'Previous term'})));
-  const carryoverPanel=carryovers.length?'<section class="panel carryover-panel"><div class="panel-head"><div><h3>Carryover courses</h3><p>Selected courses to retake in your next study session.</p></div><span class="upload-count">'+carryovers.length+'</span></div><div class="resource-list">'+carryovers.map(item=>'<article class="resource-card"><div class="resource-icon">↻</div><div style="min-width:0;flex:1"><strong>'+safe(item.subject)+'</strong><p>'+safe(item.code||'No course code')+' · '+safe(item.recordLabel)+'</p></div></article>').join('')+'</div><button class="primary-btn" data-action="add-carryovers-next-session">Add carryovers to my next session</button></section>':'';
+  const carryovers=(data.pendingCarryovers||[]).filter(item=>item.status!=='active');
+  const carryoverPanel=carryovers.length?'<section class="panel carryover-panel"><div class="panel-head"><div><h3>Carryover courses · next academic year</h3><p>These remain pending throughout the current academic year, including the second semester.</p></div><span class="upload-count">'+carryovers.length+'</span></div><div class="resource-list">'+carryovers.map(item=>'<article class="resource-card"><div class="resource-icon">↻</div><div style="min-width:0;flex:1"><strong>'+safe(item.subject)+'</strong><p>'+safe(item.code||'No course code')+' · '+safe(item.sourcePeriod||'Previous academic year')+'</p></div></article>').join('')+'</div><button class="primary-btn" data-action="activate-carryovers-new-year">Start new academic year & add carryovers</button></section>':'';
   const actions='<div class="education-actions"><button class="secondary-btn" data-action="add-academic-results">＋ Add past results</button><button class="primary-btn" data-action="archive-term">Finish and archive current term</button></div>';
   return (compact?'':pageHead('YOUR EDUCATION','My education journey','Keep a record of your learning from any starting point, then add results as you move through each term or school year.',actions))+
     '<section class="panel"><div class="panel-head"><div><h3>Current study period</h3><p>Your active profile and planner</p></div><span class="habit-badge">↗</span></div><strong>'+safe(currentLabel||'Add your current school and level in Study profile')+'</strong><div class="stats-row education-stats" style="margin-top:17px"><div class="stat-card"><div class="stat-label">ACTIVE COURSES</div><div class="stat-value">'+data.courses.length+'</div></div><div class="stat-card"><div class="stat-label">COMPLETED STUDY SESSIONS</div><div class="stat-value">'+currentStudies+'</div></div><div class="stat-card"><div class="stat-label">SAVED PERIODS</div><div class="stat-value">'+history.length+'</div></div><div class="stat-card"><div class="stat-label">RESULTS RECORDED</div><div class="stat-value">'+resultCount+'</div></div></div></section>'+
@@ -594,11 +652,12 @@ function openAcademicResultsForm(record=null,archiveMode=false){
       updated={id:record?.id||id(),recordType:'results',label,institution,school:institution,stage,level,term,academicYear,programme,results,resultsNotes:String(fd.get('resultsNotes')||'').trim(),recordedAt:record?.recordedAt||now};
     }
     try{await putStudioRecord('academicRecords',updated)}catch(error){toast('Could not save these results: '+(error.message||'storage is unavailable'));return}
+    syncPendingCarryovers(updated);
     upsertEducationSummary(educationRecordSummary(updated));closeModal();save();toast(archiveMode?'Term results saved':'Education results saved');
   });
 }
 async function editAcademicResults(recordId){try{const record=await getStudioRecord('academicRecords',recordId);if(!record){toast('This education record is unavailable on this device. Import the backup that contains it.');return}openAcademicResultsForm(record,record.recordType!=='results')}catch(error){toast('Could not open this education record: '+(error.message||'storage is unavailable'))}}
-async function deleteAcademicRecord(recordId){if(!confirm('Remove this past education results record from your history?'))return;try{await deleteStudioRecord('academicRecords',recordId);data.academicHistory=(data.academicHistory||[]).filter(record=>record.id!==recordId);closeModal();save();toast('Education record removed')}catch(error){toast('Could not remove this record: '+(error.message||'storage is unavailable'))}}
+async function deleteAcademicRecord(recordId){if(!confirm('Remove this past education results record from your history?'))return;try{await deleteStudioRecord('academicRecords',recordId);data.academicHistory=(data.academicHistory||[]).filter(record=>record.id!==recordId);data.pendingCarryovers=(data.pendingCarryovers||[]).filter(item=>item.sourceRecordId!==recordId);closeModal();save();toast('Education record removed')}catch(error){toast('Could not remove this record: '+(error.message||'storage is unavailable'))}}
 function archiveCurrentTerm(){
   const profile=data.profile,defaultLabel=[stageLabel(profile.stage),profile.level,profile.term].filter(Boolean).join(' · ')||'Current study period';
   const stages=educationStages();
@@ -617,6 +676,7 @@ function archiveCurrentTerm(){
     const archive={id:archiveId,label,recordType:'term-archive',stage:data.profile.stage||'',level:data.profile.level||'',term:data.profile.term||'',institution:data.profile.institution||'',programme:data.profile.programme||'',archivedAt:Date.now(),profile:JSON.parse(JSON.stringify(data.profile)),courses,events,completed,resources,materials,materialText:JSON.parse(JSON.stringify(data.materialText||[])),materialRecords,studyPlan:data.studyPlan||null,results,resultsNotes:String(fd.get('resultsNotes')||'').trim()};
     const summary={...educationRecordSummary(archive),studyMinutes};
     try{await putStudioRecord('academicRecords',archive)}catch(error){toast('Could not save this term to local storage: '+(error.message||'storage is unavailable'));return}
+    syncPendingCarryovers(archive);
     data.academicHistory.unshift(summary);data.courses=[];data.events=[];data.completed=[];data.resources=[];data.studyPlan=null;
     data.profile.stage=String(fd.get('nextStage')||data.profile.stage||'');data.profile.level=String(fd.get('nextLevel')||'').trim();data.profile.term=String(fd.get('nextTerm')||'').trim();data.profile.setupAt=todayISO();
     closeModal();save();toast('Term archived. Your next study period is ready.');
@@ -946,6 +1006,6 @@ window.eduBeginSessionCompletion=beginSessionCompletion;
 window.eduShowSessionRecord=showSessionRecord;
 window.eduCaptureStudioPhoto=window.eduCapturePhonePhoto;window.eduHandleStudioFile=handleStudioFile;window.eduSavePersonalDocument=addPersonalDocument;window.eduPageRenderers=window.eduPageRenderers||{};
 window.eduPageRenderers.records=renderStudyRecords;
-document.addEventListener('click',event=>{const button=event.target.closest('[data-action="add-carryovers-next-session"]');if(!button)return;const items=(data.academicHistory||[]).flatMap(record=>(record.results||[]).filter(result=>result.carryover));let added=0;for(const item of items){if(data.courses.some(course=>course.name===item.subject||(item.code&&course.code===item.code)))continue;data.courses.push({id:id(),name:item.subject,code:item.code||'',instructor:'',note:'Carryover course — retake in this study session.',topics:[],credits:0,color:COLORS[added%COLORS.length]});added++;}save();render();toast(added?added+' carryover course(s) added to your courses for the next session.':'Carryover courses are already in your current course list.');});
+document.addEventListener('click',event=>{const button=event.target.closest('[data-action="activate-carryovers-new-year"]');if(!button)return;openCarryoverActivation();});
 if(!data.profile.setupComplete)currentPage='setup';
 scheduleEventAlert();

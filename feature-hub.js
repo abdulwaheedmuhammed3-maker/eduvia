@@ -61,23 +61,57 @@
     const original=window.eduOriginalSettingsRender?window.eduOriginalSettingsRender():renderSettings();
     return original+cardBox('Separate course and timetable backups','<p>Export or restore either section independently. Restores merge records into this device and skip duplicates; they never delete existing courses or timetable entries.</p><div class="backup-actions" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="primary-btn" data-action="export-category-backup" data-kind="courses">Download courses</button><label class="secondary-btn backup-file-label">Restore courses<input id="coursesCategoryBackupFile" type="file" accept=".json,application/json"></label></div><p class="privacy-note-inline">Courses are matched by ID first, then course code or name.</p><div class="backup-actions" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px"><button class="primary-btn" data-action="export-category-backup" data-kind="timetable">Download timetable</button><label class="secondary-btn backup-file-label">Restore timetable<input id="timetableCategoryBackupFile" type="file" accept=".json,application/json"></label></div><p class="privacy-note-inline">Timetable entries are matched by ID, then their schedule details. Course links are reconnected to matching courses where possible.</p><hr style="border:0;border-top:1px solid var(--line);margin:16px 0"><p>Need everything in one file? Keep using the full backup options below.</p><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="primary-btn" data-action="export-portable-backup">Download full backup</button><button class="secondary-btn" data-page="vault">Open restore and documents</button></div><p class="privacy-note-inline">Before a category restore, Eduvia downloads a safety copy of the current device data.</p>');
   }
-  function renderMoreWithFeatures(){
-    const original=window.eduOriginalMoreRender?window.eduOriginalMoreRender():renderMore();
-    return original.slice(0,original.lastIndexOf('</div>'))+'<button class="course-card" style="text-align:left" data-page="planner"><div class="course-card-head"><span class="habit-badge">◷</span><h3>Planner</h3></div><p class="course-desc">Assignments, tests and examinations.</p></button><button class="course-card" style="text-align:left" data-page="flashcards"><div class="course-card-head"><span class="habit-badge">✧</span><h3>Flashcards</h3></div><p class="course-desc">Spaced review from topics and notes.</p></button><button class="course-card" style="text-align:left" data-page="mastery"><div class="course-card-head"><span class="habit-badge">↗</span><h3>Course mastery</h3></div><p class="course-desc">Track confidence by course topic.</p></button></div>';
-  }
+  function renderMoreWithFeatures(){return window.eduOriginalMoreRender?window.eduOriginalMoreRender():renderMore()}
   const originalSyncNav=window.syncNav;
   if(typeof originalSyncNav==='function'&&!window.eduFeatureNavWrapped){
     window.eduFeatureNavWrapped=true;
-    window.syncNav=function(){originalSyncNav();if(['planner','flashcards','mastery'].includes(currentPage)){document.querySelectorAll('[data-page="more"]').forEach(el=>el.classList.add('active'));const labels={planner:'Planner',flashcards:'Flashcards',mastery:'Course mastery'};document.getElementById('crumbCurrent').textContent=labels[currentPage];}};
+    window.syncNav=function(){
+      originalSyncNav();
+      const destinations={planner:'timetable',flashcards:'courses',mastery:'courses',practice:'courses',tutorials:'courses',progress:'habit',records:'habit'};
+      const destination=destinations[currentPage];
+      if(destination)document.querySelectorAll('[data-page="'+destination+'"]').forEach(el=>el.classList.add('active'));
+      const labels={planner:'Assignments & deadlines',flashcards:'Flashcards',mastery:'Course mastery',practice:'Practice & tests',tutorials:'Tutorials & notes',progress:'Study progress',records:'Session records'};
+      if(labels[currentPage])document.getElementById('crumbCurrent').textContent=labels[currentPage];
+    };
   }
   window.eduOriginalVaultRender=window.eduOriginalVaultRender||window.renderVault;
   window.eduOriginalSettingsRender=window.eduOriginalSettingsRender||window.renderSettings;
   window.eduOriginalMoreRender=window.eduOriginalMoreRender||window.renderMore;
   window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{planner:renderPlanner,flashcards:renderFlashcards,mastery:renderMastery,vault:renderVaultWithTools,settings:renderSettingsWithBackup,more:renderMoreWithFeatures});
+  function removeNestedPageHeading(markup){
+    return String(markup||'').replace(/<div class="page-heading">[\s\S]*?<\/div><\/div>/,'');
+  }
+  function integratedSection(title,description,markup){
+    return '<details class="panel integrated-tab-section"><summary><span><strong>'+title+'</strong><small>'+description+'</small></span><span class="integrated-section-toggle">＋</span></summary><div class="integrated-section-content">'+removeNestedPageHeading(markup)+'</div></details>';
+  }
   const originalCourses=window.renderCourses;
   if(typeof originalCourses==='function'&&!window.eduCoursesFeatureWrapped){
     window.eduCoursesFeatureWrapped=true;
-    window.renderCourses=function(){return originalCourses().replace(/(<button class="icon-btn" title="Edit course" data-action="edit-course" data-id="([^"]+)">)/g,'<button class="text-btn" data-feature="open-mastery" data-course="$2">Topic mastery →</button>$1')};
+    window.renderCourses=function(){
+      const base=originalCourses().replace(/(<button class="icon-btn" title="Edit course" data-action="edit-course" data-id="([^"]+)">)/g,'<button class="text-btn" data-feature="open-mastery" data-course="$2">Topic mastery →</button>$1');
+      const tools='<section class="courses-integrated-tools"><div class="section-title-row"><h3>Learning and revision tools</h3><span>Organised with your courses</span></div>'+
+        integratedSection('Tutorials and notes','Saved resources and study notes',renderTutorials())+
+        integratedSection('Practice and tests','Generate and review questions',renderPractice())+
+        integratedSection('Flashcards','Recall cards and scheduled reviews',renderFlashcards())+
+        integratedSection('Course mastery','Track confidence by topic',renderMastery())+
+      '</section>';
+      return base+tools;
+    };
+  }
+  const originalTimetable=window.renderTimetable;
+  if(typeof originalTimetable==='function'&&!window.eduScheduleToolsWrapped){
+    window.eduScheduleToolsWrapped=true;
+    window.renderTimetable=function(){return originalTimetable()+integratedSection('Assignments, tests and deadlines','Plan coursework alongside your classes',renderPlanner())};
+  }
+  const originalHabit=window.renderHabit;
+  if(typeof originalHabit==='function'&&!window.eduHabitToolsWrapped){
+    window.eduHabitToolsWrapped=true;
+    window.renderHabit=function(){return originalHabit()+integratedSection('Detailed study progress','Weekly performance and focus by course',renderProgress())+integratedSection('Session records','Class reflections, study notes and quiz results',renderStudyRecords())};
+  }
+  const originalProfile=window.renderProfile;
+  if(typeof originalProfile==='function'&&!window.eduProfileSectionsWrapped){
+    window.eduProfileSectionsWrapped=true;
+    window.renderProfile=function(){return originalProfile()+integratedSection('Academic history and results','Past levels, sessions and recorded results',renderEducation(true))+integratedSection('Student documents','IDs, certificates, transcripts and saved files',renderVault(true))};
   }
   const originalImportZip=window.importPortableBackup;
   const originalImportJson=window.importPlannerJsonBackup;

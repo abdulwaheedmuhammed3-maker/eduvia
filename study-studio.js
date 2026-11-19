@@ -13,6 +13,13 @@ Object.assign(data.profile, {
   institution: data.profile.institution || '',
   email: data.profile.email || '',
   department: data.profile.department || '',
+  matricNumber: data.profile.matricNumber || '25/01DL097',
+  faculty: data.profile.faculty || 'Faculty of Communication and Information Sciences',
+  specialization: data.profile.specialization || 'No Specialization',
+  studyMode: data.profile.studyMode || 'No Mode of Study',
+  studentStatus: data.profile.studentStatus || 'Active',
+  academicSession: data.profile.academicSession || '2026/2027',
+  semester: data.profile.semester || 'Harmattan Semester',
   centre: data.profile.centre || '',
   programme: data.profile.programme || '',
   level: data.profile.level || '',
@@ -496,7 +503,8 @@ document.addEventListener('submit',event=>{
   const fd=new FormData(event.target);
   const name=String(fd.get('name')||'').trim();
   if(!name){toast('Enter your name before saving your profile.');return}
-  for(const key of ['name','email','country','institution','stage','department','centre','programme','level','term'])data.profile[key]=String(fd.get(key)||'').trim();
+  for(const key of ['name','email','institution','stage','department','matricNumber','faculty','specialization','studyMode','studentStatus','level','academicSession','semester','degreeProgramme'])data.profile[key]=String(fd.get(key)||'').trim();
+  data.profile.programme=data.profile.degreeProgramme||data.profile.programme||'';
   save();
   toast('Your student profile has been saved.');
 });
@@ -504,35 +512,61 @@ document.addEventListener('submit',event=>{
 function renderProfile(){
   const profile=data.profile||{},stages=educationStages();
   const stageOptions=stages.map(([value,label])=>'<option value="'+value+'" '+(profile.stage===value?'selected':'')+'>'+label+'</option>').join('');
-  const completed=(data.completed||[]).filter(item=>isStudyCompletion(item));
-  const totalMinutes=completed.reduce((sum,item)=>sum+(Number(item.minutes)||Number(profile.sessionMinutes)||25),0);
-  const studyDays=(profile.studyDays||[]).map(day=>DAYS[Number(day)]).filter(Boolean);
-  const avatar=profile.avatarData?'<img src="'+safe(profile.avatarData)+'" alt="Student profile photo">':'<span>'+safe(Array.from(String(profile.name||'Student').trim())[0]?.toUpperCase()||'S')+'</span>';
-  const courses=(data.courses||[]).slice(0,6);
-  return pageHead('YOUR EDUVIA PROFILE','Student profile','Manage your personal details, academic information, and study preferences.','<button class="secondary-btn" data-page="settings">Open settings</button>')+
-    '<section class="panel profile-hero"><div class="profile-avatar-large">'+avatar+'</div><div class="profile-hero-copy"><div class="card-kicker">YOUR STUDENT PROFILE</div><h2>'+safe(profile.name||'Student')+'</h2><p>'+safe([profile.programme,profile.institution].filter(Boolean).join(' · ')||'Add your academic details below')+'</p><span class="profile-stage">'+safe(stageLabel(profile.stage))+'</span></div><button class="secondary-btn" data-page="settings">Study preferences</button></section>'+
-    '<div class="stats-row profile-stats"><div class="stat-card"><div class="stat-label">MY COURSES</div><div class="stat-value">'+(data.courses||[]).length+'</div><div class="stat-note">courses in your planner</div></div><div class="stat-card"><div class="stat-label">STUDY SESSIONS</div><div class="stat-value">'+completed.length+'</div><div class="stat-note">completed sessions</div></div><div class="stat-card"><div class="stat-label">WEEKLY GOAL</div><div class="stat-value">'+(Number(profile.weeklyGoal)||5)+'</div><div class="stat-note">sessions per week</div></div><div class="stat-card"><div class="stat-label">FOCUS TIME</div><div class="stat-value">'+Math.floor(totalMinutes/60)+'h '+(totalMinutes%60)+'m</div><div class="stat-note">recorded study time</div></div></div>'+
-    '<form id="studentProfileForm" class="panel profile-edit-panel"><div class="panel-head"><div><h3>Personal and academic details</h3><p>Your information is saved in your Eduvia planner on this device.</p></div></div>'+profilePhotoSettingsMarkup()+
+  const avatar=profile.avatarData?'<img src="'+safe(profile.avatarData)+'" alt="Student photograph">':'<span>'+safe(Array.from(String(profile.name||'Student').trim())[0]?.toUpperCase()||'S')+'</span>';
+  const displayLevel=profile.level?(/^\\d+$/.test(String(profile.level).trim())?String(profile.level).trim()+' Level':profile.level):'Not provided';
+  const info=(symbol,label,value,colour='blue')=>'<div class="student-id-field"><span class="student-id-icon '+colour+'">'+symbol+'</span><div class="student-id-copy"><span>'+label+'</span><strong>'+safe(value||'Not provided')+'</strong></div></div>';
+  const card='<section class="panel student-id-card">'+
+    '<div class="student-id-photo-col"><div class="student-id-photo">'+avatar+'</div></div>'+
+    '<div class="student-id-details">'+
+      '<div class="student-id-main-grid">'+
+        info('✎','Full Name',profile.name||'Student','navy')+
+        info('▣','Matriculation Number',profile.matricNumber,'gold')+
+        info('▦','Faculty',profile.faculty,'green')+
+        info('▦','Department',profile.department||profile.programme,'purple')+
+        info('▤','Programme',profile.degreeProgramme||profile.programme,'blue')+
+        info('⌕','Specialization',profile.specialization,'rust')+
+        info('♙','Mode',profile.studyMode,'gold')+
+        info('●','Status',profile.studentStatus,'grey')+
+      '</div>'+
+      '<div class="student-id-divider"></div>'+
+      '<div class="student-id-bottom-grid">'+
+        info('↗','Level',displayLevel,'navy')+
+        info('▣','Session',profile.academicSession||profile.term,'blue')+
+        info('▦','Semester',profile.semester,'purple')+
+      '</div>'+
+    '</div>'+
+  '</section>';
+  const editForm='<details class="profile-edit-details panel"><summary><span>Edit student details</span><small>Update your photo and academic information</small></summary>'+
+    '<form id="studentProfileForm" class="profile-edit-panel">'+
+      profilePhotoSettingsMarkup()+
       '<div class="form-grid">'+
         field('Full name','name','<input id="f-name" name="name" required maxlength="60" autocomplete="name" value="'+safe(profile.name||'')+'" placeholder="Your full name">')+
-        field('Email address (optional)','email','<input id="f-email" name="email" type="email" maxlength="120" autocomplete="email" value="'+safe(profile.email||'')+'" placeholder="you@example.com">')+
+        field('Matriculation number','matricNumber','<input id="f-matricNumber" name="matricNumber" maxlength="40" value="'+safe(profile.matricNumber||'')+'" placeholder="Your matriculation number">')+
       '</div><div class="form-grid">'+
-        field('Country or region','country','<input id="f-country" name="country" maxlength="60" value="'+safe(profile.country||'')+'" placeholder="Your country">')+
-        field('School or university','institution','<input id="f-institution" name="institution" maxlength="100" value="'+safe(profile.institution||'')+'" placeholder="Your institution">')+
+        field('Faculty','faculty','<input id="f-faculty" name="faculty" maxlength="120" value="'+safe(profile.faculty||'')+'" placeholder="Your faculty">')+
+        field('Department','department','<input id="f-department" name="department" maxlength="100" value="'+safe(profile.department||'')+'" placeholder="Your department">')+
+      '</div><div class="form-grid">'+
+        field('Programme','degreeProgramme','<input id="f-degreeProgramme" name="degreeProgramme" maxlength="120" value="'+safe(profile.degreeProgramme||profile.programme||'')+'" placeholder="e.g. B.Sc. Computer Science">')+
+        field('Specialization','specialization','<input id="f-specialization" name="specialization" maxlength="100" value="'+safe(profile.specialization||'')+'" placeholder="Your specialization">')+
+      '</div><div class="form-grid">'+
+        field('Mode of study','studyMode','<input id="f-studyMode" name="studyMode" maxlength="80" value="'+safe(profile.studyMode||'')+'" placeholder="e.g. Full-time">')+
+        field('Student status','studentStatus','<select id="f-studentStatus" name="studentStatus"><option '+(profile.studentStatus==='Active'?'selected':'')+'>Active</option><option '+(profile.studentStatus==='Inactive'?'selected':'')+'>Inactive</option><option '+(profile.studentStatus==='Graduated'?'selected':'')+'>Graduated</option><option '+(profile.studentStatus==='Deferred'?'selected':'')+'>Deferred</option></select>')+
+      '</div><div class="form-grid">'+
+        field('Level','level','<input id="f-level" name="level" maxlength="40" value="'+safe(profile.level||'')+'" placeholder="e.g. 300">')+
+        field('Academic session','academicSession','<input id="f-academicSession" name="academicSession" maxlength="30" value="'+safe(profile.academicSession||profile.term||'')+'" placeholder="e.g. 2026/2027">')+
+      '</div><div class="form-grid">'+
+        field('Semester','semester','<input id="f-semester" name="semester" maxlength="50" value="'+safe(profile.semester||'')+'" placeholder="e.g. Harmattan Semester">')+
+        field('Institution','institution','<input id="f-institution" name="institution" maxlength="100" value="'+safe(profile.institution||'')+'" placeholder="Your university or institution">')+
       '</div><div class="form-grid">'+
         field('Learning stage','stage','<select id="f-stage" name="stage"><option value="">Choose your learning stage</option>'+stageOptions+'</select>')+
-        field('Department (optional)','department','<input id="f-department" name="department" maxlength="100" value="'+safe(profile.department||'')+'" placeholder="Your department or faculty">')+
-      '</div><div class="form-grid">'+
-        field('Programme or course of study','programme','<input id="f-programme" name="programme" maxlength="100" value="'+safe(profile.programme||'')+'" placeholder="Your programme">')+
-        field('Level or year','level','<input id="f-level" name="level" maxlength="40" value="'+safe(profile.level||'')+'" placeholder="e.g. 300 level">')+
-      '</div><div class="form-grid">'+
-        field('Academic session or semester','term','<input id="f-term" name="term" maxlength="60" value="'+safe(profile.term||'')+'" placeholder="e.g. 2026/2027 · First semester">')+
-        field('Centre or study mode (optional)','centre','<input id="f-centre" name="centre" maxlength="100" value="'+safe(profile.centre||'')+'" placeholder="Campus, distance learning, etc.">')+
-      '</div><div class="profile-form-actions"><button class="primary-btn" type="submit">Save profile</button></div></form>'+
-    '<section class="panel profile-preferences"><div class="panel-head"><div><h3>Your study routine</h3><p>These preferences are already used by your study planner.</p></div><button class="panel-link" data-page="settings">Edit preferences →</button></div><div class="profile-routine-grid"><div><span>Weekly target</span><strong>'+(Number(profile.weeklyGoal)||5)+' sessions</strong></div><div><span>Focus session</span><strong>'+(Number(profile.sessionMinutes)||Number(profile.planSessionMinutes)||25)+' minutes</strong></div><div><span>Study window</span><strong>'+safe(profile.studyStart||'Not set')+' – '+safe(profile.studyEnd||'Not set')+'</strong></div><div><span>Study days</span><strong>'+safe(studyDays.join(', ')||'Not set')+'</strong></div></div></section>'+
-    '<section class="panel profile-courses"><div class="panel-head"><div><h3>My courses</h3><p>Your active courses are shared with the rest of Eduvia.</p></div><button class="panel-link" data-page="courses">View all →</button></div>'+(courses.length?'<div class="profile-course-chips">'+courses.map(course=>'<span>'+safe(course.code||course.name)+'</span>').join('')+(data.courses.length>courses.length?'<span>+'+(data.courses.length-courses.length)+' more</span>':'')+'</div>':'<p class="profile-empty">No courses added yet. Add your courses to see them here.</p>')+'</section>';
+        field('Email address (optional)','email','<input id="f-email" name="email" type="email" maxlength="120" autocomplete="email" value="'+safe(profile.email||'')+'" placeholder="you@example.com">')+
+      '</div><div class="profile-form-actions"><button class="primary-btn" type="submit">Save student details</button></div>'+
+    '</form></details>';
+  return pageHead('YOUR EDUVIA PROFILE','Student profile','Your academic identity in one place.','')+
+    card+
+    '<div class="student-profile-actions"><button class="secondary-btn" data-page="settings">Study preferences</button><span>Your profile details are saved in your Eduvia planner on this device.</span></div>'+
+    editForm;
 }
-
 function renderEducation(){
   const profile=data.profile,history=[...(data.academicHistory||[])].sort((a,b)=>(b.archivedAt||0)-(a.archivedAt||0));
   const currentLabel=[profile.institution,stageLabel(profile.stage),profile.programme,profile.level,profile.term].filter(Boolean).join(' · ');

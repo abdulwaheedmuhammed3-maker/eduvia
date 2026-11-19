@@ -404,3 +404,97 @@ button{ -webkit-tap-highlight-color:transparent}
 }
 html[data-theme="dark"] .profile-routine-grid>div{background:#202b24;border-color:var(--line)}
 html[data-theme="dark"] .profile-stage,html[data-theme="dark"] .profile-course-chips span{background:#2c4030;color:#b8dfc1}
+
+
+/* Academic identity card profile layout */
+.student-id-card{
+  display:grid;
+  grid-template-columns:minmax(205px,30%) minmax(0,1fr);
+  align-items:stretch;
+  gap:24px;
+  padding:20px;
+  margin:0 0 14px;
+  border-radius:20px;
+}
+.student-id-photo-col{min-width:0;display:flex;align-items:stretch}
+.student-id-photo{
+  width:100%;
+  min-height:350px;
+  aspect-ratio: .76;
+  max-height:520px;
+  overflow:hidden;
+  display:grid;
+  place-items:center;
+  border-radius:16px;
+  background:var(--mint);
+  color:var(--green);
+  font:800 52px Manrope;
+}
+.student-id-photo img{width:100%;height:100%;min-height:350px;object-fit:cover;display:block}
+.student-id-details{min-width:0;display:flex;flex-direction:column;justify-content:space-between;gap:20px;padding:6px 2px}
+.student-id-main-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:22px;row-gap:20px}
+.student-id-field{min-width:0;display:flex;align-items:flex-start;gap:12px}
+.student-id-icon{
+  width:43px;height:43px;flex:0 0 43px;display:grid;place-items:center;
+  border-radius:8px;font:800 23px Manrope;
+}
+.student-id-icon.navy{background:#e8eaff;color:#171e70}
+.student-id-icon.gold{background:#fff0d8;color:#d89b3c}
+.student-id-icon.green{background:#e2f2e7;color:#5d9f70}
+.student-id-icon.purple{background:#f0e4f5;color:#9251a4}
+.student-id-icon.blue{background:#e2f0fc;color:#5796c9}
+.student-id-icon.rust{background:#fae9df;color:#a64f25}
+.student-id-icon.grey{background:#eceff0;color:#70787d}
+.student-id-copy{min-width:0;display:flex;flex-direction:column;gap:3px}
+.student-id-copy>span{font-size:13px;line-height:1.35;color:var(--muted)}
+.student-id-copy strong{font:750 14px/1.45 Manrope;color:var(--ink);overflow-wrap:anywhere}
+.student-id-divider{height:1px;background:var(--line);width:100%;margin-top:auto}
+.student-id-bottom-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.student-profile-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
+.student-profile-actions>span{font-size:11px;color:var(--muted);line-height:1.45;text-align:right}
+.profile-edit-details{margin-bottom:16px;padding:0;overflow:hidden}
+.profile-edit-details>summary{
+  list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:17px 19px;cursor:pointer;font:750 13px Manrope;color:var(--ink)
+}
+.profile-edit-details>summary::-webkit-details-marker{display:none}
+.profile-edit-details>summary:after{content:'＋';font-size:19px;color:var(--green)}
+.profile-edit-details[open]>summary:after{content:'−'}
+.profile-edit-details>summary small{font:500 11px/1.4 inherit;color:var(--muted);margin-left:auto;text-align:right}
+.profile-edit-details .profile-edit-panel{padding:0 19px 20px;border:0;box-shadow:none;margin:0}
+.profile-edit-details .profile-edit-panel .panel-head{margin:0 0 15px}
+.profile-edit-details .student-id-photo-preview{max-width:72px}
+@media(max-width:760px){
+  .student-id-card{grid-template-columns:1fr;gap:16px;padding:14px;border-radius:18px}
+  .student-id-photo-col{justify-content:flex-start}
+  .student-id-photo{width:132px;min-height:168px;height:168px;max-height:168px;aspect-ratio:auto;border-radius:13px;font-size:36px}
+  .student-id-photo img{min-height:168px;height:168px}
+  .student-id-details{gap:16px;padding:0}
+  .student-id-main-grid{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:12px;row-gap:17px}
+  .student-id-field{gap:8px}
+  .student-id-icon{width:30px;height:30px;flex-basis:30px;font-size:16px;border-radius:7px}
+  .student-id-copy>span{font-size:10px}
+  .student-id-copy strong{font-size:11px;line-height:1.35}
+  .student-id-bottom-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .student-id-bottom-grid .student-id-field{display:flex;flex-direction:column;gap:5px}
+  .student-id-bottom-grid .student-id-copy>span{font-size:9px}
+  .student-id-bottom-grid .student-id-copy strong{font-size:10px}
+  .student-profile-actions{align-items:flex-start;flex-direction:column}
+  .student-profile-actions>span{text-align:left}
+  .profile-edit-details>summary{padding:15px;flex-wrap:wrap}
+  .profile-edit-details>summary small{width:100%;margin:0;text-align:left}
+  .profile-edit-details .profile-edit-panel{padding:0 14px 16px}
+}
+@media(max-width:360px){
+  .student-id-main-grid{grid-template-columns:1fr}
+  .student-id-field{gap:10px}
+  .student-id-copy strong{font-size:12px}
+}
+html[data-theme="dark"] .student-id-icon.navy{background:#272e54;color:#c8ceff}
+html[data-theme="dark"] .student-id-icon.gold{background:#4a3d29;color:#f3cb84}
+html[data-theme="dark"] .student-id-icon.green{background:#294432;color:#a9d8b5}
+html[data-theme="dark"] .student-id-icon.purple{background:#403047;color:#d9b6e4}
+html[data-theme="dark"] .student-id-icon.blue{background:#263b50;color:#a8d1f0}
+html[data-theme="dark"] .student-id-icon.rust{background:#4a3028;color:#f2b59b}
+html[data-theme="dark"] .student-id-icon.grey{background:#303a3b;color:#c3cdcf}
+html[data-theme="dark"] .student-id-divider{background:var(--line)}

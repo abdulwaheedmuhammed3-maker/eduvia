@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#140d26" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -13,6 +13,16 @@
   <link rel="stylesheet" href="styles.css?v=entry-flow-2" />
   <link rel="stylesheet" href="entry-flow.css?v=eduvia-entry-2" />
   <title>Eduvia — Your study planner</title>
+  <script>
+    (function(){
+      document.addEventListener("touchstart", function(e){ if(e.touches && e.touches.length > 1) e.preventDefault(); }, {passive:false});
+      document.addEventListener("touchmove", function(e){ if(e.touches && e.touches.length > 1) e.preventDefault(); }, {passive:false});
+      document.addEventListener("gesturestart", function(e){ e.preventDefault(); }, {passive:false});
+      document.addEventListener("gesturechange", function(e){ e.preventDefault(); }, {passive:false});
+      document.addEventListener("gestureend", function(e){ e.preventDefault(); }, {passive:false});
+      document.addEventListener("dblclick", function(e){ e.preventDefault(); }, {passive:false});
+    })();
+  </script>
 </head>
 <body>
   <div id="entryFlow" class="entry-flow" role="dialog" aria-modal="true" aria-label="Welcome to Eduvia">

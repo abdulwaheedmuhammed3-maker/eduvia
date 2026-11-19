@@ -513,13 +513,17 @@ function openCarryoverActivation(){
   const pending=(data.pendingCarryovers||[]).filter(item=>item.status!=='active');
   if(!pending.length){toast('There are no pending carryover courses.');return}
   const years=[...new Set(pending.map(item=>item.sourceAcademicYear).filter(Boolean))];
-  const body='<p class="preview-note"><strong>Important:</strong> Use this only when the student is beginning a new academic year after completing the current academic year. Do not use it when moving from first semester to second semester.</p>'+
+  const currentYear=academicYearKey(data.profile.academicSession||data.profile.academicYear||data.profile.term);
+  const body='<p class="preview-note"><strong>Important:</strong> Use this only after the previous academic year is complete. Carryovers must not be activated when moving from first semester to second semester. First move the active student profile into the new academic year, then add these carryovers.</p>'+
     field('New academic year','nextAcademicYear','<input id="f-nextAcademicYear" name="nextAcademicYear" required maxlength="24" placeholder="e.g. 2027/2028">')+
     '<div class="note-callout">'+pending.length+' carryover course(s) are waiting. They will be added to the active course list only after this confirmation.</div>'+
     '<label class="form-field"><span><input type="checkbox" name="confirmNewYear" value="yes" required> I confirm that this is a different academic year, not the next semester of the same year.</span></label>';
   openModal('Start a new academic year','Activate carryover courses for the year the student is now entering.',body,'Add carryovers to new year',fd=>{
     const entered=String(fd.get('nextAcademicYear')||'').trim(),enteredKey=academicYearKey(entered);
     if(!entered){toast('Enter the new academic year.');return}
+    if((currentYear&&(!enteredKey||enteredKey!==currentYear))){
+      toast('Update the active student profile to the new academic year before activating carryovers. Do not activate them during the second semester of the old year.');return;
+    }
     if(years.some(year=>!enteredKey||year===enteredKey)){
       toast('Enter a different academic year from the one in which these carryovers were recorded.');return;
     }

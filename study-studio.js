@@ -963,4 +963,3 @@ window.eduCaptureStudioPhoto=window.eduCapturePhonePhoto;window.eduHandleStudioF
 window.eduPageRenderers.records=renderStudyRecords;
 if(!data.profile.setupComplete)currentPage='setup';
 scheduleEventAlert();
-render();

@@ -533,3 +533,35 @@ html[data-theme="dark"] .student-id-divider{background:var(--line)}
   }
   .student-id-photo img{width:100%;height:100%;min-height:100%;object-fit:cover;object-position:center center}
 }
+
+
+/* Robust grid stretch: anchor the photo to all four edges of its ID-card column. */
+.student-id-photo-col{
+  position:relative;
+  align-self:stretch;
+  min-width:0;
+  min-height:0;
+  height:auto;
+}
+.student-id-photo{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  min-height:0;
+  max-height:none;
+  aspect-ratio:auto;
+}
+.student-id-photo img{
+  display:block;
+  width:100%;
+  height:100%;
+  min-height:0;
+  object-fit:cover;
+  object-position:center center;
+}
+@media(max-width:760px){
+  .student-id-photo-col{position:relative;align-self:stretch;height:auto;min-height:0}
+  .student-id-photo{position:absolute;inset:0;width:100%;height:100%;min-height:0;max-height:none;aspect-ratio:auto}
+  .student-id-photo img{width:100%;height:100%;min-height:0;object-fit:cover;object-position:center center}
+}

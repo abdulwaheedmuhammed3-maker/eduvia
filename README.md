@@ -24,7 +24,7 @@ Uploaded files are read in the browser. Extracted text and planner details stay 
 
 ## Phone notifications
 
-In the browser and installed PWA, Eduvia can send class and study alerts about five minutes before they start, plus a daily reading reminder, through its own phone notification service. The free service uses Cloudflare Workers and D1; it does not use Google Calendar. Phone notification permissions and sound settings still apply. iPhone and iPad require Eduvia to be added to the Home Screen (iOS/iPadOS 16.4 or later).
+In the browser and installed PWA, Eduvia schedules class and study alerts for their scheduled start time, plus a daily reading reminder, through its own phone notification service. Browser push can arrive late because a scheduled Worker checks once per minute and sends up to ten due reminders per run. The free service uses Cloudflare Workers and D1; it does not use Google Calendar. Phone notification permissions and sound settings still apply. iPhone and iPad require Eduvia to be added to the Home Screen (iOS/iPadOS 16.4 or later).
 
 The browser notification service stores a device subscription and scheduled reminder titles and times so it can deliver alerts while the PWA is closed. In the Android app, alarms are scheduled locally on the phone instead; Android asks for notification access and exact-alarm access, and Eduvia asks for camera access only when the learner taps **Take a photo**. Courses, results, uploaded materials, and personal documents remain on the device.
 

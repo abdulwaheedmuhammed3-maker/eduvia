@@ -468,9 +468,14 @@ function collectAcademicResults(formData,optional=false){
   const subjects=formData.getAll('academicSubject'),codes=formData.getAll('academicCode'),grades=formData.getAll('academicGrade');
   const carryovers=[...document.querySelectorAll('#academicResultRows .academic-result-row')].map(row=>!!row.querySelector('[name="academicCarryover"]')?.checked);
   const rows=subjects.map((subject,index)=>({subject:String(subject||'').trim(),code:String(codes[index]||'').trim(),grade:String(grades[index]||'').trim(),carryover:carryovers[index]||false}));
-  if(optional){if(rows.some(row=>row.grade&&!row.subject)){toast('Add a subject or course name for each grade or score.');return null}return rows.filter(row=>row.subject&&row.grade)}
-  if(rows.some(row=>(row.subject||row.code||row.grade)&&(!row.subject||!row.grade))){toast('For each result, add both the subject or course and its grade or score.');return null}
-  return rows.filter(row=>row.subject&&row.grade);
+  if(optional){
+    if(rows.some(row=>row.grade&&!row.subject)){toast('Add a subject or course name for each grade or score.');return null}
+    return rows.filter(row=>row.subject&&(row.grade||row.carryover));
+  }
+  if(rows.some(row=>(row.subject||row.code||row.grade||row.carryover)&&(!row.subject||(!row.grade&&!row.carryover)))){
+    toast('For each result, add a subject and either its grade or mark it as a carryover.');return null;
+  }
+  return rows.filter(row=>row.subject&&(row.grade||row.carryover));
 }
 function academicResultFields(results=[],courses=[]){
   return '<section class="academic-result-section"><div class="panel-head"><div><h3>Subject or course results</h3><p>Enter the grade, score, or outcome exactly as your school reported it.</p></div></div>'+academicResultRowsMarkup(results,courses)+'</section>';
@@ -487,25 +492,33 @@ function academicYearKey(value=''){
   if(!match)return '';
   const start=Number(match[1]),rawEnd=match[2];
   const end=rawEnd.length===2?Math.floor(start/100)*100+Number(rawEnd):Number(rawEnd);
-  return start+'/'+end;
+  return end===start+1?start+'/'+end:'';
+}
+function firstAcademicYear(...values){
+  for(const value of values){const year=academicYearKey(value);if(year)return year}
+  return '';
 }
 function syncPendingCarryovers(record){
   data.pendingCarryovers=Array.isArray(data.pendingCarryovers)?data.pendingCarryovers:[];
+  const previous=new Map(data.pendingCarryovers.map(item=>[item.id,item]));
   data.pendingCarryovers=data.pendingCarryovers.filter(item=>item.sourceRecordId!==record.id);
   const profile=record.profile||{};
-  const sourceYear=academicYearKey(record.academicYear||profile.academicSession||profile.academicYear||record.term||profile.term);
+  const sourceYear=firstAcademicYear(record.academicYear,profile.academicSession,profile.academicYear,record.term,profile.term);
   (record.results||[]).forEach((result,index)=>{
-    if(!result.carryover||!result.subject) return;
+    if(!result.carryover||!result.subject)return;
+    const key=String(record.id)+':'+index,prior=previous.get(key);
     data.pendingCarryovers.push({
-      id:String(record.id)+':'+index,
+      id:key,
       sourceRecordId:record.id,
       subject:result.subject,
       code:result.code||'',
       grade:result.grade||'',
       sourcePeriod:[record.level||profile.level,record.term||profile.term,sourceYear].filter(Boolean).join(' · ')||record.label||'Previous academic year',
       sourceAcademicYear:sourceYear,
-      status:'pending',
-      createdAt:Date.now()
+      status:prior?.status||'pending',
+      activatedAcademicYear:prior?.activatedAcademicYear||'',
+      activatedAt:prior?.activatedAt||null,
+      createdAt:prior?.createdAt||Date.now()
     });
   });
 }
@@ -513,19 +526,21 @@ function openCarryoverActivation(){
   const pending=(data.pendingCarryovers||[]).filter(item=>item.status!=='active');
   if(!pending.length){toast('There are no pending carryover courses.');return}
   const years=[...new Set(pending.map(item=>item.sourceAcademicYear).filter(Boolean))];
-  const currentYear=academicYearKey(data.profile.academicSession||data.profile.academicYear||data.profile.term);
+  const currentYear=firstAcademicYear(data.profile.academicSession,data.profile.academicYear,data.profile.term);
+  if(!currentYear){toast('Set the active academic year in your student profile before activating carryovers. Use a format such as 2026/2027.');return}
+  if(pending.some(item=>!academicYearKey(item.sourceAcademicYear))){toast('Some carryover records are missing a valid original academic year. Edit those results before activating carryovers.');return}
   const body='<p class="preview-note"><strong>Important:</strong> Use this only after the previous academic year is complete. Carryovers must not be activated when moving from first semester to second semester. First move the active student profile into the new academic year, then add these carryovers.</p>'+
     field('New academic year','nextAcademicYear','<input id="f-nextAcademicYear" name="nextAcademicYear" required maxlength="24" placeholder="e.g. 2027/2028">')+
     '<div class="note-callout">'+pending.length+' carryover course(s) are waiting. They will be added to the active course list only after this confirmation.</div>'+
     '<label class="form-field"><span><input type="checkbox" name="confirmNewYear" value="yes" required> I confirm that this is a different academic year, not the next semester of the same year.</span></label>';
   openModal('Start a new academic year','Activate carryover courses for the year the student is now entering.',body,'Add carryovers to new year',fd=>{
     const entered=String(fd.get('nextAcademicYear')||'').trim(),enteredKey=academicYearKey(entered);
-    if(!entered){toast('Enter the new academic year.');return}
-    if((currentYear&&(!enteredKey||enteredKey!==currentYear))){
-      toast('Update the active student profile to the new academic year before activating carryovers. Do not activate them during the second semester of the old year.');return;
+    if(!enteredKey){toast('Enter a valid academic year such as 2027/2028.');return}
+    if(enteredKey!==currentYear){
+      toast('The new year must match the active academic year in the student profile. Do not activate carryovers during the second semester of the old year.');return;
     }
-    if(years.some(year=>!enteredKey||year===enteredKey)){
-      toast('Enter a different academic year from the one in which these carryovers were recorded.');return;
+    if(years.some(year=>year===enteredKey)){
+      toast('A carryover can only be activated in an academic year after its original year.');return;
     }
     let added=0;
     for(const item of pending){
@@ -677,13 +692,15 @@ function archiveCurrentTerm(){
     const archiveId=id(),label=String(fd.get('archiveLabel')||defaultLabel).trim(),studyItems=completed.filter(item=>item.type==='study'||(!item.type&&String(item.eventId||'').startsWith('focus-')));
     const studyMinutes=studyItems.reduce((total,item)=>total+(Number(item.minutes)||Number(data.profile.sessionMinutes)||0),0);
     const materialRecords=[];for(const material of materials){const saved=await readMaterial(material.id);if(saved?.text)materialRecords.push(saved)}
+    const nextAcademicYear=String(fd.get('nextAcademicSession')||'').trim();
+    if(!academicYearKey(nextAcademicYear)){toast('Enter the next academic year in a valid format, such as 2027/2028.');return}
     const results=collectAcademicResults(fd,true);if(!results)return;
     const archive={id:archiveId,label,recordType:'term-archive',stage:data.profile.stage||'',level:data.profile.level||'',term:data.profile.term||'',institution:data.profile.institution||'',programme:data.profile.programme||'',archivedAt:Date.now(),profile:JSON.parse(JSON.stringify(data.profile)),courses,events,completed,resources,materials,materialText:JSON.parse(JSON.stringify(data.materialText||[])),materialRecords,studyPlan:data.studyPlan||null,results,resultsNotes:String(fd.get('resultsNotes')||'').trim()};
     const summary={...educationRecordSummary(archive),studyMinutes};
     try{await putStudioRecord('academicRecords',archive)}catch(error){toast('Could not save this term to local storage: '+(error.message||'storage is unavailable'));return}
     syncPendingCarryovers(archive);
     data.academicHistory.unshift(summary);data.courses=[];data.events=[];data.completed=[];data.resources=[];data.studyPlan=null;
-    data.profile.stage=String(fd.get('nextStage')||data.profile.stage||'');data.profile.level=String(fd.get('nextLevel')||'').trim();data.profile.academicSession=String(fd.get('nextAcademicSession')||data.profile.academicSession||academicYearKey(profile.term)||'').trim();data.profile.term=String(fd.get('nextTerm')||'').trim();data.profile.setupAt=todayISO();
+    data.profile.stage=String(fd.get('nextStage')||data.profile.stage||'');data.profile.level=String(fd.get('nextLevel')||'').trim();data.profile.academicSession=nextAcademicYear;data.profile.term=String(fd.get('nextTerm')||'').trim();data.profile.setupAt=todayISO();
     closeModal();save();toast('Term archived. Your next study period is ready.');
   });
 }

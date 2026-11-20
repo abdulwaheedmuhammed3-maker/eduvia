@@ -6,8 +6,8 @@
   "workers_dev": true,
   "triggers": { "crons": ["* * * * *"] },
   "vars": {
-    "ALLOWED_ORIGIN": "https://eduvia-pmso.onrender.com",
-    "VAPID_SUBJECT": "https://eduvia-pmso.onrender.com"
+    "ALLOWED_ORIGIN": "https://eduvia-study-planner.onrender.com,https://eduvia-pmso.onrender.com",
+    "VAPID_SUBJECT": "https://eduvia-study-planner.onrender.com"
   },
   "d1_databases": [
     {

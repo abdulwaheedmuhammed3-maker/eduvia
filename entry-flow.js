@@ -295,8 +295,18 @@
     selectedCountry = chosen;
     if (typeof data !== 'undefined' && data.profile) {
       data.profile.country = chosen;
-      if (typeof save === 'function') save();
-      else if (typeof STORE_KEY !== 'undefined') localStorage.setItem(STORE_KEY, JSON.stringify(data));
+      if (typeof save === 'function') {
+        if (!save()) {
+          if (error) error.textContent = 'Eduvia could not save your country selection. Check your device storage and try again.';
+          return;
+        }
+      } else if (typeof STORE_KEY !== 'undefined') {
+        try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
+        catch {
+          if (error) error.textContent = 'Eduvia could not save your country selection. Check your device storage and try again.';
+          return;
+        }
+      }
     }
     try {
       localStorage.setItem(COUNTRY_KEY, chosen);
@@ -374,7 +384,10 @@
       localStorage.setItem(COUNTRY_KEY, chosenCountry);
       localStorage.setItem(INTRO_KEY, '1');
     } catch {}
-    if (typeof save === 'function') save();
+    if (typeof save === 'function' && !save()) {
+      if (error) error.textContent = 'Eduvia could not save your learning profile. Check your device storage and try again.';
+      return;
+    }
     if (typeof applyTheme === 'function') applyTheme();
     if (typeof setPage === 'function') setPage('today');
     else if (typeof render === 'function') render();

@@ -145,4 +145,5 @@
         '<button type="button" class="roadmap-more-entry" data-page="roadmaps"><span>↗</span><strong>Learning roadmaps</strong><small>Goals, milestones and progress</small></button>';
     };
   }
+  if(typeof render==='function')render();
 })();

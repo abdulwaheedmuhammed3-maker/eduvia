@@ -28,13 +28,13 @@ const MOTIVATION_QUOTES = [
   'You can learn difficult things one idea at a time.'
 ];
 function storageGet(key){
-  try{return window.storageGet(key)}catch{return null}
+  try{return window.localStorage.getItem(key)}catch{return null}
 }
 function storageSet(key,value){
-  try{window.storageSet(key,value);return null}catch(error){return error}
+  try{window.localStorage.setItem(key,value);return null}catch(error){return error}
 }
 function storageRemove(key){
-  try{window.storageRemove(key);return null}catch(error){return error}
+  try{window.localStorage.removeItem(key);return null}catch(error){return error}
 }
 function chooseEntryMotivationQuote(){let previous=-1;try{const value=storageGet('eduvia-entry-quote-v1'),saved=value===null?-1:Number(value);if(Number.isInteger(saved))previous=saved}catch{}const choices=MOTIVATION_QUOTES.map((_,index)=>index).filter(index=>index!==previous);const selected=choices[Math.floor(Math.random()*choices.length)];try{storageSet('eduvia-entry-quote-v1',String(selected))}catch{}return MOTIVATION_QUOTES[selected]}
 const entryMotivationQuote = chooseEntryMotivationQuote();
@@ -228,16 +228,16 @@ function renderSettings(){
  const theme=['system','light','dark'].includes(data.profile.theme)?data.profile.theme:'system';
  const native=Boolean(window.EduviaNative?.isNative);
  const pushEnabled=native?nativeAlertsAreActive():storageGet(PUSH_ENABLED_KEY)==="1";
- const notificationText=native?'Eduvia schedules lecture and study alarms directly on this phone, including while the app is closed. Allow notifications and exact alarms. Android Do Not Disturb, silent mode, and notification-channel settings can still silence alerts; Eduvia cannot override them automatically.':'Get scheduled class and learning-session alerts at their scheduled start times, plus your daily learning reminder. Background delivery requires the notification service and operating-system permissions to be available. Browser and phone sound settings, including Do Not Disturb, can still silence alerts. The phone subscription and scheduled titles and times are stored by Eduvia’s free notification service; the rest of your planner stays on this device. iPhone and iPad require Eduvia on the Home Screen.';
+ const notificationText=native?'Eduvia schedules class and learning-session alerts directly on this phone, including while the app is closed. Allow notifications and exact alarms. Android Do Not Disturb, silent mode, and notification-channel settings can still silence alerts; Eduvia cannot override them automatically.':'Get scheduled class and learning-session alerts at their scheduled start times, plus your daily learning reminder. Background delivery requires the notification service and operating-system permissions to be available. Browser and phone sound settings, including Do Not Disturb, can still silence alerts. The phone subscription and scheduled learning titles and times are stored by Eduvia’s free notification service; the rest of your planner stays on this device. iPhone and iPad require Eduvia on the Home Screen.';
  const notificationButton=pushEnabled?'Turn off':(native?'Enable alarms &amp; notifications':'Enable &amp; send test');
- return `${pageHead('MAKE IT YOURS','Settings','Make Eduvia feel comfortable on your device, and choose a study routine that fits your day.','')}
+ return `${pageHead('MAKE IT YOURS','Settings','Make Eduvia feel comfortable on your device, and choose a learning routine that fits your day.','')}
  <section class="panel settings-panel">
-  <div class="panel-head"><div><h3>Your study space</h3><p>Personalise the app without changing your academic records.</p></div></div>
+  <div class="panel-head"><div><h3>Your learning space</h3><p>Personalise the app without changing your learning history.</p></div></div>
   ${profilePhotoSettingsMarkup()}
   <div class="setting-row"><div><strong>Appearance</strong><p>Follow your phone setting, or choose light or dark mode.</p></div><select id="settingTheme" aria-label="Appearance"><option value="system" ${theme==='system'?'selected':''}>System setting</option><option value="light" ${theme==='light'?'selected':''}>Light</option><option value="dark" ${theme==='dark'?'selected':''}>Dark</option></select></div>
   <div class="setting-row"><div><strong>Name</strong><p>Used for your welcome message</p></div><input type="text" id="settingName" value="${safe(data.profile.name)}" maxlength="40" /></div>
-  <div class="setting-row"><div><strong>Weekly study goal</strong><p>How many sessions would feel realistic?</p></div><input type="number" id="settingGoal" value="${Number(data.profile.weeklyGoal)||5}" min="1" max="30" /></div>
-  <div class="setting-row"><div><strong>Focus session length</strong><p>Minutes for each guided focus session</p></div><input type="number" id="settingMinutes" value="${Number(data.profile.sessionMinutes)||25}" min="5" max="180" /></div>
+  <div class="setting-row"><div><strong>Weekly learning goal</strong><p>How many learning sessions would feel realistic?</p></div><input type="number" id="settingGoal" value="${Number(data.profile.weeklyGoal)||5}" min="1" max="30" /></div>
+  <div class="setting-row"><div><strong>Learning session length</strong><p>Minutes for each guided focus session</p></div><input type="number" id="settingMinutes" value="${Number(data.profile.sessionMinutes)||25}" min="5" max="180" /></div>
   <div class="setting-row"><div><strong>Daily learning reminder</strong><p>${data.profile.reminderTime?'Your daily reminder time':'Pick a time to build your rhythm'}</p></div><input type="time" id="settingReminder" value="${safe(data.profile.reminderTime||'19:00')}" /></div>
   <div class="setting-row"><div><strong>Eduvia phone notifications</strong><p>${notificationText}</p></div><button class="secondary-btn" data-action="${pushEnabled?'disable-notifications':'enable-notifications'}">${notificationButton}</button></div>
   <div class="setting-row backup-setting-row"><div><strong>Planner backup</strong><p>Restore your profile, courses, timetable, notes, progress and study records. Personal documents and full education records need the portable ZIP in Personal documents.</p></div><div class="backup-actions"><button class="secondary-btn" data-action="export-data">Download JSON</button><label class="secondary-btn backup-file-label">Restore from phone JSON<input id="plannerJsonBackupFile" type="file" accept=".json,application/json"></label></div></div>
@@ -298,7 +298,7 @@ function scheduleEventAlert(){
     if(next){
       const key='eduvia-event-alert:'+next.event.id+':'+next.date;let already=false;
       try{already=storageGet(key)==='1'}catch{}
-      if(!already){try{storageSet(key,'1')}catch{};const label=next.event.type==='class'?'Lecture':'Study session';await showStudyNotification(label+' starts now',next.event.title+' is scheduled to start now.');}
+      if(!already){try{storageSet(key,'1')}catch{};const label=next.event.type==='class'?'Class':'Learning session';await showStudyNotification(label+' starts now',next.event.title+' is scheduled to start now.');}
     }
     scheduleEventAlert();
   },Math.max(100,Math.min(delay,24*60*60*1000)));
@@ -318,7 +318,7 @@ async function enableNotifications(){if(window.EduviaNative?.isNative){try{const
 async function disableNotifications(){if(window.EduviaNative?.isNative){try{await window.EduviaNative.disableAlerts();storageRemove(NATIVE_ALERTS_ENABLED_KEY);updatePhoneNotificationButton(false);clearTimeout(eventAlertTimer);clearTimeout(window.daymarkReminder);render();toast('Eduvia alarms and notifications are off on this phone.')}catch(error){toast(error.message||'Eduvia could not turn off phone alerts.')}return}const token=storageGet(PUSH_TOKEN_KEY);try{if(token)await pushApi('/v1/unsubscribe',{method:'POST'},token);if('serviceWorker'in navigator){const registration=await navigator.serviceWorker.ready,subscription=await registration.pushManager.getSubscription();if(subscription)await subscription.unsubscribe()}storageRemove(PUSH_TOKEN_KEY);storageRemove(PUSH_ENABLED_KEY);storageSet(PUSH_DISABLED_KEY,'1');updatePhoneNotificationButton(false);clearTimeout(eventAlertTimer);clearTimeout(window.daymarkReminder);render();toast('Eduvia phone notifications are off.')}catch(error){toast(error.message||'Could not turn off phone notifications. Try again when online.')}}
 function deleteCourse(courseId){if(!confirm('Remove this course and its linked timetable items?'))return;data.courses=data.courses.filter(c=>c.id!==courseId);data.events=data.events.filter(e=>e.courseId!==courseId);data.resources=data.resources.filter(r=>r.courseId!==courseId);save();toast('Course removed')}
 function deleteEvent(eventId){data.events=data.events.filter(e=>e.id!==eventId);save();toast('Timetable item removed')}
-function clearData(){if(!confirm('This will permanently remove your courses, schedule, resources, and progress from this device. Download a backup first if you want to keep them.'))return;data=defaultData();save();toast('Planner data cleared')}
+function clearData(){if(!confirm('This will permanently remove your learning areas, schedule, resources, and progress from this device. Download a backup first if you want to keep them.'))return;data=defaultData();save();toast('Planner data cleared')}
 
 // Course navigation supports touch, pointer and click input on mobile browsers and installed PWAs.
 function openCourseFromCard(card,event){

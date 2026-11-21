@@ -418,3 +418,8 @@
 .entry-flow-card.entry-flow-profile-screen .entry-profile-day-list input:focus-visible+span{outline-color:#7180ce}
 .entry-flow-card.entry-flow-profile-screen .entry-profile-actions>span{color:#77839a}
 .entry-flow-card.entry-flow-profile-screen .entry-flow-error{color:#b54758}
+
+
+/* Only show university-specific onboarding fields to formal education learners. */
+.entry-profile-formal-only{grid-column:1/-1}
+.entry-profile-grid[hidden]{display:none!important}

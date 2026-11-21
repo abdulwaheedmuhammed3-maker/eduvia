@@ -255,3 +255,50 @@ html[data-theme="dark"] .setting-row select{background:#141a2d;color:#f1f2ff;bor
 html[data-theme="dark"] .discover-article{background:#1b2035;border-color:#303650}
 html[data-theme="dark"] .discover-article p{color:#c5c9df}
 @media(max-width:760px){.discover-library-card{min-height:180px;padding:18px;border-radius:19px}.discover-article{padding:20px}}
+
+
+/* Discover mobile layout: compact guide tiles and reliable touch targets. */
+@media (max-width:760px){
+  .exp-discover-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    align-items:stretch;
+    gap:10px;
+  }
+  .discover-library-card{
+    box-sizing:border-box;
+    min-height:0;
+    height:100%;
+    padding:13px;
+    gap:8px;
+    border-radius:16px;
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .discover-library-card .exp-icon{
+    width:34px;
+    height:34px;
+    border-radius:11px;
+    font-size:17px;
+  }
+  .discover-library-card b{
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+    overflow:hidden;
+    font-size:13px;
+    line-height:1.25;
+  }
+  .discover-library-card>span:not(.exp-icon){
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:3;
+    overflow:hidden;
+    font-size:11px;
+    line-height:1.45;
+  }
+  .discover-library-card small{
+    padding-top:6px;
+    margin-top:auto;
+    font-size:10px;
+  }
+}

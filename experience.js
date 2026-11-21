@@ -48,7 +48,8 @@ function myStudy(){
  '<button data-page="records">'+ic('▣','blue')+'<b>Session records</b><small>'+(data.studyRecords||[]).length+' saved class and study records</small></button>'+
  '<button data-page="more">'+ic('🎓','orange')+'<b>Examination centre</b><small>Exam dates, revision plans and mock examinations</small></button>'+
  '<button data-page="vault">'+ic('▧','lime')+'<b>Personal documents</b><small>Keep transcripts and useful files together</small></button>'+
- '<button data-page="profile">'+ic('♙')+'<b>Student profile</b><small>Update institution and academic details</small></button></div></section>'+
+ '<button data-page="profile">'+ic('♙')+'<b>Student profile</b><small>Update institution and academic details</small></button>'+
+ '<button data-page="settings">'+ic('⚙','purple')+'<b>Settings & appearance</b><small>System, light or dark mode; reminders and backups</small></button></div></section>'+
  '<section class="exp-inline-cta"><div><b>Keep your academic journey together.</b><span>Your results, semester history and carryover rules remain in your existing records.</span></div><button class="primary-btn" data-page="education">Open academic history ↗</button></section>';
 }
 function askResultHtml(){

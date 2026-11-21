@@ -67,8 +67,7 @@
     event:'<rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M7.5 3v4M16.5 3v4M3.5 9.5h17M8 13h3m-3 4h2m4-4h2"/>',
     libraryBooks:'<path d="M3.5 5.5h4v14h-4zM9.5 3.5h4v16h-4zM15.5 6.5h5v13h-5z"/><path d="M5.5 8h.01M11.5 6h.01M18 9h.01"/>',
     bolt:'<path d="M13.5 2.5 5 13h6l-.5 8.5L19 10h-6z"/>',
-    puzzle:'<path d="M9 3.5h2a2 2 0 1 1 4 0h2a2 2 0 0 1 2 2v3a2 2 0 1 0 0 4v3a2 2 0 0 1-2 2h-3a2 2 0 1 0-4 0H7a2 2 0 0 1-2-2v-3a2 2 0 1 0 0-4v-3a2 2 0 0 1 2-2z"/>
-    
+    puzzle:'<path d="M9 3.5h2a2 2 0 1 1 4 0h2a2 2 0 0 1 2 2v3a2 2 0 1 0 0 4v3a2 2 0 0 1-2 2h-3a2 2 0 1 0-4 0H7a2 2 0 0 1-2-2v-3a2 2 0 1 0 0-4v-3a2 2 0 0 1 2-2z"/>',
   };
 
   const glyphMap={

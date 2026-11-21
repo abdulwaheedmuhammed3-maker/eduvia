@@ -71,3 +71,9 @@ jobs:
           grep -q 'experience.css' scripts/build-web.mjs
           grep -q 'app.js?v=' service-worker.js
           grep -q 'eduvia-study-alarms-v2' native-bridge-src.js
+          ! grep -q 'user-scalable=no' index.html
+          ! grep -q 'touchstart.*preventDefault' index.html
+          grep -q 'storage-accessibility-2' index.html
+          grep -q 'storage-accessibility-2' service-worker.js
+          grep -q 'function save(){applyTheme();try{localStorage.setItem' app.js
+          grep -q "if(!route){currentPage='today'" app.js

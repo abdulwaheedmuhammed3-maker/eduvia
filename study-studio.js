@@ -1166,9 +1166,7 @@ function editStudyProfile(){
       for(const key of ['institution','stage','programme','level','term','department'])data.profile[key]=String(fd.get(key)||'').trim();
       data.profile.degreeProgramme=data.profile.programme||'';
     }else{
-      data.profile.institution='';data.profile.stage='';data.profile.department='';data.profile.degreeProgramme='';data.profile.academicSession='';data.profile.semester='';data.profile.programme=data.profile.learningFocus;
-      data.profile.level='';
-      data.profile.term='';
+      data.profile.programme=data.profile.learningFocus;
     }
     closeModal();save();toast('Learning profile updated');
   });

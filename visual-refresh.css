@@ -350,3 +350,20 @@ html[data-theme="dark"] .entry-flow-card{background:linear-gradient(155deg,#1b20
 html[data-theme="dark"] .entry-flow-title,html[data-theme="dark"] .entry-flow-brand{color:#f1f2ff}
 html[data-theme="dark"] .entry-flow-copy,html[data-theme="dark"] .entry-flow-privacy{color:#a8aec8}
 html[data-theme="dark"] .entry-flow-country{background:#141a2d;color:#f1f2ff;border-color:#3b4262}
+
+
+/* Profile onboarding: enforce readable contrast in light mode on mobile and desktop. */
+html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen .entry-profile-section{background:#f8f9fc!important;border-color:#dfe4ef!important}
+html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen .entry-profile-section h2{color:#20283a!important}
+html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen .entry-profile-section>p{color:#59657c!important}
+html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen .entry-profile-field,html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen .entry-profile-field>span{color:#35405a!important}
+html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen .entry-profile-field i{color:#4766a7!important}
+html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen .entry-profile-field span small,html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen .entry-profile-field>small{color:#65738b!important}
+html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen input,html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen select{background:#fff!important;color:#20283a!important;border-color:#cbd3e2!important;color-scheme:light!important}
+html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen input::placeholder{color:#8792a6!important;opacity:1}
+html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen .entry-profile-days>strong{color:#35405a!important}
+html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen .entry-profile-days>strong i{color:#4766a7!important}
+html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen .entry-profile-day-list span{background:#fff!important;color:#46546d!important;border-color:#cbd3e2!important}
+html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen .entry-profile-day-list input:checked+span{background:#edf2ff!important;color:#354a99!important;border-color:#7180ce!important}
+html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen .entry-profile-actions>span{color:#65738b!important}
+html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen .entry-flow-error{color:#b54758!important}

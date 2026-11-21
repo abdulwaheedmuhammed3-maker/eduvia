@@ -1,4 +1,5 @@
-/* Eduvia icon language: quiet outline SVGs, soft colour coding and rounded active states. */
+/* Eduvia feature icons: Material-like outlined symbols with semantic pastel accents.
+   The five mobile footer icons intentionally retain their original artwork and styling. */
 :root{
   --icon-purple:#736bd5;--icon-purple-soft:#efedff;
   --icon-pink:#c77c9b;--icon-pink-soft:#fbeaf1;
@@ -8,8 +9,15 @@
   --icon-teal:#61a99b;--icon-teal-soft:#e9f6f2;
   --icon-slate:#9398aa;--icon-slate-soft:#f0f1f6;
 }
-.eduvia-line-icon{display:block;width:22px;height:22px;flex:0 0 auto;overflow:visible;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
-.nav-icon{width:40px;height:40px;flex:0 0 40px;display:grid;place-items:center;border-radius:14px;background:var(--icon-purple-soft);color:var(--icon-purple);font-size:0;transition:background .18s ease,color .18s ease,transform .18s ease}
+.eduvia-line-icon{
+  display:block;width:22px;height:22px;flex:0 0 auto;overflow:visible;
+  fill:none;stroke:currentColor;stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round;
+}
+.nav-icon{
+  width:40px;height:40px;flex:0 0 40px;display:grid;place-items:center;
+  border-radius:14px;background:var(--icon-purple-soft);color:var(--icon-purple);
+  font-size:0;transition:background .18s ease,color .18s ease,transform .18s ease;
+}
 .nav-icon .eduvia-line-icon{width:23px;height:23px}
 .nav-item:nth-child(2) .nav-icon{background:var(--icon-pink-soft);color:var(--icon-pink)}
 .nav-item:nth-child(3) .nav-icon{background:var(--icon-green-soft);color:var(--icon-green)}
@@ -17,27 +25,19 @@
 .nav-item:nth-child(5) .nav-icon{background:var(--icon-orange-soft);color:var(--icon-orange)}
 .nav-item.active .nav-icon{background:var(--icon-purple-soft);color:var(--icon-purple)}
 .nav-item{gap:11px}
-.mobile-nav{min-height:calc(76px + env(safe-area-inset-bottom));padding:7px 6px calc(6px + env(safe-area-inset-bottom));align-items:center;background:rgba(255,255,255,.96);border-top:1px solid #e9eaf1;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
-.mobile-nav-item{min-width:0;min-height:61px;gap:3px;justify-content:center;color:var(--icon-slate);font-size:10px;font-weight:700;border-radius:15px;padding:3px 1px 4px;transition:color .18s ease,background .18s ease}
-.mobile-nav-icon{width:44px;height:43px;flex:0 0 43px;display:grid;place-items:center;border-radius:16px;background:transparent;transition:background .18s ease,transform .18s ease}
-.mobile-nav-icon .eduvia-line-icon{width:29px;height:29px;stroke-width:1.75}
-.mobile-nav-item .icon-today{color:var(--icon-purple)}
-.mobile-nav-item .icon-my-study{color:var(--icon-pink)}
-.mobile-nav-item .icon-play{color:var(--icon-green)}
-.mobile-nav-item .icon-ask{color:var(--icon-purple)}
-.mobile-nav-item .icon-discover{color:var(--icon-orange)}
-.mobile-nav-item.active{color:#5550ad}
-.mobile-nav-item.active .mobile-nav-icon{background:var(--icon-purple-soft);color:var(--icon-purple);transform:none}
-.mobile-nav-item:active .mobile-nav-icon{transform:scale(.95)}
-.mobile-nav-label{font-size:10px;font-weight:700;letter-spacing:0;line-height:1.15}
-.exp-icon{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:14px;font-size:0}
-.exp-icon .eduvia-line-icon{width:22px;height:22px}
+.exp-icon{
+  display:inline-grid;place-items:center;width:40px;height:40px;flex:0 0 40px;
+  border-radius:14px;font-size:0;vertical-align:middle;
+}
+.exp-icon .eduvia-line-icon{width:22px;height:22px;stroke-width:1.85}
 .exp-icon-pink{background:#fff0f6;color:#b96c8b}
 .exp-icon-blue{background:#edf6ff;color:#6499c5}
 .exp-icon-lime{background:#f1f8df;color:#789c42}
 .exp-icon-orange{background:#fff3e5;color:#c88e4f}
 .exp-icon-purple{background:#f0edff;color:#7169ce}
-.resource-icon,.habit-badge,.empty-icon,.stat-mark,.btn-icon,.upload-symbol{display:inline-grid;place-items:center;font-size:0}
+.resource-icon,.habit-badge,.empty-icon,.stat-mark,.btn-icon,.upload-symbol{
+  display:inline-grid;place-items:center;font-size:0;
+}
 .resource-icon .eduvia-line-icon{width:20px;height:20px}
 .habit-badge .eduvia-line-icon{width:19px;height:19px}
 .empty-icon .eduvia-line-icon{width:24px;height:24px}
@@ -48,21 +48,12 @@
 .icon-btn .eduvia-line-icon{width:16px;height:16px}
 .upload-icon .eduvia-line-icon{width:20px;height:20px}
 .student-id-icon{font-size:0}
-.student-id-icon .eduvia-line-icon{width:21px;height:21px;stroke-width:1.7}
+.student-id-icon .eduvia-line-icon{width:21px;height:21px;stroke-width:1.8}
 .resource-icon:not([data-edu-icon]){font-size:10px;font-weight:800;letter-spacing:.2px}
 .resource-icon[data-edu-icon]{font-size:0}
-html[data-theme="dark"] .mobile-nav{background:rgba(25,29,48,.96);border-top-color:#323751}
-html[data-theme="dark"] .mobile-nav-item{color:#a5abc0}
-html[data-theme="dark"] .mobile-nav-item.active{color:#d0ccff}
-html[data-theme="dark"] .mobile-nav-item.active .mobile-nav-icon{background:#353159;color:#c4beff}
-html[data-theme="dark"] .mobile-nav-item .icon-my-study{color:#e2a4bd}
-html[data-theme="dark"] .mobile-nav-item .icon-play{color:#a7cf7e}
-html[data-theme="dark"] .mobile-nav-item .icon-discover{color:#e0b47d}
 html[data-theme="dark"] .nav-icon{background:#353159;color:#c4beff}
 html[data-theme="dark"] .nav-item:nth-child(2) .nav-icon{background:#493445;color:#e2a4bd}
 html[data-theme="dark"] .nav-item:nth-child(3) .nav-icon{background:#34452f;color:#a7cf7e}
 html[data-theme="dark"] .nav-item:nth-child(5) .nav-icon{background:#4b3d30;color:#e0b47d}
 html[data-theme="dark"] .nav-item.active .nav-icon{background:#353159;color:#c4beff}
 html[data-theme="dark"] .student-id-icon,html[data-theme="dark"] .upload-icon{filter:saturate(.9) brightness(.92)}
-@media(max-width:760px){.mobile-nav{grid-template-columns:repeat(5,minmax(0,1fr))}.mobile-nav-item{font-size:10px}.mobile-nav-icon{width:43px;height:42px;flex-basis:42px}.mobile-nav-icon .eduvia-line-icon{width:28px;height:28px}}
-@media(max-width:360px){.mobile-nav{padding-left:3px;padding-right:3px}.mobile-nav-icon{width:39px;height:39px;flex-basis:39px}.mobile-nav-icon .eduvia-line-icon{width:26px;height:26px}.mobile-nav-label{font-size:9px}}

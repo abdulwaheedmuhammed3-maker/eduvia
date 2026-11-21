@@ -33,7 +33,7 @@ To deploy the free service, follow `notifications-worker/README.md`, then set it
 
 New installations open with the Eduvia brand splash and a short introduction to learning, practice, and progress. The learner then chooses a country and completes the learning profile and study routine before the main app is unlocked. The profile is saved locally and can be updated later from Learning Profile. The flow does not ask for ethnicity or a nickname.
 
-The same HTML/CSS/JavaScript entry flow is included in the website and the Capacitor Android build. Existing planner data, local privacy, and study tools are unchanged.
+The same HTML/CSS/JavaScript entry flow is included in the website and the Capacitor Android build. Existing planner data, local privacy, and saved academic records are retained; academic tools are shown in the context of formal education.
 
 ## Android APK
 

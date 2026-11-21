@@ -297,7 +297,7 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
   const originalProfile=window.renderProfile;
   if(typeof originalProfile==='function'&&!window.eduProfileSectionsWrapped){
     window.eduProfileSectionsWrapped=true;
-    window.renderProfile=function(){return originalProfile()+integratedSection('Academic history and results','Past levels, sessions and recorded results',renderEducation(true))+integratedSection('Student documents','IDs, certificates, transcripts and saved files',renderVault(true))};
+    window.renderProfile=function(){const formal=typeof learnerTypeOf==='function'&&learnerTypeOf(data.profile)==='formal';return originalProfile()+(formal?integratedSection('Academic history and results','Past levels, sessions and recorded results',renderEducation(true)):'')+integratedSection('Personal library','Keep useful files, certificates, transcripts and other documents together',renderVault(true))};
   }
   const originalImportZip=window.importPortableBackup;
   const originalImportJson=window.importPlannerJsonBackup;

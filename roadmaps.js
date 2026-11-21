@@ -59,12 +59,16 @@
   }
   function renderMilestone(roadmap,milestone){
     const due=milestone.dueDate?'<small class="roadmap-milestone-date">'+safeText(dateLabel(milestone.dueDate))+'</small>':'';
+    const cards=core.cardsForMilestone(data.flashcards,roadmap.id,milestone.id);
+    const dueCards=core.dueCards(cards,today());
+    const reviewAction=cards.length?'<button type="button" class="roadmap-review-btn" data-roadmap-action="review-cards" data-roadmap-id="'+safeText(roadmap.id)+'" data-milestone-id="'+safeText(milestone.id)+'">Review cards · '+dueCards.length+' due</button>':'';
     return '<li class="roadmap-milestone '+(milestone.completed?'is-complete':'')+'">'+
       '<button type="button" class="roadmap-check" data-roadmap-action="toggle-milestone" data-roadmap-id="'+safeText(roadmap.id)+'" data-milestone-id="'+safeText(milestone.id)+'" aria-label="'+(milestone.completed?'Mark milestone incomplete':'Mark milestone complete')+'" aria-pressed="'+(milestone.completed?'true':'false')+'">'+(milestone.completed?'✓':'')+'</button>'+
       '<span class="roadmap-milestone-copy"><strong>'+safeText(milestone.title)+'</strong>'+due+'</span>'+
-      '<button type="button" class="roadmap-remove-milestone" data-roadmap-action="delete-milestone" data-roadmap-id="'+safeText(roadmap.id)+'" data-milestone-id="'+safeText(milestone.id)+'" aria-label="Remove milestone">×</button></li>';
+      '<button type="button" class="roadmap-remove-milestone" data-roadmap-action="delete-milestone" data-roadmap-id="'+safeText(roadmap.id)+'" data-milestone-id="'+safeText(milestone.id)+'" aria-label="Remove milestone">×</button>'+
+      '<div class="roadmap-milestone-revision"><span>'+cards.length+' revision card'+(cards.length===1?'':'s')+(dueCards.length?' · '+dueCards.length+' due':'')+'</span><div><button type="button" class="roadmap-create-cards-btn" data-roadmap-action="create-cards" data-roadmap-id="'+safeText(roadmap.id)+'" data-milestone-id="'+safeText(milestone.id)+'">＋ '+(cards.length?'Add cards':'Create revision cards')+'</button>'+reviewAction+'</div></div></li>';
   }
-  function renderRoadmap(roadmap){
+function renderRoadmap(roadmap){
     const counts=core.progress(roadmap);
     const course=(data.courses||[]).find(item=>String(item.id)===String(roadmap.courseId));
     const status=core.roadmapStatus(roadmap,today());
@@ -100,8 +104,16 @@
     if(!button)return;
     const action=button.dataset.roadmapAction,roadmap=findRoadmap(button.dataset.roadmapId);
     if(action==='create'){openRoadmapEditor();return}
+    if(action==='back-to-roadmap'){setPage('roadmaps');return}
+    if(action==='clear-flashcard-context'){window.eduRoadmapFlashcardContext=null;render();return}
     if(action==='edit'){if(roadmap)openRoadmapEditor(roadmap);return}
     if(action==='add-milestone'){if(roadmap)openMilestoneEditor(roadmap);return}
+    if((action==='create-cards'||action==='review-cards')&&roadmap){
+      const milestone=roadmap.milestones.find(item=>String(item.id)===String(button.dataset.milestoneId));
+      if(!milestone)return;
+      window.eduRoadmapFlashcardContext={roadmapId:roadmap.id,milestoneId:milestone.id,roadmapTitle:roadmap.title,milestoneTitle:milestone.title,courseId:roadmap.courseId||'',intent:action==='create-cards'?'create':'review'};
+      setPage('flashcards');return;
+    }
     if(action==='delete'){
       if(!roadmap)return;
       if(!confirm('Delete “'+roadmap.title+'” and all its milestones?'))return;

@@ -139,7 +139,7 @@
       ['exam-prep','Exam or certification preparation'],
       ['general','General knowledge and personal interests']
     ];
-    const savedType = profile.learnerType || ((profile.institution || profile.stage || profile.matricNumber || profile.academicSession || profile.degreeProgramme) ? 'formal' : '');
+    const savedType = profile.learnerType || (window.EduviaLearnerProfile.resolveLearnerType(profile) === 'formal' ? 'formal' : '');
     const learnerTypeOptions = learnerTypes.map(([value,label]) =>
       '<option value="' + value + '"' + (savedType === value ? ' selected' : '') + '>' + label + '</option>'
     ).join('');
@@ -230,6 +230,8 @@
     const isProfile = currentStep === slides.length + 1;
     if (isProfile) {
       root.innerHTML = profileSetupMarkup();
+      const profileForm = root.querySelector('#entryProfileForm');
+      if (profileForm) syncFormalProfileFields(profileForm);
       return;
     }
     if (isCountry) {
@@ -408,6 +410,10 @@
 
   root.addEventListener('change', event => {
     if (event.target?.id === 'entryCountry') selectedCountry = event.target.value;
+    if (event.target?.id === 'entryLearnerType') {
+      const profileForm = event.target.closest('#entryProfileForm');
+      if (profileForm) syncFormalProfileFields(profileForm);
+    }
   });
 
   root.addEventListener('submit', event => {

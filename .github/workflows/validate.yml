@@ -19,7 +19,7 @@ jobs:
           node --check entry-flow.js
           node --check study-studio.js
           node --check course-intelligence.js
-          node --test tests/course-intelligence.test.cjs tests/learner-profile.test.cjs
+          node --test tests/course-intelligence.test.cjs tests/learner-profile.test.cjs tests/study-studio-structure.test.cjs
           node --check feature-hub.js
           node --check experience.js
           node --check icon-system.js

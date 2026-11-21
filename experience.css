@@ -174,3 +174,70 @@ html[data-theme="dark"] .exp-course-row,html[data-theme="dark"] .exp-empty{backg
 html[data-theme="dark"] .exp-empty>b{color:var(--exp-ink)}
 html[data-theme="dark"] .exp-empty>p,html[data-theme="dark"] .exp-course-row small{color:#a8aec8}
 html[data-theme="dark"] .exp-search-form input{background:#141a2d;border-color:#303650;color:var(--exp-ink)}
+
+
+/* Shared detail screens: courses, timetable, study studio, exams, results and settings. */
+.page-heading{margin-bottom:25px}
+.page-heading h1{font:800 clamp(27px,3.8vw,32px)/1.14 Manrope,sans-serif;letter-spacing:-1.3px;color:var(--exp-ink)}
+.page-heading p{max-width:620px;color:var(--exp-muted);line-height:1.65}
+.sidebar .brand{margin-bottom:31px}
+.sidebar .main-nav{gap:6px}
+.sidebar .nav-item{min-height:43px;border-radius:13px;font-weight:700}
+.sidebar .nav-item.active{background:#efeeff;color:#514bc9}
+.sidebar .nav-item.active .nav-icon{color:#655ee0}
+.mobile-nav-item.active{color:#514bc9}
+.mobile-nav-item.active .mobile-nav-icon{background:#efeeff;color:#5c56d7}
+.mobile-nav-item .icon-discover{color:#e69a59}
+.mobile-nav-item .icon-play{color:#69a33b}
+.mobile-nav-item .icon-ask{color:#776ee2}
+.mobile-nav-item .icon-my-study{color:#e18a9c}
+.course-card,.resource-card,.schedule-row,.focus-card,.student-id-card,.exam-list-card,.revision-task{
+  border-radius:18px;
+  box-shadow:0 7px 23px rgba(42,43,91,.035);
+}
+.course-card{padding:18px;border-top:3px solid #e2dfff}
+.course-card:nth-child(4n+1){border-top-color:#e7a8c6}
+.course-card:nth-child(4n+2){border-top-color:#8bbce5}
+.course-card:nth-child(4n+3){border-top-color:#a4c86a}
+.course-card:nth-child(4n){border-top-color:#b1a4ef}
+.course-card .course-desc{font-size:11px;line-height:1.6}
+.schedule-row{padding:15px;background:#fff}
+.schedule-row-main strong,.course-card h3{font-size:13px}
+.schedule-row-main span{font-size:10px}
+.day-tab{min-height:66px}
+.day-tab.selected{background:linear-gradient(145deg,#7069e9,#514bc9)}
+.study-profile-banner,.onboarding-panel{border-radius:18px}
+.studio-grid,.studio-bottom-grid{gap:16px}
+.upload-panel,.onboarding-panel{padding:21px;border-radius:19px}
+.resource-card{padding:16px;border-color:#e9eaf3}
+.resource-card h4{font:800 12px Manrope}
+.focus-card{padding:22px}
+.goal-banner,.progress-hero{border-radius:19px}
+.academic-result-view-row{padding:12px;border-radius:12px}
+.student-id-card{padding:20px}
+.setting-row{padding:17px 0}
+.setting-row select{min-width:124px;max-width:190px;border:1px solid #e3e5f0;border-radius:10px;background:#fff;color:#2b3048;padding:10px}
+.settings-panel{padding:22px}
+.settings-save{display:flex;justify-content:flex-end;margin-top:18px}
+.backup-actions{gap:9px}
+.modal{border-radius:22px}
+.modal-head h2{font-size:19px}
+.form-field input,.form-field select,.form-field textarea{min-height:42px;border-radius:11px}
+.primary-btn,.secondary-btn,.danger-btn{min-height:39px}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #7770e8;outline-offset:3px}
+html[data-theme="dark"] .sidebar .nav-item.active{background:#302d52;color:#d3ceff}
+html[data-theme="dark"] .nav-item.active .nav-icon{color:#c2bdff}
+html[data-theme="dark"] .mobile-nav-item.active .mobile-nav-icon{background:#302d52;color:#c5c0ff}
+html[data-theme="dark"] .course-card,html[data-theme="dark"] .resource-card,html[data-theme="dark"] .schedule-row,html[data-theme="dark"] .focus-card,html[data-theme="dark"] .student-id-card,html[data-theme="dark"] .exam-list-card,html[data-theme="dark"] .revision-task{background:#1b2035;border-color:#303650;color:#f1f2ff}
+html[data-theme="dark"] .schedule-row,html[data-theme="dark"] .course-card-foot{border-color:#303650}
+html[data-theme="dark"] .setting-row select{background:#141a2d;color:#f1f2ff;border-color:#303650}
+@media(max-width:760px){
+  .page-heading{gap:8px}
+  .page-heading h1{font-size:26px}
+  .course-card,.resource-card,.schedule-row{border-radius:16px}
+  .settings-panel{padding:16px}
+  .setting-row{align-items:flex-start;gap:12px;flex-wrap:wrap}
+  .setting-row>div:first-child{flex:1 1 100%}
+  .setting-row select,.setting-row input{max-width:100%;width:100%}
+  .settings-save .primary-btn{width:100%}
+}

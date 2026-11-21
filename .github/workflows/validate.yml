@@ -15,11 +15,13 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check learner-profile.js
+          node --check roadmap-core.js
+          node --check roadmaps.js
           node --check app.js
           node --check entry-flow.js
           node --check study-studio.js
           node --check course-intelligence.js
-          node --test tests/course-intelligence.test.cjs tests/learner-profile.test.cjs tests/study-studio-structure.test.cjs
+          node --test tests/course-intelligence.test.cjs tests/learner-profile.test.cjs tests/study-studio-structure.test.cjs tests/roadmap-core.test.cjs
           node --check feature-hub.js
           node --check experience.js
           node --check icon-system.js
@@ -29,6 +31,15 @@ jobs:
           node --check notifications-worker/src/index.js
       - name: Verify feature bundle is loaded and cached
         run: |
+          grep -q 'roadmap-core.js' index.html
+          grep -q 'roadmap-core.js' service-worker.js
+          grep -q 'roadmap-core.js' scripts/build-web.mjs
+          grep -q 'roadmaps.js' index.html
+          grep -q 'roadmaps.js' service-worker.js
+          grep -q 'roadmaps.js' scripts/build-web.mjs
+          grep -q 'roadmaps.css' index.html
+          grep -q 'roadmaps.css' service-worker.js
+          grep -q 'roadmaps.css' scripts/build-web.mjs
           grep -q 'course-intelligence.js' index.html
           grep -q 'course-intelligence.js' service-worker.js
           grep -q 'course-intelligence.js' scripts/build-web.mjs

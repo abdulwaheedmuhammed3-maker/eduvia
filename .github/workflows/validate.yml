@@ -17,6 +17,8 @@ jobs:
           node --check app.js
           node --check entry-flow.js
           node --check study-studio.js
+          node --check course-intelligence.js
+          node --test tests/course-intelligence.test.cjs
           node --check feature-hub.js
           node --check experience.js
           node --check native-bridge-src.js
@@ -25,6 +27,9 @@ jobs:
           node --check notifications-worker/src/index.js
       - name: Verify feature bundle is loaded and cached
         run: |
+          grep -q 'course-intelligence.js' index.html
+          grep -q 'course-intelligence.js' service-worker.js
+          grep -q 'course-intelligence.js' scripts/build-web.mjs
           grep -q 'feature-hub.js' index.html
           grep -q 'feature-hub.js' service-worker.js
           grep -q 'app.js?v=' index.html

@@ -1128,3 +1128,35 @@ window.eduPageRenderers.records=renderStudyRecords;
 document.addEventListener('click',event=>{const button=event.target.closest('[data-action="activate-carryovers-new-year"]');if(!button)return;openCarryoverActivation();});
 if(!data.profile.setupComplete)currentPage='setup';
 scheduleEventAlert();
+
+
+// Final universal learning-profile editor. Declared last to supersede the legacy academic-only editor.
+function editStudyProfile(){
+  const types=[['formal','Formal education'],['independent','Self-directed learning'],['professional','Professional development'],['exam-prep','Exam or certification preparation'],['general','General knowledge and personal interests']];
+  const stages=educationStages();
+  const typeOptions=types.map(([value,label])=>'<option value="'+value+'" '+(learnerTypeOf(data.profile)===value?'selected':'')+'>'+label+'</option>').join('');
+  const stageOptions=stages.map(([value,label])=>'<option value="'+value+'" '+(data.profile.stage===value?'selected':'')+'>'+label+'</option>').join('');
+  const body='<div class="form-grid">'+
+    field('Learning path','learnerType','<select name="learnerType">'+typeOptions+'</select>')+
+    field('What are you learning?','learningFocus','<input name="learningFocus" required maxlength="120" value="'+safe(data.profile.learningFocus||data.profile.degreeProgramme||data.profile.programme||'')+'" placeholder="e.g. Data analysis, French or Computer Science">')+
+    '</div><div class="form-grid">'+
+    field('Country or region','country','<input name="country" value="'+safe(data.profile.country||'')+'">')+
+    field('Learning provider (optional)','institution','<input name="institution" value="'+safe(data.profile.institution||'')+'" placeholder="Only if applicable">')+
+    '</div><div class="form-grid">'+
+    field('Learning stage (optional)','stage','<select name="stage"><option value="">Choose if applicable</option>'+stageOptions+'</select>')+
+    field('Programme, course or qualification (optional)','programme','<input name="programme" value="'+safe(data.profile.programme||'')+'" placeholder="Only if applicable">')+
+    '</div><div class="form-grid">'+
+    field('Level or experience level (optional)','level','<input name="level" value="'+safe(data.profile.level||'')+'" placeholder="e.g. 300 Level, beginner or advanced">')+
+    field('Academic period (optional)','term','<input name="term" value="'+safe(data.profile.term||'')+'" placeholder="e.g. 2026/2027 or First semester">')+
+    '</div><div class="form-grid">'+
+    field('Learning mode (optional)','studyMode','<input name="studyMode" value="'+safe(data.profile.studyMode||'')+'" placeholder="e.g. Online, full-time or self-paced">')+
+    field('Email address (optional)','email','<input type="email" name="email" value="'+safe(data.profile.email||'')+'" placeholder="you@example.com">')+
+    '</div>';
+  openModal('Learning profile','Choose your learning path and keep academic details only when they apply.',body,'Save profile',fd=>{
+    const focus=String(fd.get('learningFocus')||'').trim();
+    if(!focus){toast('Add the main subject, skill or topic you are learning.');return}
+    for(const key of ['learnerType','learningFocus','country','institution','stage','programme','level','term','studyMode','email'])data.profile[key]=String(fd.get(key)||'').trim();
+    data.profile.degreeProgramme=data.profile.programme||'';
+    closeModal();save();toast('Learning profile updated');
+  });
+}

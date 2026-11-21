@@ -395,3 +395,26 @@
   .entry-profile-actions{align-items:stretch;flex-direction:column}
   .entry-profile-actions .entry-flow-primary{width:100%}
 }
+
+
+/* FIX: profile onboarding must follow the light welcome palette, not the earlier dark form styles. */
+.entry-flow-card.entry-flow-profile-screen .entry-profile-section{background:#f7f8fc;border-color:#e3e7f1}
+.entry-flow-card.entry-flow-profile-screen .entry-profile-section h2{color:#20283a}
+.entry-flow-card.entry-flow-profile-screen .entry-profile-section>p{color:#657086}
+.entry-flow-card.entry-flow-profile-screen .entry-profile-field{color:#35405a}
+.entry-flow-card.entry-flow-profile-screen .entry-profile-field i{color:#6079b9}
+.entry-flow-card.entry-flow-profile-screen .entry-profile-field span small,
+.entry-flow-card.entry-flow-profile-screen .entry-profile-field>small{color:#77839a}
+.entry-flow-card.entry-flow-profile-screen .entry-profile-field>input,
+.entry-flow-card.entry-flow-profile-screen .entry-profile-field>select{background:#fff;color:#20283a;border-color:#d9deeb;color-scheme:light}
+.entry-flow-card.entry-flow-profile-screen .entry-profile-field>input::placeholder{color:#929caf}
+.entry-flow-card.entry-flow-profile-screen .entry-profile-field>input:focus,
+.entry-flow-card.entry-flow-profile-screen .entry-profile-field>select:focus{outline:2px solid rgba(99,123,208,.45);border-color:#7180ce}
+.entry-flow-card.entry-flow-profile-screen .entry-profile-field>select option{background:#fff;color:#20283a}
+.entry-flow-card.entry-flow-profile-screen .entry-profile-days>strong{color:#35405a}
+.entry-flow-card.entry-flow-profile-screen .entry-profile-days>strong i{color:#6079b9}
+.entry-flow-card.entry-flow-profile-screen .entry-profile-day-list span{background:#fff;color:#56617a;border-color:#d9deeb}
+.entry-flow-card.entry-flow-profile-screen .entry-profile-day-list input:checked+span{border-color:#7180ce;background:#edf1ff;color:#354a99}
+.entry-flow-card.entry-flow-profile-screen .entry-profile-day-list input:focus-visible+span{outline-color:#7180ce}
+.entry-flow-card.entry-flow-profile-screen .entry-profile-actions>span{color:#77839a}
+.entry-flow-card.entry-flow-profile-screen .entry-flow-error{color:#b54758}

@@ -21,6 +21,7 @@ jobs:
           node --test tests/course-intelligence.test.cjs
           node --check feature-hub.js
           node --check experience.js
+          node --check icon-system.js
           node --check native-bridge-src.js
           node --check scripts/prepare-android.mjs
           node --check service-worker.js
@@ -42,6 +43,14 @@ jobs:
           grep -q 'touch-action:manipulation' experience.css
           grep -q 'experience.js' index.html
           grep -q 'experience.css' index.html
+          grep -q 'icon-system.css' index.html
+          grep -q 'icon-system.js' index.html
+          grep -q 'icon-system.css' service-worker.js
+          grep -q 'icon-system.js' service-worker.js
+          grep -q 'icon-system.css' scripts/build-web.mjs
+          grep -q 'icon-system.js' scripts/build-web.mjs
+          grep -q 'outline-icons-1' index.html
+          grep -q 'outline-icons-1' service-worker.js
           grep -q 'entry-flow.js' service-worker.js
           grep -q 'entry-flow.css' service-worker.js
           grep -q 'visual-refresh.css' service-worker.js

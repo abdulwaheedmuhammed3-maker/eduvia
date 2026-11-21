@@ -53,17 +53,31 @@
     filePlus:'<path d="M6 3.5h8l4 4V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z"/><path d="M14 3.5V8h4M12 11v6m-3-3h6"/>',
     layers:'<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5"/>',
     circle:'<circle cx="12" cy="12" r="8.5"/>',
-    checkCircle:'<circle cx="12" cy="12" r="9"/><path d="m7.5 12.2 3 3 6-6.4"/>'
+    checkCircle:'<circle cx="12" cy="12" r="9"/><path d="m7.5 12.2 3 3 6-6.4"/>',
+    dashboard:'<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/>',
+    library:'<path d="M4 5.5h11a3 3 0 0 1 3 3V20H7a3 3 0 0 0-3 1.5z"/><path d="M4 5.5v16M18 8.5h2a1 1 0 0 1 1 1V20h-3M8 10h6m-6 4h6"/>',
+    quiz:'<rect x="4" y="3.5" width="16" height="18" rx="2"/><path d="M9 3.5V2h6v1.5M8 9h8M8 13h3m3.5 0h.5M8 17h8"/>',
+    forum:'<path d="M20.5 11.5a7.5 7.5 0 0 1-7.5 7.5H7l-3.5 2v-5A7.5 7.5 0 1 1 20.5 11.5Z"/><path d="M8 11.5h.01M12 11.5h.01M16 11.5h.01"/>',
+    explore:'<circle cx="12" cy="12" r="9"/><path d="m15.8 8.2-2.3 5.3-5.3 2.3 2.3-5.3z"/><circle cx="12" cy="12" r="1"/>',
+    article:'<path d="M6 3.5h9l4 4V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z"/><path d="M14.5 3.5V8H19M8 12h8M8 15.5h8M8 19h5"/>',
+    assignment:'<rect x="4" y="4.5" width="16" height="17" rx="2"/><path d="M9 4.5V3h6v1.5M8 10h8m-8 4h3m2.5 2 1.5 1.5 3-3"/>',
+    award:'<circle cx="12" cy="8" r="5"/><path d="m9 12-1 9 4-2.5 4 2.5-1-9"/>',
+    insights:'<path d="M4 19.5h16"/><rect x="5.5" y="11" width="3" height="6.5" rx=".7"/><rect x="10.5" y="7.5" width="3" height="10" rx=".7"/><rect x="15.5" y="4" width="3" height="13.5" rx=".7"/>',
+    event:'<rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M7.5 3v4M16.5 3v4M3.5 9.5h17M8 13h3m-3 4h2m4-4h2"/>',
+    libraryBooks:'<path d="M3.5 5.5h4v14h-4zM9.5 3.5h4v16h-4zM15.5 6.5h5v13h-5z"/><path d="M5.5 8h.01M11.5 6h.01M18 9h.01"/>',
+    bolt:'<path d="M13.5 2.5 5 13h6l-.5 8.5L19 10h-6z"/>',
+    puzzle:'<path d="M9 3.5h2a2 2 0 1 1 4 0h2a2 2 0 0 1 2 2v3a2 2 0 1 0 0 4v3a2 2 0 0 1-2 2h-3a2 2 0 1 0-4 0H7a2 2 0 0 1-2-2v-3a2 2 0 1 0 0-4v-3a2 2 0 0 1 2-2z"/>
+    
   };
 
   const glyphMap={
-    '⌂':'home','▣':'book','◇':'play','✧':'sparkles','✳':'sparkles','✦':'sparkles','⌕':'search',
+    '⌂':'dashboard','▣':'library','◇':'puzzle','✧':'sparkles','✳':'brain','✦':'award','⌕':'explore',
     '•••':'more','⚙':'settings','＋':'plus','+':'plus','✓':'check','✔':'check','✎':'edit','✏':'edit',
-    '×':'close','✕':'close','↓':'download','↑':'upload','◷':'clock','▦':'grid','↗':'arrow',
-    '♧':'graduation','▤':'file','▷':'play','▶':'play','☆':'star','★':'star','♡':'heart',
-    '♙':'user','●':'circle','🎓':'graduation','📚':'book','🧠':'brain','🕒':'clock','⭐':'star','🎯':'target','📅':'calendar','📄':'file','💡':'lightbulb','🔔':'bell',
-    '♥':'heart','⌖':'target','☼':'sun','☀':'sun','⌚':'clock','↻':'refresh','☷':'list',
-    '▧':'folder','▱':'file','?':'lightbulb'
+    '×':'close','✕':'close','↓':'download','↑':'upload','◷':'event','▦':'dashboard','↗':'arrow',
+    '♧':'school','▤':'article','▷':'quiz','▶':'quiz','☆':'award','★':'award','♡':'heart',
+    '♙':'user','●':'circle','🎓':'graduation','📚':'libraryBooks','🧠':'brain','🕒':'event','⭐':'award','🎯':'target','📅':'event','📄':'article','💡':'lightbulb','🔔':'bell',
+    '♥':'heart','⌖':'target','☼':'forum','☀':'forum','⌚':'timer','↻':'refresh','☷':'list',
+    '▧':'folder','▱':'file','?':'forum'
   };
 
   function makeSvg(name){
@@ -82,6 +96,31 @@
     return svg;
   }
 
+  function contextualName(element){
+    const pageElement=element.closest('.nav-icon')?.closest('[data-page]');
+    if(pageElement){
+      const page=pageElement.dataset.page;
+      const desktopMap={today:'dashboard','my-study':'library',play:'quiz',ask:'forum',discover:'explore',more:'grid',settings:'settings'};
+      if(desktopMap[page])return desktopMap[page];
+    }
+    if(!element.matches('.exp-icon'))return null;
+    const host=element.closest('.exp-tool-card,.exp-tile,.exp-discover-card,.discover-library-card,.exp-academic-grid button,.exp-my-study-grid button,.exp-inline-cta,.panel')||element.parentElement;
+    const context=String(host?.innerText||host?.textContent||'').toLowerCase();
+    if(/study smarter|active recall|spaced repetition|memory/.test(context))return 'brain';
+    if(/academic skills|writing|research|referencing|lecture notes/.test(context))return 'article';
+    if(/exam preparation|examination|mock exam|past paper/.test(context))return 'assignment';
+    if(/opportunit|scholarship|internship/.test(context))return 'award';
+    if(/my study|my courses|course material|course list/.test(context))return 'libraryBooks';
+    if(/discover|explore by interest|learning library/.test(context))return 'explore';
+    if(/play|practice|flashcard|quiz|challenge/.test(context))return 'quiz';
+    if(/ask eduvia|ask without|question/.test(context))return 'forum';
+    if(/schedule|timetable|calendar|lecture/.test(context))return 'event';
+    if(/habit|focus|consistency|streak/.test(context))return 'insights';
+    if(/deadline|planner|task/.test(context))return 'assignment';
+    if(/progress|result|cgpa|performance/.test(context))return 'chart';
+    return null;
+  }
+
   function semanticName(element,text){
     const title=((element.getAttribute('aria-label')||'')+' '+(element.getAttribute('title')||'')+' '+(element.dataset.action||'')+' '+(element.dataset.feature||'')+' '+(element.dataset.examAction||'')).toLowerCase();
     if(/delete|remove|clear/.test(title))return 'trash';
@@ -92,9 +131,9 @@
     if(/setting|preference/.test(title))return 'settings';
     if(/profile|account|student/.test(title))return 'user';
     if(/calendar|date|schedule|timetable/.test(title))return 'calendar';
-    if(/search|find/.test(title))return 'search';
-    if(/play|practice|quiz|test/.test(title))return 'play';
-    if(/course|book|study|lesson|material/.test(title))return 'book';
+    if(/search|find/.test(title))return 'explore';
+    if(/play|practice|quiz|test/.test(title))return 'quiz';
+    if(/course|book|study|lesson|material/.test(title))return 'library';
     if(/timer|focus|time/.test(title))return 'timer';
     if(/add|new|create/.test(title))return 'plus';
     const normalized=String(text||'').trim();
@@ -114,28 +153,20 @@
 
   function applyElement(element){
     if(!(element instanceof Element))return;
-    if(element.matches('.mobile-nav-icon')){
-      const parent=element.closest('.mobile-nav-item');
-      const name=parent?.classList.contains('icon-today')?'home':
-        parent?.classList.contains('icon-my-study')?'book':
-        parent?.classList.contains('icon-play')?'play':
-        parent?.classList.contains('icon-ask')?'sun':
-        parent?.classList.contains('icon-discover')?'search':'sparkles';
-      iconize(element,name);
-      return;
-    }
+    // Footer navigation keeps its original hand-authored SVG artwork.
+    if(element.matches('.mobile-nav-icon'))return;
     if(element.matches('.nav-icon')){
       const parent=element.closest('[data-page]');
       const page=parent?.dataset.page;
       const map={today:'home','my-study':'book',play:'play',ask:'sun',discover:'search',more:'more',settings:'settings'};
-      iconize(element,map[page]||semanticName(element,element.textContent));
+      iconize(element,contextualName(element)||map[page]||semanticName(element,element.textContent));
       return;
     }
     const selector='.exp-icon,.resource-icon,.habit-badge,.empty-icon,.stat-mark,.btn-icon,.upload-symbol,.upload-icon,.student-id-icon,.icon-btn';
     if(element.matches(selector)){
       const text=element.textContent.trim();
       if(element.matches('.resource-icon')&&/^(PDF|PPT|DOC|TXT|CSV|FILE)$/.test(text))return;
-      const name=semanticName(element,text);
+      const name=contextualName(element)||semanticName(element,text);
       if(name)iconize(element,name);
     }
   }
@@ -144,7 +175,7 @@
     if(!root)return;
     if(root instanceof Element)applyElement(root);
     if(root.querySelectorAll){
-      root.querySelectorAll('.mobile-nav-icon,.nav-icon,.exp-icon,.resource-icon,.habit-badge,.empty-icon,.stat-mark,.btn-icon,.upload-symbol,.upload-icon,.student-id-icon,.icon-btn').forEach(applyElement);
+      root.querySelectorAll('.nav-icon,.exp-icon,.resource-icon,.habit-badge,.empty-icon,.stat-mark,.btn-icon,.upload-symbol,.upload-icon,.student-id-icon,.icon-btn').forEach(applyElement);
     }
   }
 

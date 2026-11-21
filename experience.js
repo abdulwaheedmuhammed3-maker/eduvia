@@ -10,7 +10,8 @@ function home(){
  for(let offset=0;offset<8;offset++){
   const targetDate=addDays(parseISO(day),offset).toLocaleDateString('en-CA');
   for(const item of dayEvents(targetDate)){
-   if(!['class','study'].includes(item.type))continue;\n   if(!item.start)continue;
+   if(!['class','study'].includes(item.type))continue;
+   if(!item.start)continue;
    if(offset===0&&minutes(item.start)<=nowMinutes)continue;
    if((completedForDate(targetDate)||[]).some(done=>done.eventId===item.id))continue;
    if(item.type==='class'&&classRecordForDate(item.id,targetDate))continue;

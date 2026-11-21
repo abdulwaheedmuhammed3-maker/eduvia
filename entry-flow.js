@@ -240,8 +240,8 @@
         '<div class="entry-flow-progress">' + slides.map(() => '<i class="is-active"></i>').join('') + '<i class="is-active"></i><i></i></div>' +
         '<main class="entry-flow-content">' +
           '<p class="entry-flow-kicker">PERSONALISE YOUR LEARNING SPACE</p>' +
-          '<h1 class="entry-flow-title">Which country are you studying in?</h1>' +
-          '<p class="entry-flow-copy">Choose your country, then complete your student profile before entering Eduvia.</p>' +
+          '<h1 class="entry-flow-title">Which country are you learning from?</h1>' +
+          '<p class="entry-flow-copy">Choose your country, then complete your learning profile before entering Eduvia.</p>' +
           '<div class="entry-flow-country-wrap">' +
             '<label class="entry-flow-country-label" for="entryCountry">Select your country</label>' +
             '<select id="entryCountry" class="entry-flow-country" required>' +

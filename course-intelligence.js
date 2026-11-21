@@ -76,7 +76,7 @@
       paragraph.push(fullLine);
       paragraphEnd=offset+line.length;
       offset+=fullLine.length;
-      if(paragraph.join('\n').length>=CHUNK_SIZE)flush();
+      if(paragraph.join('').length>=CHUNK_SIZE)flush();
     }
     flush();
     const pages=[...new Set(chunks.map(chunk=>chunk.page).filter(value=>value!==null))];

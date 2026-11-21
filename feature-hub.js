@@ -33,8 +33,8 @@
     return pageHead('ACTIVE RECALL','Flashcards','Turn topics and your own notes into short questions, then schedule reviews based on recall.','<button class="primary-btn" data-feature="add-card">＋ Create card</button>')+
       '<div class="stats-row"><div class="stat-card"><div class="stat-label">TOTAL CARDS</div><div class="stat-value">'+data.flashcards.length+'</div></div><div class="stat-card"><div class="stat-label">DUE TODAY</div><div class="stat-value">'+due.length+'</div></div><div class="stat-card"><div class="stat-label">MASTERED REVIEWS</div><div class="stat-value">'+data.flashcards.filter(c=>(c.level||0)>=3).length+'</div></div></div>'+
       cardBox('Create from a course topic or uploaded notes','<details class="action-disclosure"><summary><div><strong>Create review cards</strong><p>Choose a course and topic, optionally add notes</p></div><span class="disclosure-cta">＋ Create</span></summary><div class="disclosure-body"><form id="cardGenerateForm" class="form-grid"><label class="form-field">Course'+selectCourse()+'</label><label class="form-field">Topic'+input('topic','text','','required maxlength="120" placeholder="e.g. Database normalisation"')+'</label><label class="form-field full">Notes or explanation<textarea name="notes" rows="4" placeholder="Paste notes here, or leave blank to create a topic prompt."></textarea></label><div class="form-field full"><button class="primary-btn" type="submit">Create review cards</button></div></form></div></details>')+
-      cardBox('Review queue',due.length?'<div class="resource-list">'+due.map(c=>'<article class="resource-card"><div class="resource-icon">✧</div><div style="min-width:0;flex:1"><h4>'+esc(c.front)+'</h4><p>'+esc(courseName(c.courseId)||'Personal review')+' · due '+esc(c.nextReview||today())+'</p><details><summary>Reveal answer</summary><p>'+esc(c.back)+'</p></details><div style="display:flex;gap:8px;margin-top:10px"><button class="secondary-btn" data-feature="rate-card" data-id="'+esc(c.id)+'" data-known="1">I remembered</button><button class="secondary-btn" data-feature="rate-card" data-id="'+esc(c.id)+'" data-known="0">Review again</button></div></div><button class="icon-btn" data-feature="delete-card" data-id="'+esc(c.id)+'">×</button></article>').join('')+'</div>':emptyState('✧','You are up to date','Create cards from a course topic or your own notes.','',''))+
-      cardBox('All cards',data.flashcards.length?'<div class="resource-list">'+data.flashcards.map(c=>'<article class="resource-card"><div class="resource-icon">▤</div><div style="flex:1"><h4>'+esc(c.front)+'</h4><p>'+esc(courseName(c.courseId)||'Personal')+' · next review '+esc(c.nextReview||'Now')+'</p></div></article>').join('')+'</div>': '<p class="privacy-note-inline">No cards saved yet.</p>');
+      cardBox('Review queue',due.length?'<div class="resource-list">'+due.map(c=>'<article class="resource-card"><div class="resource-icon">✧</div><div style="min-width:0;flex:1"><h4>'+esc(c.front)+'</h4><p>'+esc(courseName(c.courseId)||'Personal review')+' · due '+esc(c.nextReview||today())+'</p><details><summary>Reveal answer</summary><p>'+esc(c.back)+'</p>'+(c.sourceCitation?'<small class=\"source-hint\">Source: '+esc(c.sourceCitation)+'</small>':'')+'</details><div style="display:flex;gap:8px;margin-top:10px"><button class="secondary-btn" data-feature="rate-card" data-id="'+esc(c.id)+'" data-known="1">I remembered</button><button class="secondary-btn" data-feature="rate-card" data-id="'+esc(c.id)+'" data-known="0">Review again</button></div></div><button class="icon-btn" data-feature="delete-card" data-id="'+esc(c.id)+'">×</button></article>').join('')+'</div>':emptyState('✧','You are up to date','Create cards from a course topic or your own notes.','',''))+
+      cardBox('All cards',data.flashcards.length?'<div class="resource-list">'+data.flashcards.map(c=>'<article class="resource-card"><div class="resource-icon">▤</div><div style="flex:1"><h4>'+esc(c.front)+'</h4><p>'+esc(courseName(c.courseId)||'Personal')+' · next review '+esc(c.nextReview||'Now')+(c.sourceCitation?' · '+esc(c.sourceCitation):'')+'</p></div></article>').join('')+'</div>': '<p class="privacy-note-inline">No cards saved yet.</p>');
   }
   function masteryKey(courseId, topic){return courseId+'::'+topic;}
   function renderMastery(){
@@ -356,7 +356,38 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
   });
   document.addEventListener('submit',async e=>{
     if(e.target.id==='deadlineForm'){e.preventDefault();const fd=new FormData(e.target);data.deadlines.push({id:uid(),title:fd.get('title').trim(),kind:fd.get('kind'),courseId:fd.get('courseId'),dueDate:fd.get('dueDate'),notes:fd.get('notes').trim(),completed:false,createdAt:Date.now()});save();return}
-    if(e.target.id==='cardGenerateForm'){e.preventDefault();const fd=new FormData(e.target),topic=fd.get('topic').trim(),courseId=fd.get('courseId');let notes=fd.get('notes').trim();if(!notes&&courseId&&typeof sessionQuizSources==='function'){try{const sources=await sessionQuizSources(courseId);notes=sources.map(x=>x.text||'').join('\n')}catch{}}const sentences=notes.split(/(?<=[.!?])\s+/).map(s=>s.trim()).filter(s=>s.length>35);if(sentences.length){sentences.slice(0,12).forEach((s,i)=>data.flashcards.push({id:uid(),courseId,front:'Explain: '+(i===0?topic:topic+' — key point '+(i+1)),back:s.slice(0,480),level:0,nextReview:today(),createdAt:Date.now()}))}else data.flashcards.push({id:uid(),courseId,front:'Explain '+topic+' in your own words.',back:'Use your course notes to explain the key definition, main principles and one example of '+topic+'.',level:0,nextReview:today(),createdAt:Date.now()});save();toast('Review cards created from your topic and notes.');return}
+    if(e.target.id==='cardGenerateForm'){
+      e.preventDefault();
+      const fd=new FormData(e.target),topic=String(fd.get('topic')||'').trim(),courseId=String(fd.get('courseId')||'');
+      let notes=String(fd.get('notes')||'').trim(),matched=[];
+      if(!notes&&courseId&&typeof loadCourseText==='function'){
+        try{
+          const sources=await loadCourseText(courseId);
+          matched=window.eduCourseIntelligence?.search(sources,topic,12)||[];
+          if(!matched.length&&sources.length){
+            toast('No matching passage was found for that topic. Try another wording or paste the exact notes you want to turn into cards.');
+            return;
+          }
+        }catch{toast('Could not read your indexed course materials.');return}
+      }
+      if(matched.length){
+        matched.forEach((item,index)=>data.flashcards.push({
+          id:uid(),courseId,front:'Explain: '+(index===0?topic:topic+' — key point '+(index+1)),
+          back:item.text.slice(0,480),source:item.name,sourceLocation:item.location,
+          sourceCitation:item.citation,materialId:item.materialId,
+          level:0,nextReview:today(),createdAt:Date.now()
+        }));
+      }else{
+        const sentences=notes.split(/(?<=[.!?])\s+/).map(value=>value.trim()).filter(value=>value.length>35);
+        if(!sentences.length){toast('Add some notes or upload a course document linked to this course.');return}
+        sentences.slice(0,12).forEach((sentence,index)=>data.flashcards.push({
+          id:uid(),courseId,front:'Explain: '+(index===0?topic:topic+' — key point '+(index+1)),
+          back:sentence.slice(0,480),source:'Text entered by student',sourceLocation:'Pasted notes',
+          sourceCitation:'Student-provided notes',level:0,nextReview:today(),createdAt:Date.now()
+        }));
+      }
+      save();toast('Source-linked review cards created.');return
+    }
   });
   document.addEventListener('input',e=>{if(e.target.id==='documentSearch'){const q=e.target.value.toLowerCase();document.querySelectorAll('[data-doc-search]').forEach(el=>el.hidden=!el.dataset.docSearch.includes(q));}});
   document.addEventListener('change',e=>{

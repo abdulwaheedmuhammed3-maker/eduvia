@@ -708,7 +708,7 @@ function renderProfile(){
     info('▤','Learning days',(profile.studyDays||[]).map(day=>STUDIO_DAYS[day]?.slice(0,3)).filter(Boolean).join(', '),'purple')
   ];
   const card='<section class="panel student-id-card">'+
-    '<header class="student-id-header"><div><strong>'+safe(profile.learningFocus||profile.institution||'Eduvia')+'</strong><span>LEARNING PROFILE · '+safe(learnerTypeLabel(learnerType).toUpperCase())+'</span></div><span class="student-id-mark">'+(formal?'STUDENT':'LEARNER')+'</span></header>'+
+    '<header class="student-id-header"><div><strong>'+safe(profile.learningFocus||profile.institution||'Eduvia')+'</strong><span>LEARNING PROFILE · '+safe(learnerTypeLabel(learnerType).toUpperCase())+'</span></div><span class="student-id-mark">'+(formal?'ST':'LP')+'</span></header>'+
     '<div class="student-id-top"><div class="student-id-photo-col"><div class="student-id-photo">'+avatar+'</div></div><div class="student-id-primary-grid">'+primary.join('')+'</div></div>'+
     '<div class="student-id-secondary-grid">'+secondary.join('')+'</div><div class="student-id-divider"></div><div class="student-id-bottom-grid">'+bottom.join('')+'</div></section>';
   const editForm='<details class="profile-edit-details"><summary><span>Edit learning profile</span><small>Update your learning path, details and photograph</small></summary>'+

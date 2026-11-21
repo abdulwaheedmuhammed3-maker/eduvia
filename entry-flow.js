@@ -172,11 +172,13 @@
               '<label class="entry-profile-field"><span>Learning stage <i data-formal-marker>Optional · required for formal education</i></span><select name="stage" id="entryStage"><option value="">Choose if applicable</option>' + stageOptions + '</select></label>' +
               '<label class="entry-profile-field"><span>Programme, course or qualification <i data-formal-marker>Optional · required for formal education</i></span><input name="degreeProgramme" id="entryProgramme" type="text" maxlength="120" value="' + escapeHtml(profile.degreeProgramme || profile.programme || '') + '" placeholder="e.g. B.Sc. Computer Science or AWS certification"></label>' +
               '<label class="entry-profile-field"><span>Level, grade or experience level <i data-formal-marker>Optional · required for formal education</i></span><input name="level" id="entryLevel" type="text" maxlength="40" value="' + escapeHtml(profile.level || '') + '" placeholder="e.g. 300 Level, beginner or advanced"></label>' +
-              '<label class="entry-profile-field"><span>Academic session <i data-formal-marker>Optional · required for formal education</i></span><input name="academicSession" id="entryAcademicSession" type="text" maxlength="40" value="' + escapeHtml(profile.academicSession || profile.term || '') + '" placeholder="e.g. 2026/2027"></label>' +
-              '<label class="entry-profile-field"><span>Term or semester <small>Optional</small></span><input name="semester" type="text" maxlength="50" value="' + escapeHtml(profile.semester || '') + '" placeholder="Only if your learning follows terms or semesters"></label>' +
-              '<label class="entry-profile-field"><span>Faculty <small>Optional</small></span><input name="faculty" type="text" maxlength="120" value="' + escapeHtml(profile.faculty || '') + '" placeholder="Your faculty, if applicable"></label>' +
-              '<label class="entry-profile-field"><span>Department <small>Optional</small></span><input name="department" type="text" maxlength="100" value="' + escapeHtml(profile.department || '') + '" placeholder="Your department, if applicable"></label>' +
-              '<label class="entry-profile-field"><span>Student or member ID <small>Optional</small></span><input name="matricNumber" type="text" maxlength="40" value="' + escapeHtml(profile.matricNumber || '') + '" placeholder="Only if you have one"></label>' +
+              '<div class="entry-profile-grid entry-profile-formal-only" data-formal-only hidden>' +
+                '<label class="entry-profile-field"><span>Academic session <i data-formal-marker>Required</i></span><input name="academicSession" id="entryAcademicSession" type="text" maxlength="40" value="' + escapeHtml(profile.academicSession || profile.term || '') + '" placeholder="e.g. 2026/2027"></label>' +
+                '<label class="entry-profile-field"><span>Term or semester <small>Optional</small></span><input name="semester" type="text" maxlength="50" value="' + escapeHtml(profile.semester || '') + '" placeholder="e.g. First semester"></label>' +
+                '<label class="entry-profile-field"><span>Faculty <small>Optional</small></span><input name="faculty" type="text" maxlength="120" value="' + escapeHtml(profile.faculty || '') + '" placeholder="Your faculty, if applicable"></label>' +
+                '<label class="entry-profile-field"><span>Department <small>Optional</small></span><input name="department" type="text" maxlength="100" value="' + escapeHtml(profile.department || '') + '" placeholder="Your department, if applicable"></label>' +
+                '<label class="entry-profile-field"><span>Student ID <small>Optional</small></span><input name="matricNumber" type="text" maxlength="40" value="' + escapeHtml(profile.matricNumber || '') + '" placeholder="Only if you have one"></label>' +
+              '</div>' +
               '<label class="entry-profile-field"><span>Mode of learning <small>Optional</small></span><input name="studyMode" type="text" maxlength="80" value="' + escapeHtml(profile.studyMode || '') + '" placeholder="e.g. Full-time, part-time, online or self-paced"></label>' +
               '<label class="entry-profile-field"><span>Learning status <small>Optional</small></span><select name="studentStatus">' + statusOptions + '</select></label>' +
               '<label class="entry-profile-field"><span>Email address <small>Optional</small></span><input name="email" type="email" maxlength="120" autocomplete="email" value="' + escapeHtml(profile.email || '') + '" placeholder="you@example.com"></label>' +
@@ -204,6 +206,7 @@
 
   function syncFormalProfileFields(form) {
     const formal = form.querySelector('[name="learnerType"]')?.value === 'formal';
+    form.querySelectorAll('[data-formal-only]').forEach(section => { section.hidden = !formal; });
     const requirements = {
       institution:'School, organisation or learning provider',
       stage:'Learning stage',

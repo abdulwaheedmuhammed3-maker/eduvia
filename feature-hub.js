@@ -111,7 +111,7 @@ function generateRevisionPlan(examId){
  for(let d=new Date(Math.max(parseISO(today()).getTime(),firstDate.getTime()));d<examDate;d=addDays(d,1)){if(studyDays.includes(d.getDay()))dates.push(d.toLocaleDateString('en-CA'))}
  if(!dates.length)dates=[today()];
  const work=topics.length?topics.map(topic=>({title:'Review '+topic,topic,type:'Topic review'})):[
-  {title:'Review uploaded learning materials',topic:'Course materials',type:'Notes review'},
+  {title:'Review uploaded learning materials',topic:'Learning materials',type:'Notes review'},
   {title:'List key topics from your lecture notes',topic:'Lecture topics',type:'Active recall'}
  ];
  work.push({title:'Complete a practice set and review mistakes',topic:topics[0]||exam.title,type:'Practice'});
@@ -181,7 +181,7 @@ async function startMockExam(courseId,count,duration,style){
   const started=Date.now();
   data.activeMockExam={id:uid(),courseId:course.id,courseName:course.name,startedAt:started,endsAt:started+(Number(duration)||30)*60000,durationMinutes:Number(duration)||30,questions,answers:[],status:'in-progress'};
   save();setPage('mock-exam');
- }catch(error){toast('Could not prepare the mock paper: '+(error.message||'course materials unavailable'))}
+ }catch(error){toast('Could not prepare the mock paper: '+(error.message||'learning materials unavailable'))}
 }
 function mockClock(milliseconds){
  const seconds=Math.max(0,Math.ceil(milliseconds/1000));

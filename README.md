@@ -1,8 +1,8 @@
-# Eduvia student planner
+# Eduvia learning platform
 
-Eduvia is a school-, course-, and level-neutral study planner for primary and high school learners, college and university students, postgraduate learners, and people in vocational or professional training.
+Eduvia is a learning platform for anyone building knowledge or developing skills. It supports formal education learners, self-directed learners, professionals, exam and certification candidates, and people exploring knowledge for personal interest.
 
-Before the main app opens on a new installation, each learner completes a student profile with their name, country, school or provider, learning stage, programme, level, academic session, and study preferences. Matriculation number, faculty, department, specialization, email, and semester are collected when relevant but remain optional. They can import a course list and class timetable, add study materials, generate a weekly plan, create local study guides, and practise with questions based on their own course details. My education lets learners backfill past school years, semesters, and sessions with their subjects and results, then save current results when they archive a term and move forward.
+Before the main app opens on a new installation, each learner chooses a learning path (formal education, self-directed learning, professional development, exam and certification preparation, or general knowledge), then completes a learning profile with their name, country, main learning focus and study preferences. School, programme, level, academic session and student identifiers are only required for formal education learners; they remain optional or hidden from the default experience for everyone else. Learners can organise subjects, skills and topics as learning areas, create schedules, add materials, generate personal plans and practise with their own resources. University-specific records such as results, CGPA, semester history and carryovers remain available to formal education learners.
 
 ## Start Eduvia locally
 
@@ -31,7 +31,7 @@ The browser notification service stores a device subscription and scheduled remi
 To deploy the free service, follow `notifications-worker/README.md`, then set its Worker URL in `push-config.js`.
 ## First launch and welcome screens
 
-New installations open with the Eduvia brand splash and a short introduction to learning, practice, and progress. The learner then chooses a country and completes the student profile and study routine before the main app is unlocked. The profile is saved locally and can be updated later from Student Profile. The flow does not ask for ethnicity or a nickname.
+New installations open with the Eduvia brand splash and a short introduction to learning, practice, and progress. The learner then chooses a country and completes the learning profile and study routine before the main app is unlocked. The profile is saved locally and can be updated later from Learning Profile. The flow does not ask for ethnicity or a nickname.
 
 The same HTML/CSS/JavaScript entry flow is included in the website and the Capacitor Android build. Existing planner data, local privacy, and study tools are unchanged.
 

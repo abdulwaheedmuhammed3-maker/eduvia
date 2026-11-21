@@ -82,7 +82,7 @@ function play(){
 }
 function myStudy(){
  const p=data.profile||{},w=getWeekStats(),type=learnerTypeOf(p),formal=type==='formal',examLearner=type==='exam-prep';
- const focus=p.learningFocus||p.degreeProgramme||p.programme||'Your interests, skills and subjects';
+ const focus=p.learningFocus||(formal?(p.degreeProgramme||p.programme):'Your interests, skills and subjects');
  const academicTools=formal?'<button data-page="education">'+ic('▤','pink')+'<b>Results & CGPA</b><small>Academic results, semester history and carryover courses</small></button>':'';
  const examTools=(formal||examLearner)?'<button data-page="exams">'+ic('🎓','orange')+'<b>Examination centre</b><small>Exam dates, revision plans and mock examinations</small></button>':'';
  return hd('YOUR LEARNING SPACE','My Learning','Your subjects, skills, ideas, materials and learning progress — organised around what matters to you.')+

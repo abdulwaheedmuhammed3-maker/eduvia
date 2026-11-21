@@ -4,6 +4,16 @@ Eduvia is a learning platform for anyone building knowledge or developing skills
 
 Before the main app opens on a new installation, each learner chooses a learning path (formal education, self-directed learning, professional development, exam and certification preparation, or general knowledge), then completes a learning profile with their name, country, main learning focus and study preferences. School, programme, level, academic session and student identifiers are only required for formal education learners; they remain optional or hidden from the default experience for everyone else. Learners can organise subjects, skills and topics as learning areas, create schedules, add materials, generate personal plans and practise with their own resources. University-specific records such as results, CGPA, semester history and carryovers remain available to formal education learners.
 
+## Validate and test
+
+Use Node.js 22 or later to run the automated unit tests:
+
+```sh
+npm test
+```
+
+The tests cover course-material retrieval and learner-path migration, including compatibility with profiles created before the universal learning update.
+
 ## Start Eduvia locally
 
 Python 3 is required; no Python packages are needed. From this folder run:
@@ -33,7 +43,7 @@ To deploy the free service, follow `notifications-worker/README.md`, then set it
 
 New installations open with the Eduvia brand splash and a short introduction to learning, practice, and progress. The learner then chooses a country and completes the learning profile and study routine before the main app is unlocked. The profile is saved locally and can be updated later from Learning Profile. The flow does not ask for ethnicity or a nickname.
 
-The same HTML/CSS/JavaScript entry flow is included in the website and the Capacitor Android build. Existing learning data, local privacy, and saved academic records are retained; academic tools are shown in the context of formal education.
+The same HTML/CSS/JavaScript entry flow is included in the website and the Capacitor Android build. Existing learning data, local privacy, and saved academic records are retained; academic tools are shown in the context of formal education. The shared learner-path rules live in `learner-profile.js` and are covered by the test suite.
 
 ## Android APK
 

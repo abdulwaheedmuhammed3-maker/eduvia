@@ -50,9 +50,23 @@ data.pendingCarryovers = Array.isArray(data.pendingCarryovers) ? data.pendingCar
 data.personalDocuments = data.personalDocuments || [];
 
 function syncNav(){
-  document.querySelectorAll('[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page===currentPage||(el.dataset.page==='more'&&['settings','study','practice','education','vault','profile'].includes(currentPage))));
-  const labels={today:'Today',courses:'My courses','course-detail':'Course workspace',timetable:'Timetable',habit:'Study habit',tutorials:'Tutorials & notes',study:'Study studio',practice:'Practice',setup:'Set up your planner',progress:'My progress',education:'Education history',vault:'Document vault',settings:'Settings',profile:'Student profile',more:'More'};
-  document.getElementById('crumbCurrent').textContent=labels[currentPage]||'Today';
+ const groups={
+  home:['today'],
+  discover:['discover','tutorials'],
+  play:['play','practice','flashcards','mastery','planner','mock-exam','mock-results'],
+  ask:['ask'],
+  'my-study':['my-study','courses','course-detail','timetable','habit','study','progress','records','education','vault','profile']
+ };
+ document.querySelectorAll('[data-nav-key]').forEach(el=>{
+  const key=el.dataset.navKey;
+  el.classList.toggle('active',(groups[key]||[]).includes(currentPage));
+ });
+ document.querySelectorAll('[data-utility-nav]').forEach(el=>{
+  const key=el.dataset.utilityNav;
+  el.classList.toggle('active',key===currentPage||(key==='more'&&currentPage==='more'));
+ });
+ const labels={today:'Home',discover:'Discover',play:'Play & learn',ask:'Ask Eduvia','my-study':'My Study',courses:'My courses','course-detail':'Course workspace',timetable:'My schedule',habit:'Study habit',tutorials:'Saved resources',study:'Study studio',practice:'Practice & tests',setup:'Set up your planner',progress:'Academic progress',records:'Session records',education:'Results & academic history',vault:'Personal documents',settings:'Settings',profile:'Student profile',more:'More tools',planner:'Planner',flashcards:'Flashcards',mastery:'Course mastery'};
+ document.getElementById('crumbCurrent').textContent=labels[currentPage]||'Home';
 }
 function render(){
   if(!data.profile.setupComplete&&currentPage!=='setup')currentPage='setup';

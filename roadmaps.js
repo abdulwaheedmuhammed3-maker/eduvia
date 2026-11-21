@@ -117,7 +117,8 @@ function renderRoadmap(roadmap){
     if(action==='delete'){
       if(!roadmap)return;
       if(!confirm('Delete “'+roadmap.title+'” and all its milestones?'))return;
-      data.roadmaps=data.roadmaps.filter(item=>item.id!==roadmap.id);save();toast('Roadmap deleted.');return;
+      data.flashcards.forEach(card=>{if(String(card.roadmapId||'')===String(roadmap.id)){delete card.roadmapId;delete card.milestoneId}});
+      data.roadmaps=data.roadmaps.filter(item=>item.id!==roadmap.id);save();toast('Roadmap deleted. Its flashcards were kept in your general review list.');return;
     }
     if(action==='toggle-milestone'&&roadmap){
       const milestone=roadmap.milestones.find(item=>String(item.id)===String(button.dataset.milestoneId));
@@ -128,6 +129,7 @@ function renderRoadmap(roadmap){
       toast(allDone?'Roadmap completed. Well done.':milestone.completed?'Milestone completed.':'Milestone reopened.');return;
     }
     if(action==='delete-milestone'&&roadmap){
+      data.flashcards.forEach(card=>{if(String(card.roadmapId||'')===String(roadmap.id)&&String(card.milestoneId||'')===String(button.dataset.milestoneId)){delete card.roadmapId;delete card.milestoneId}});
       roadmap.milestones=roadmap.milestones.filter(item=>String(item.id)!==String(button.dataset.milestoneId));
       if(roadmap.status==='completed')roadmap.status='active';
       roadmap.updatedAt=Date.now();save();toast('Milestone removed.');

@@ -54,5 +54,17 @@
     if(roadmap?.targetDate&&validDate(roadmap.targetDate)&&validDate(today)&&roadmap.targetDate<today)return 'overdue';
     return 'active';
   }
-  return {MAX_TITLE,MAX_DESCRIPTION,MAX_MILESTONES,validDate,normalizeMilestone,normalizeRoadmap,progress,roadmapStatus};
+  function cardsForMilestone(cards,roadmapId,milestoneId){
+    return (Array.isArray(cards)?cards:[]).filter(card=>
+      String(card?.roadmapId||'')===String(roadmapId||'')&&
+      String(card?.milestoneId||'')===String(milestoneId||'')
+    );
+  }
+  function dueCards(cards,today){
+    if(!validDate(today))return [];
+    return (Array.isArray(cards)?cards:[]).filter(card=>
+      !validDate(card?.nextReview)||card.nextReview<=today
+    );
+  }
+  return {MAX_TITLE,MAX_DESCRIPTION,MAX_MILESTONES,validDate,normalizeMilestone,normalizeRoadmap,progress,roadmapStatus,cardsForMilestone,dueCards};
 });

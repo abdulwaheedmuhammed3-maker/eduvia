@@ -51,3 +51,26 @@ test('all milestones completed makes normalized roadmap complete',()=>{
   const roadmap=core.normalizeRoadmap({title:'Read a book',milestones:[{title:'Chapter 1',completed:true},{title:'Chapter 2',completed:true}]});
   assert.equal(roadmap.status,'completed');
 });
+
+test('links flashcards to exactly one roadmap milestone',()=>{
+  const cards=[
+    {id:'a',roadmapId:'r1',milestoneId:'m1',nextReview:'2026-11-22'},
+    {id:'b',roadmapId:'r1',milestoneId:'m2',nextReview:'2026-11-21'},
+    {id:'c',roadmapId:'r2',milestoneId:'m1',nextReview:'2026-11-22'},
+    {id:'d',nextReview:'2026-11-22'}
+  ];
+  assert.deepEqual(core.cardsForMilestone(cards,'r1','m1').map(card=>card.id),['a']);
+  assert.deepEqual(core.cardsForMilestone(cards,'missing','m1'),[]);
+});
+
+test('finds cards due for review without changing future-dated cards',()=>{
+  const cards=[
+    {id:'a',nextReview:'2026-11-21'},
+    {id:'b',nextReview:'2026-11-22'},
+    {id:'c',nextReview:'2026-11-23'},
+    {id:'d'},
+    {id:'e',nextReview:'invalid'}
+  ];
+  assert.deepEqual(core.dueCards(cards,'2026-11-22').map(card=>card.id),['a','b','d','e']);
+  assert.deepEqual(core.dueCards(cards,'bad-date'),[]);
+});

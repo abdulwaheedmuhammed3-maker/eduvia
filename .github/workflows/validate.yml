@@ -18,6 +18,7 @@ jobs:
           node --check entry-flow.js
           node --check study-studio.js
           node --check feature-hub.js
+          node --check experience.js
           node --check native-bridge-src.js
           node --check scripts/prepare-android.mjs
           node --check service-worker.js
@@ -30,12 +31,18 @@ jobs:
           grep -q 'entry-flow.js' index.html
           grep -q 'entry-flow.css' index.html
           grep -q 'visual-refresh.css' index.html
+          grep -q 'experience.js' index.html
+          grep -q 'experience.css' index.html
           grep -q 'entry-flow.js' service-worker.js
           grep -q 'entry-flow.css' service-worker.js
           grep -q 'visual-refresh.css' service-worker.js
+          grep -q 'experience.js' service-worker.js
+          grep -q 'experience.css' service-worker.js
           grep -q 'entry-flow.js' scripts/build-web.mjs
           grep -q 'feature-hub.js' scripts/build-web.mjs
           grep -q 'entry-flow.css' scripts/build-web.mjs
           grep -q 'visual-refresh.css' scripts/build-web.mjs
+          grep -q 'experience.js' scripts/build-web.mjs
+          grep -q 'experience.css' scripts/build-web.mjs
           grep -q 'app.js?v=' service-worker.js
           grep -q 'eduvia-study-alarms-v2' native-bridge-src.js

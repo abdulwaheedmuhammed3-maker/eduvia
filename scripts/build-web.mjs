@@ -2,7 +2,7 @@ import { copyFile, mkdir } from 'node:fs/promises';
 import { build } from 'esbuild';
 
 const webFiles = [
-  'index.html', 'app.js', 'study-studio.js', 'feature-hub.js', 'styles.css', 'entry-flow.css', 'visual-refresh.css', 'entry-flow.js', 'manifest.json',
+  'index.html', 'app.js', 'study-studio.js', 'feature-hub.js', 'styles.css', 'entry-flow.css', 'visual-refresh.css', 'experience.css', 'experience.js', 'entry-flow.js', 'manifest.json',
   'push-config.js', 'service-worker.js', 'icon.svg', 'icon-192.png',
   'icon-512.png', 'apple-touch-icon.png'
 ];

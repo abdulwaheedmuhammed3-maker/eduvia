@@ -7,7 +7,7 @@ if (!existsSync('android')) execFileSync(npx, ['cap', 'add', 'android'], { stdio
 execFileSync(npx, ['cap', 'sync', 'android'], { stdio: 'inherit' });
 execFileSync(npx, [
   'capacitor-assets', 'generate', '--android', '--assetPath', 'assets',
-  '--iconBackgroundColor', '#147e83', '--splashBackgroundColor', '#f8faff'
+  '--iconBackgroundColor', '#655ee0', '--splashBackgroundColor', '#f7f8fd'
 ], { stdio: 'inherit' });
 
 const manifestPath = 'android/app/src/main/AndroidManifest.xml';

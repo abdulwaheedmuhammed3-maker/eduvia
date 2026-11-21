@@ -1,11 +1,11 @@
 {
   "name": "Eduvia — Your study planner",
   "short_name": "Eduvia",
-  "description": "A calm study planner for your courses, classes, and reading habit.",
+  "description": "A colourful, calm study companion for your courses, classes, and learning goals.",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#f5f7fb",
-  "theme_color": "#f5f7fb",
+  "background_color": "#f7f8fd",
+  "theme_color": "#f7f8fd",
   "icons": [
     {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
     {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},

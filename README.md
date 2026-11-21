@@ -1,8 +1,8 @@
-# Eduvia student planner
+# Eduvia learning platform
 
-Eduvia is a school-, course-, and level-neutral study planner for primary and high school learners, college and university students, postgraduate learners, and people in vocational or professional training.
+Eduvia is a learning platform for anyone building knowledge or developing skills. It supports formal education learners, self-directed learners, professionals, exam and certification candidates, and people exploring knowledge for personal interest.
 
-Before the main app opens on a new installation, each learner completes a student profile with their name, country, school or provider, learning stage, programme, level, academic session, and study preferences. Matriculation number, faculty, department, specialization, email, and semester are collected when relevant but remain optional. They can import a course list and class timetable, add study materials, generate a weekly plan, create local study guides, and practise with questions based on their own course details. My education lets learners backfill past school years, semesters, and sessions with their subjects and results, then save current results when they archive a term and move forward.
+Before the main app opens on a new installation, each learner chooses a learning path (formal education, self-directed learning, professional development, exam and certification preparation, or general knowledge), then completes a learning profile with their name, country, main learning focus and study preferences. School, programme, level, academic session and student identifiers are only required for formal education learners; they remain optional or hidden from the default experience for everyone else. Learners can organise subjects, skills and topics as learning areas, create schedules, add materials, generate personal plans and practise with their own resources. University-specific records such as results, CGPA, semester history and carryovers remain available to formal education learners.
 
 ## Start Eduvia locally
 
@@ -12,11 +12,11 @@ Python 3 is required; no Python packages are needed. From this folder run:
 python server.py
 ```
 
-Open `http://127.0.0.1:8000`. Course lists and timetables can be imported as CSV, TSV, Excel, JSON, PDF, Word, PowerPoint, text, or PNG/JPG/WebP images. Photos and scanned PDFs are read with in-browser OCR, then the detected courses or class times appear in a review step before they are added. The first PDF, Office, image OCR, or portable ZIP import loads its reader from a public CDN, so an internet connection is needed for that first use.
+Open `http://127.0.0.1:8000`. Learning-area lists and schedules can be imported as CSV, TSV, Excel, JSON, PDF, Word, PowerPoint, text, or PNG/JPG/WebP images. Photos and scanned PDFs are read with in-browser OCR, then the detected learning areas or scheduled items appear in a review step before they are added. The first PDF, Office, image OCR, or portable ZIP import loads its reader from a public CDN, so an internet connection is needed for that first use.
 
 ## Study guides and practice
 
-Eduvia creates study guides and practice questions on the device from course topics and uploaded materials. It has no AI connection or API key requirement. Use **Find a course outline online** to open a normal web search; review the results yourself and save useful links or notes to the learning kit.
+Eduvia creates study guides and practice questions on the device from learning-area topics and uploaded materials. It has no AI connection or API key requirement. Use **Find a learning resource online** to open a normal web search; review the results yourself and save useful links or notes to the learning kit.
 
 ## Materials and privacy
 
@@ -24,16 +24,16 @@ Uploaded files are read in the browser. Extracted text and planner details stay 
 
 ## Phone notifications
 
-In the browser and installed PWA, Eduvia schedules class and study alerts for their scheduled start time, plus a daily reading reminder, through its own phone notification service. Browser push can arrive late because a scheduled Worker checks once per minute and sends up to ten due reminders per run. The free service uses Cloudflare Workers and D1; it does not use Google Calendar. Phone notification permissions and sound settings still apply. iPhone and iPad require Eduvia to be added to the Home Screen (iOS/iPadOS 16.4 or later).
+In the browser and installed PWA, Eduvia schedules class and learning-session alerts for their scheduled start time, plus a daily learning reminder, through its own phone notification service. Browser push can arrive late because a scheduled Worker checks once per minute and sends up to ten due reminders per run. The free service uses Cloudflare Workers and D1; it does not use Google Calendar. Phone notification permissions and sound settings still apply. iPhone and iPad require Eduvia to be added to the Home Screen (iOS/iPadOS 16.4 or later).
 
 The browser notification service stores a device subscription and scheduled reminder titles and times so it can deliver alerts while the PWA is closed. In the Android app, alarms are scheduled locally on the phone instead; Android asks for notification access and exact-alarm access, and Eduvia asks for camera access only when the learner taps **Take a photo**. Courses, results, uploaded materials, and personal documents remain on the device.
 
 To deploy the free service, follow `notifications-worker/README.md`, then set its Worker URL in `push-config.js`.
 ## First launch and welcome screens
 
-New installations open with the Eduvia brand splash and a short introduction to learning, practice, and progress. The learner then chooses a country and completes the student profile and study routine before the main app is unlocked. The profile is saved locally and can be updated later from Student Profile. The flow does not ask for ethnicity or a nickname.
+New installations open with the Eduvia brand splash and a short introduction to learning, practice, and progress. The learner then chooses a country and completes the learning profile and study routine before the main app is unlocked. The profile is saved locally and can be updated later from Learning Profile. The flow does not ask for ethnicity or a nickname.
 
-The same HTML/CSS/JavaScript entry flow is included in the website and the Capacitor Android build. Existing planner data, local privacy, and study tools are unchanged.
+The same HTML/CSS/JavaScript entry flow is included in the website and the Capacitor Android build. Existing planner data, local privacy, and saved academic records are retained; academic tools are shown in the context of formal education.
 
 ## Android APK
 
@@ -46,6 +46,6 @@ Publish the files on an HTTPS host, then open Eduvia in Safari, tap Share, and c
 The app shell can open offline after its first load, but each phone keeps its own local data. Use the portable backup to move data between devices.
 
 
-## Scheduled lecture and study alarms
+## Scheduled scheduled class and learning-session alarms
 
 Eduvia schedules lecture and study notifications for the event's actual start time. The Android app uses local notifications with an audible multi-pulse sound and requests notification and exact-alarm permissions. Android notification-channel settings, silent mode, battery policies, and Do Not Disturb can still affect delivery or sound. Eduvia does not silently bypass Do Not Disturb; Android requires separate user-granted special access for apps that are allowed to override it. The browser version depends on the configured push service for delivery while closed; foreground browser timers alone are not guaranteed in the background.

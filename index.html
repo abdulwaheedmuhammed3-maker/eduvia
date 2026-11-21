@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="styles.css?v=entry-flow-3" />
   <link rel="stylesheet" href="entry-flow.css?v=eduvia-entry-4" />
   <link rel="stylesheet" href="visual-refresh.css?v=eduvia-design-1" />
+  <link rel="stylesheet" href="experience.css?v=eduvia-experience-1" />
   <title>Eduvia — Your study planner</title>
   <script>
     (function(){
@@ -39,18 +40,16 @@
       <a class="brand" href="#today" aria-label="Eduvia home"><span class="brand-mark"><img class="brand-symbol" src="icon.svg" alt=""></span><span>Eduvia</span></a>
       <div class="side-caption">YOUR SPACE</div>
       <nav class="main-nav" aria-label="Main navigation">
-        <button class="nav-item active" data-page="today"><span class="nav-icon">◷</span>Today</button>
-        <button class="nav-item" data-page="courses"><span class="nav-icon">▦</span>My courses</button>
-        <button class="nav-item" data-page="timetable"><span class="nav-icon">▤</span>Timetable</button>
-        <button class="nav-item" data-page="habit"><span class="nav-icon">✳</span>Study habit</button>
-        <button class="nav-item" data-page="tutorials"><span class="nav-icon">▷</span>Tutorials & notes</button>
-        <button class="nav-item" data-page="study"><span class="nav-icon">✧</span>Study studio</button>
-        <button class="nav-item" data-page="progress"><span class="nav-icon">↗</span>My progress</button>
+        <button class="nav-item active" data-page="today" data-nav-key="home"><span class="nav-icon">⌂</span>Home</button>
+        <button class="nav-item" data-page="discover" data-nav-key="discover"><span class="nav-icon">⌕</span>Discover</button>
+        <button class="nav-item" data-page="play" data-nav-key="play"><span class="nav-icon">◇</span>Play &amp; learn</button>
+        <button class="nav-item" data-page="ask" data-nav-key="ask"><span class="nav-icon">✧</span>Ask Eduvia</button>
+        <button class="nav-item" data-page="my-study" data-nav-key="my-study"><span class="nav-icon">▣</span>My Study</button>
       </nav>
       <div class="sidebar-bottom">
         <div class="week-goal-mini"><div class="mini-label">THIS WEEK'S GOAL</div><div><strong id="sideGoal">0 / 5</strong><span> study sessions</span></div><div class="mini-track"><i id="sideGoalFill"></i></div></div>
-        <button class="nav-item" data-page="more"><span class="nav-icon">•••</span>More</button>
-        <button class="nav-item" data-page="settings"><span class="nav-icon">⚙</span>Settings</button>
+        <button class="nav-item" data-page="more" data-utility-nav="more"><span class="nav-icon">•••</span>More tools</button>
+        <button class="nav-item" data-page="settings" data-utility-nav="settings"><span class="nav-icon">⚙</span>Settings</button>
         <div class="privacy-note"><span class="privacy-dot"></span>Private on this device</div>
       </div>
     </aside>
@@ -61,14 +60,13 @@
     </main>
   </div>
 
-  <nav class="mobile-nav" aria-label="Mobile navigation">
-    <button class="mobile-nav-item active" data-page="today"><span class="mobile-nav-icon icon-today"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 1 2.35 5.65"/><path d="M4 5v5h5"/><path d="M12 7v5l3 2"/></svg></span><span class="mobile-nav-label">Today</span></button>
-    <button class="mobile-nav-item" data-page="courses"><span class="mobile-nav-icon icon-courses"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><path d="M16.5 13v7M13 16.5h7"/></svg></span><span class="mobile-nav-label">Courses</span></button>
-    <button class="mobile-nav-item" data-page="timetable"><span class="mobile-nav-icon icon-timetable"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="16" rx="3"/><path d="M7.5 3v4M16.5 3v4M4 10h16M8 14h3M8 17h6"/></svg></span><span class="mobile-nav-label">Schedule</span></button>
-    <button class="mobile-nav-item" data-page="habit"><span class="mobile-nav-icon icon-habit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 14 9l5.5-2-2 5.5 4 3.5-6 .5L12 21l-3.5-4.5-6-.5 4-3.5-2-5.5L10 9z"/><path d="m9.5 12.5 1.7 1.7 3.5-3.8"/></svg></span><span class="mobile-nav-label">Habit</span></button>
-    <button class="mobile-nav-item" data-page="more"><span class="mobile-nav-icon icon-more"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span><span class="mobile-nav-label">More</span></button>
+  <nav class="mobile-nav" aria-label="Main navigation">
+    <button class="mobile-nav-item active" data-page="today" data-nav-key="home"><span class="mobile-nav-icon icon-today"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span><span class="mobile-nav-label">Home</span></button>
+    <button class="mobile-nav-item" data-page="discover" data-nav-key="discover"><span class="mobile-nav-icon icon-discover"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg></span><span class="mobile-nav-label">Discover</span></button>
+    <button class="mobile-nav-item" data-page="play" data-nav-key="play"><span class="mobile-nav-icon icon-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5 19 12 8 18.5z"/><path d="M4 8v8M2 10v4"/></svg></span><span class="mobile-nav-label">Play</span></button>
+    <button class="mobile-nav-item" data-page="ask" data-nav-key="ask"><span class="mobile-nav-icon icon-ask"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.2"/></svg></span><span class="mobile-nav-label">Ask</span></button>
+    <button class="mobile-nav-item" data-page="my-study" data-nav-key="my-study"><span class="mobile-nav-icon icon-my-study"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5c3-1.2 5.8-.6 8 1.1v13c-2.2-1.7-5-2.3-8-1.1zM20 5.5c-3-1.2-5.8-.6-8 1.1v13c2.2-1.7 5-2.3 8-1.1z"/></svg></span><span class="mobile-nav-label">My Study</span></button>
   </nav>
-
   <div id="modalRoot"></div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="native-bridge.js?v=native-android-2" defer></script>
@@ -76,6 +74,7 @@
   <script src="app.js?v=renderer-audit-1" defer></script>
   <script src="study-studio.js?v=first-screen-country-1" defer></script>
   <script src="feature-hub.js?v=exam-preparation-1" defer></script>
+  <script src="experience.js?v=eduvia-experience-1" defer></script>
   <script src="entry-flow.js?v=eduvia-entry-2" defer></script>
 </body>
 </html>

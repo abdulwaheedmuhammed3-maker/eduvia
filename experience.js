@@ -1,0 +1,87 @@
+(function(){
+let askResult=null,askCourse='';
+const ic=(s,t='purple')=>'<span class="exp-icon exp-icon-'+t+'">'+s+'</span>';
+const hd=(k,t,d)=>'<header class="exp-heading"><div><div class="eyebrow">'+k+'</div><h1>'+t+'</h1><p>'+d+'</p></div></header>';
+const tile=(p,t,s,n,d,m='')=>'<button class="exp-tile exp-tile-'+t+'" data-page="'+p+'"><span class="exp-tile-top">'+ic(s,t)+'<b>↗</b></span><strong>'+n+'</strong><span>'+d+'</span>'+(m?'<small>'+m+'</small>':'')+'</button>';
+const search=q=>{const w=window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank');if(w)w.opener=null;else toast('Allow pop-ups for Eduvia to open this search.')};
+function home(){
+ const p=data.profile||{},h=new Date().getHours(),w=getWeekStats(),g=Math.max(1,+p.weeklyGoal||5),pct=Math.min(100,Math.round(w.total/g*100)),day=todayISO(),events=dayEvents(day),cs=data.courses.slice(0,3),sal=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+ return '<div class="exp-home"><header class="exp-home-heading"><div><div class="eyebrow">YOUR LEARNING SPACE</div><h1>'+sal+', '+safe(p.name||'Student')+' 👋</h1><p>Ready to make a little progress today?</p></div><button class="exp-profile" data-page="profile">'+safe((p.name||'S').trim()[0].toUpperCase())+'</button></header>'+
+ '<section class="exp-hero"><div><span class="exp-hero-kicker">PLAN · LEARN · PRACTISE · EXCEL</span><h2>Your semester.<br><em>Your pace.</em></h2><p>One calm space for your courses, schedule, study habits and academic progress.</p><div class="exp-hero-actions"><button class="exp-hero-primary" data-page="my-study">Open My Study ↗</button><button class="exp-hero-secondary" data-page="play">Try a quick challenge</button></div></div><div class="exp-hero-art">✦<b>STUDY<br>YOUR WAY</b><i>✳</i></div></section>'+
+ '<section class="exp-section"><div class="exp-section-heading"><div><div class="eyebrow">PICK YOUR NEXT MOVE</div><h2>Jump right in.</h2></div></div><div class="exp-tile-grid">'+tile('my-study','pink','▣','My Study','Courses, classes and academic records',data.courses.length+' courses')+tile('discover','blue','⌕','Discover','Study ideas, resources and opportunities','Explore your learning')+tile('play','lime','◇','Play & learn','Practise with questions and flashcards','Learn by doing')+tile('ask','purple','✧','Ask Eduvia','Find relevant passages in your saved notes','Local study helper')+'</div></section>'+
+ '<section class="exp-week-card"><div><div class="eyebrow">YOUR WEEKLY RHYTHM</div><h2>'+w.total+' of '+g+' study sessions</h2><p>'+(pct>=100?'You reached your weekly goal.':(g-w.total)+' more sessions to reach your goal.')+'</p></div><strong>'+pct+'%</strong><div class="exp-progress"><i style="width:'+pct+'%"></i></div><div class="exp-week-foot"><span>🔥 '+streakCount()+' day streak</span><span>'+studyCompletionsForDate(day).length+' sessions today</span><button class="text-btn" data-page="habit">View habit ↗</button></div></section>'+
+ '<div class="exp-two-column"><section class="panel exp-panel"><div class="panel-head"><div><h3>Today’s plan</h3><p>'+formatDate(parseISO(day),{weekday:'long',month:'long',day:'numeric'})+'</p></div><button class="panel-link" data-page="timetable">Full schedule ↗</button></div>'+(events.length?'<div class="agenda-list">'+events.slice(0,4).map(e=>agendaMarkup(e,day)).join('')+'</div>':'<div class="exp-empty"><b>Your day is open.</b><p>Add a class or plan a study session.</p><button class="secondary-btn" data-action="add-session">＋ Plan a session</button></div>')+'</section>'+
+ '<section class="panel exp-panel"><div class="panel-head"><div><h3>Continue learning</h3><p>Your courses at a glance</p></div><button class="panel-link" data-page="courses">All courses ↗</button></div>'+(cs.length?'<div class="exp-course-list">'+cs.map(c=>'<a class="exp-course-row" href="#course/'+encodeURIComponent(c.id)+'"><i style="--course-color:'+safe(c.color||'#655ee0')+'"></i><span><b>'+safe(c.name)+'</b><small>'+safe(c.code||'COURSE')+'</small></span><strong>↗</strong></a>').join('')+'</div>':'<div class="exp-empty"><b>Your courses start here.</b><p>Add your subjects in My Study.</p><button class="secondary-btn" data-page="courses">View courses</button></div>')+'</section></div></div>';
+}
+function discover(){
+ const cats=[['pink','✳','Study smarter','Active recall and spaced revision','active recall spaced repetition study techniques'],['blue','▤','Academic skills','Notes, writing and research','university academic writing research skills'],['orange','✦','Exam preparation','Revision and past-paper strategies','exam revision past paper study strategies'],['purple','♧','Opportunities','Scholarships and student programmes','student scholarships opportunities '+(data.profile.country||'')]];
+ return hd('STAY CURIOUS','Discover','Explore ideas and learning resources beyond your timetable.')+
+ '<section class="exp-discover-hero"><div class="eyebrow">A LITTLE MORE CURIOUS</div><h2>Explore.<br><em>Learn. Grow.</em></h2><p>Find useful study methods, strengthen your academic skills and discover resources that support your goals.</p><div class="exp-chips"><span>Study smarter</span><span>Learn independently</span><span>Find opportunities</span></div></section>'+
+ '<section class="exp-section"><div class="exp-section-heading"><div><div class="eyebrow">EXPLORE BY INTEREST</div><h2>What would you like to learn?</h2></div></div><div class="exp-discover-grid">'+cats.map(c=>'<button class="exp-discover-card exp-discover-'+c[0]+'" data-discover-search="'+safe(c[4])+'">'+ic(c[1],c[0])+'<b>'+c[2]+'</b><span>'+c[3]+'</span><small>Search resources ↗</small></button>').join('')+'</div></section>'+
+ '<section class="panel exp-panel"><div class="panel-head"><div><h3>Find a learning resource</h3><p>Search for a topic, course outline or study guide.</p></div></div><form id="discoverSearchForm" class="exp-search-form"><input id="discoverQuery" type="search" maxlength="180" placeholder="e.g. data structures, academic writing..." required><button class="primary-btn">Search ↗</button></form></section>'+
+ '<section class="panel exp-panel"><div class="panel-head"><div><h3>Your saved learning kit</h3><p>Links and notes saved in Eduvia.</p></div><button class="panel-link" data-page="tutorials">Manage ↗</button></div>'+(data.resources.length?resourceMarkup(data.resources.slice(0,4)):'<div class="exp-empty"><b>No saved resources yet.</b><p>Save useful tutorials and your own notes here.</p><button class="secondary-btn" data-page="tutorials">Open tutorials & notes</button></div>')+'</section>';
+}
+function play(){
+ const due=(data.flashcards||[]).filter(c=>!c.nextReview||c.nextReview<=todayISO()).length;
+ return hd('NO GRADES. NO PRESSURE.','Play & learn','Short challenges, practice sets and recall tools to help you learn actively.')+
+ '<section class="exp-play-hero"><div><div class="eyebrow">LEARN BY DOING</div><h2>Play a little.<br><em>Know a lot.</em></h2><p>Turn your course topics and saved materials into questions you can practise.</p><button class="exp-play-cta" data-page="practice">Start practising ↗</button></div><div class="exp-play-art">◇<i>✳</i><b>?</b></div></section>'+
+ '<section class="exp-tool-grid">'+
+ '<button class="exp-tool-card exp-tool-pink" data-page="practice">'+ic('✓','pink')+'<b>Practice & tests</b><span>Generate questions from courses and notes.</span><small>Open practice ↗</small></button>'+
+ '<button class="exp-tool-card exp-tool-lime" data-page="flashcards">'+ic('▤','lime')+'<b>Flashcards</b><span>Review key ideas and schedule recall.</span><small>'+(data.flashcards||[]).length+' saved · '+due+' due ↗</small></button>'+
+ '<button class="exp-tool-card exp-tool-purple" data-page="mastery">'+ic('◎','purple')+'<b>Topic mastery</b><span>Track topics you are learning and know confidently.</span><small>Check progress ↗</small></button>'+
+ '<button class="exp-tool-card exp-tool-blue" data-page="planner">'+ic('◷','blue')+'<b>Deadlines & planner</b><span>Keep assignments, tests and revision milestones visible.</span><small>Open planner ↗</small></button>'+
+ '<button class="exp-tool-card exp-tool-orange" data-page="more">'+ic('🎓','orange')+'<b>Exam centre</b><span>Exam dates, revision plans and mock examinations.</span><small>'+(data.exams||[]).length+' exams saved ↗</small></button></section>'+
+ '<section class="exp-inline-cta"><div><b>Practise with your own course material.</b><span>Upload notes or slides in Study Studio first.</span></div><button class="primary-btn" data-page="study">Open Study Studio ↗</button></section>';
+}
+function myStudy(){
+ const p=data.profile||{},w=getWeekStats();
+ return hd('YOUR ACADEMIC HEADQUARTERS','My Study','Your courses, classes, study routine and academic records — all in one organised space.')+
+ '<section class="exp-my-study-hero"><div class="eyebrow">YOUR ACADEMIC SPACE</div><h2>Everything about<br><em>your education.</em></h2><p>'+safe([p.institution,p.programme,p.level?p.level+' level':'',p.semester].filter(Boolean).join(' · ')||'Your learning profile and academic tools in one place.')+'</p><span>✦</span></section>'+
+ '<section class="exp-section"><div class="exp-section-heading"><div><div class="eyebrow">YOUR DAILY TOOLS</div><h2>Organise your learning.</h2></div></div><div class="exp-tile-grid exp-my-study-grid">'+
+ tile('courses','pink','▣','My Courses','Subjects, topics, credits and course materials',data.courses.length+' courses')+
+ tile('timetable','blue','◷','My Schedule','Lectures, classes and study sessions',data.events.length+' scheduled items')+
+ tile('habit','lime','◎','Study Habit','Focus sessions, weekly goals and consistency',w.total+' sessions this week')+
+ tile('study','purple','✧','Study Studio','Import course forms, notes and timetables','Build a personal study plan')+'</div></section>'+
+ '<section class="exp-section"><div class="exp-section-heading"><div><div class="eyebrow">YOUR ACADEMIC RECORD</div><h2>Track your progress.</h2></div></div><div class="exp-academic-grid">'+
+ '<button data-page="progress">'+ic('↗')+'<b>Academic progress</b><small>Study sessions, focus time and weekly growth</small></button>'+
+ '<button data-page="education">'+ic('▤','pink')+'<b>Results & CGPA</b><small>Semester results and academic history</small></button>'+
+ '<button data-page="records">'+ic('▣','blue')+'<b>Session records</b><small>'+(data.studyRecords||[]).length+' saved class and study records</small></button>'+
+ '<button data-page="more">'+ic('🎓','orange')+'<b>Examination centre</b><small>Exam dates, revision plans and mock examinations</small></button>'+
+ '<button data-page="vault">'+ic('▧','lime')+'<b>Personal documents</b><small>Keep transcripts and useful files together</small></button>'+
+ '<button data-page="profile">'+ic('♙')+'<b>Student profile</b><small>Update institution and academic details</small></button></div></section>'+
+ '<section class="exp-inline-cta"><div><b>Keep your academic journey together.</b><span>Your results, semester history and carryover rules remain in your existing records.</span></div><button class="primary-btn" data-page="education">Open academic history ↗</button></section>';
+}
+function askResultHtml(){
+ if(!askResult)return '';
+ if(askResult.missing)return '<section class="exp-ask-result"><div class="eyebrow">SOURCE NEEDED</div><h3>Add course notes to get started.</h3><p>'+askResult.message+'</p><button class="secondary-btn" data-page="study">Add material in Study Studio</button></section>';
+ return '<section class="exp-ask-result"><div class="eyebrow">'+(askResult.mode==='summary'?'EXTRACTIVE SUMMARY':'RELEVANT PASSAGES')+'</div><h3>'+(askResult.mode==='summary'?'Selected passages from your notes':'What your saved notes say')+'</h3><p>'+safe(askResult.course)+' · '+askResult.rows.length+' passages</p>'+askResult.rows.map((p,i)=>'<article class="exp-passage"><span>0'+(i+1)+'</span><div><p>'+safe(p.text)+'</p><small>Source: '+safe(p.source)+'</small></div></article>').join('')+'<p class="exp-source-note">These are passages retrieved from your saved material, not an independently verified answer. Open the original file to check its full context.</p><button class="secondary-btn" data-ask-clear="1">Ask another question</button></section>';
+}
+function ask(){
+ const cs=data.courses||[],selected=askCourse||cs[0]?.id||'',mats=(data.materials||[]).filter(m=>String(m.courseId||'')===String(selected)||!m.courseId);
+ return hd('QUESTIONS ARE WELCOME HERE','Ask Eduvia','Search your own course material, or extract a short summary from saved notes.')+
+ '<section class="exp-ask-hero"><div class="eyebrow">YOUR PERSONAL STUDY HELPER</div><h2>Ask without<br><em>the awkward.</em></h2><p>Choose a course and search your own notes. Your question and material are processed in this browser; Eduvia does not send them to an online AI model.</p></section>'+
+ '<section class="panel exp-panel"><div class="panel-head"><div><h3>What are you working on?</h3><p>Choose a course to search its saved learning materials.</p></div></div>'+
+ (cs.length?'<form id="askEduviaForm" class="exp-ask-form"><label class="form-field">Course<select name="courseId">'+cs.map(c=>'<option value="'+safe(c.id)+'" '+(String(c.id)===String(selected)?'selected':'')+'>'+safe((c.code?c.code+' · ':'')+c.name)+'</option>').join('')+'</select></label><label class="form-field">What do you want help with?<textarea name="question" rows="3" maxlength="500" required placeholder="e.g. Where do my notes explain normalisation?"></textarea></label><div class="exp-ask-actions"><label class="form-field">Study helper<select name="mode"><option value="question">Find relevant passages</option><option value="summary">Summarise my notes</option></select></label><button class="primary-btn">Search my notes ↗</button></div><p class="exp-local-status">'+mats.length+' saved materials available, including unlinked files.</p></form>':'<div class="exp-empty"><b>Add a course to get started.</b><p>Upload learning materials after setting up a course.</p><button class="primary-btn" data-page="courses">Add a course</button></div>')+'</section>'+askResultHtml()+
+ '<section class="exp-inline-cta"><div><b>Need a study guide or practice questions?</b><span>Use your saved materials with the existing study tools.</span></div><button class="secondary-btn" data-page="play">Explore Play & learn ↗</button></section>';
+}
+const stop=new Set('about above after again against all also am an and any are as at be because been before being below between both but by can could did do does doing down during each few for from further had has have having he her here hers herself him himself his how i if in into is it its itself just me more most my myself no nor not of off on once only or other our ours ourselves out over own same she should so some such than that the their theirs them themselves then there these they this those through to too under until up very was we were what when where which while who whom why will with would you your yours yourself yourselves'.split(' '));
+function sentenceList(txt){return String(txt||'').replace(/\s+/g,' ').split(/(?<=[.!?])\s+/).map(s=>s.trim()).filter(s=>s.length>35&&s.length<700)}
+document.addEventListener('submit',async e=>{
+ if(e.target.id==='discoverSearchForm'){e.preventDefault();const q=document.getElementById('discoverQuery')?.value.trim();if(q)search(q+' study resources');return}
+ if(e.target.id!=='askEduviaForm')return;e.preventDefault();
+ const fd=new FormData(e.target),id=String(fd.get('courseId')||''),course=data.courses.find(c=>String(c.id)===id),question=String(fd.get('question')||'').trim(),mode=String(fd.get('mode')||'question');
+ if(!course||!question){toast('Choose a course and enter a question or topic.');return}askCourse=course.id;let sources=[];
+ try{if(typeof loadCourseText==='function')sources=await loadCourseText(course.id)}catch{toast('Could not open saved course materials.');return}
+ if(!sources.length){askResult={missing:true,message:'No notes are linked to this course or saved as general material. Add a textbook, slides or notes in Study Studio. Eduvia will not invent an answer without a source.'};render();return}
+ const all=sources.flatMap(src=>sentenceList(src.text).map(text=>({text,source:src.name||'Saved material'})));let rows=[];
+ if(mode==='summary'){const f={};all.forEach(x=>(x.text.toLowerCase().match(/[a-z0-9]{3,}/g)||[]).forEach(w=>{if(!stop.has(w))f[w]=(f[w]||0)+1}));rows=all.map((x,i)=>({...x,i,score:(x.text.toLowerCase().match(/[a-z0-9]{3,}/g)||[]).reduce((n,w)=>n+(f[w]||0),0)})).sort((a,b)=>b.score-a.score||a.i-b.i).slice(0,5).sort((a,b)=>a.i-b.i)}
+ else{const terms=[...new Set((question.toLowerCase().match(/[a-z0-9]{3,}/g)||[]).filter(w=>!stop.has(w)))];rows=all.map((x,i)=>({...x,i,score:terms.filter(w=>x.text.toLowerCase().includes(w)).length})).filter(x=>x.score).sort((a,b)=>b.score-a.score||a.i-b.i).slice(0,4).sort((a,b)=>a.i-b.i)}
+ askResult={course:course.name,mode,rows:rows.length?rows:all.slice(0,3)};render();
+});
+document.addEventListener('click',e=>{
+ const s=e.target.closest('[data-discover-search]');if(s){search(s.dataset.discoverSearch);return}
+ if(e.target.closest('[data-ask-clear]')){askResult=null;render()}
+});
+window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{today:home,discover,play,ask,'my-study':myStudy});
+if(typeof window.render==='function')window.render();
+})();

@@ -241,3 +241,17 @@ html[data-theme="dark"] .setting-row select{background:#141a2d;color:#f1f2ff;bor
   .setting-row select,.setting-row input{max-width:100%;width:100%}
   .settings-save .primary-btn{width:100%}
 }
+
+/* Eduvia Discover: fully in-app curated library */
+.discover-library-card{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:12px;padding:22px;border-radius:22px;border:1px solid rgba(100,100,150,.16);min-height:210px;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}
+.discover-library-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(45,40,90,.1)}
+.discover-library-card b{font:800 16px/1.35 Manrope,sans-serif}
+.discover-library-card>span:not(.exp-icon){font-size:13px;line-height:1.6;opacity:.82}
+.discover-library-card small{font-weight:800;margin-top:auto}
+.exp-discover-grid .discover-library-card{width:100%}
+.discover-article{margin:22px 0;padding:clamp(20px,4vw,32px);border:1px solid var(--exp-line);border-radius:24px;background:var(--exp-card)}
+.discover-article h2{font:800 clamp(22px,4vw,30px)/1.25 Manrope,sans-serif;margin:0 0 20px}
+.discover-article p{font-size:15px;line-height:1.85;color:var(--exp-muted);margin:0 0 18px}
+html[data-theme="dark"] .discover-article{background:#1b2035;border-color:#303650}
+html[data-theme="dark"] .discover-article p{color:#c5c9df}
+@media(max-width:760px){.discover-library-card{min-height:180px;padding:18px;border-radius:19px}.discover-article{padding:20px}}

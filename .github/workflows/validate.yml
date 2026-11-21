@@ -14,11 +14,12 @@ jobs:
           node-version: 22
       - name: Check JavaScript syntax
         run: |
+          node --check learner-profile.js
           node --check app.js
           node --check entry-flow.js
           node --check study-studio.js
           node --check course-intelligence.js
-          node --test tests/course-intelligence.test.cjs
+          node --test tests/course-intelligence.test.cjs tests/learner-profile.test.cjs
           node --check feature-hub.js
           node --check experience.js
           node --check icon-system.js
@@ -33,6 +34,9 @@ jobs:
           grep -q 'course-intelligence.js' scripts/build-web.mjs
           grep -q 'feature-hub.js' index.html
           grep -q 'feature-hub.js' service-worker.js
+          grep -q 'learner-profile.js' index.html
+          grep -q 'learner-profile.js' service-worker.js
+          grep -q 'learner-profile.js' scripts/build-web.mjs
           grep -q 'app.js?v=' index.html
           grep -q 'entry-flow.js' index.html
           grep -q 'entry-flow.css' index.html
@@ -75,5 +79,7 @@ jobs:
           ! grep -q 'touchstart.*preventDefault' index.html
           grep -q 'storage-accessibility-2' index.html
           grep -q 'storage-accessibility-2' service-worker.js
-          grep -q 'function save(){applyTheme();try{localStorage.setItem' app.js
+          grep -q 'function storageGet(key)' app.js
+          grep -q 'function storageSet(key,value)' app.js
+          grep -q 'const storageError=storageSet(STORE_KEY' app.js
           grep -q "if(!route){currentPage='today'" app.js

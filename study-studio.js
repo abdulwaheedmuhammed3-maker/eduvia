@@ -95,15 +95,15 @@ function renderStudyStudio(){
   <section class="panel upload-panel"><div class="upload-icon purple">▤</div><div class="panel-head"><div><h3>2. Import your schedule</h3><p>Fixed commitments stay in place; personal learning sessions fit around them.</p></div><span class="upload-count">${data.events.filter(e=>e.type==='class').length} classes</span></div><label class="upload-drop"><input id="timetableImportFile" type="file" accept=".csv,.tsv,.xls,.xlsx,.json,.txt,.md,.pdf,.docx,.pptx,.png,.jpg,.jpeg,.webp,image/*"><span class="upload-symbol">↑</span><strong>Choose your schedule</strong><span>Images, PDFs, Word, PowerPoint, Excel, CSV, JSON, or text · up to 40 MB</span></label><div class="upload-tools"><button class="secondary-btn native-only" data-action="capture-timetable-photo">Take a photo</button>${timetableCsv}<button class="panel-link" data-page="timetable">Review timetable →</button></div>${imports.timetable?.length?`<div class="import-history">Last updated: ${safe(imports.timetable[imports.timetable.length-1].name)} · ${imports.timetable[imports.timetable.length-1].count} class blocks</div>`:''}</section></div>
   <section class="panel availability-panel"><div class="panel-head"><div><h3>3. Choose when you can learn</h3><p>The generator works around your existing commitments and spreads learning across your available days.</p></div><span class="habit-badge">◷</span></div><form id="availabilityForm"><div class="availability-days">${STUDIO_DAYS.map((day,i)=>`<label class="day-check"><input type="checkbox" name="studyDay" value="${i}" ${(data.profile.studyDays||[]).includes(i)?'checked':''}><span>${day.slice(0,3)}</span></label>`).join('')}</div><div class="availability-times"><label>Study window starts<input type="time" name="studyStart" value="${safe(data.profile.studyStart)}"></label><span>to</span><label>Study window ends<input type="time" name="studyEnd" value="${safe(data.profile.studyEnd)}"></label><label>Study session length<select name="planSessionMinutes">${[25,30,45,60,75,90].map(n=>`<option value="${n}" ${Number(data.profile.planSessionMinutes)===n?'selected':''}>${n} minutes</option>`).join('')}</select></label></div><div class="availability-footer"><span>Weekly target: <b>${data.profile.weeklyGoal} sessions</b> · you can change this in Settings.</span><button type="submit" class="secondary-btn">Save study times</button></div></form></section>
   <section class="panel material-panel"><div class="panel-head"><div><h3>4. Add textbooks, slides, notes, or past papers</h3><p>Eduvia extracts and indexes text on this device. The same course index powers Ask, tutorials, practice and flashcards.</p></div><span class="upload-count">${data.materials.length} file${data.materials.length===1?'':'s'}</span></div><div class="material-upload-row"><label class="upload-drop compact"><input id="materialImportFile" type="file" multiple accept=".pdf,.docx,.pptx,.txt,.md,.csv,.png,.jpg,.jpeg,.webp,image/*"><span class="upload-symbol">↑</span><strong>Upload learning material</strong><span>PDF, Word, slides, or text</span></label><button class="secondary-btn native-only" data-action="capture-material-photo">Take a photo</button><div class="material-privacy"><b>Private by default</b><span>Files are read and indexed in this browser. Extracted text and passage references stay on this device; Ask, Study, Play and flashcards reuse the same index. Scanned PDFs may need OCR or a text copy.</span></div></div>${data.materials.length?`<div class="material-list">${data.materials.map(m=>`<div class="material-row"><span class="resource-icon">${m.ext==='pdf'?'PDF':m.ext==='pptx'?'PPT':m.ext==='docx'?'DOC':'TXT'}</span><div><strong>${safe(m.name)}</strong><span>${safe(courseName(m.courseId)||'Not linked to a course')} · ${Number(m.characters||0).toLocaleString()} characters · ${Number(m.chunkCount||0).toLocaleString()} searchable sections${m.pageCount?' · '+Number(m.pageCount)+' pages':''}${m.slideCount?' · '+Number(m.slideCount)+' slides':''}</span><small class="material-index-status">${m.status==='ready'?'Indexed on this device':'Text extracted · index will be built when opened'}</small></div><button class="icon-btn" data-action="delete-material" data-id="${m.id}" title="Remove material">×</button></div>`).join('')}</div>`:emptyState('▷','No learning materials uploaded yet','Add textbooks, class slides, notes, or past papers to align lessons and practice with your course material.','', '')}</section>
-  <div class="studio-bottom-grid"><section class="panel"><div class="panel-head"><div><h3>Study tutorial</h3><p>Get a focused lesson for one of your courses.</p></div><span class="habit-badge">✧</span></div><div class="studio-action-row"><select id="lessonCourse">${courseOptions()}</select><button class="primary-btn" data-action="generate-tutorial">Create tutorial</button></div><div class="source-hint">Uses your linked textbook or slides first. Without course materials, Eduvia creates a general study guide from your learning details. Use the link below to search the web for an outline.</div><button class="text-btn" data-action="find-curriculum">Find a course outline online ↗</button></section>
-  <section class="panel"><div class="panel-head"><div><h3>Practice and tests</h3><p>Try questions from your notes or course topics.</p></div><span class="habit-badge">✓</span></div><div class="studio-action-row"><select id="practiceCourse">${courseOptions()}</select><button class="secondary-btn" data-page="practice">Open practice →</button></div><div class="source-hint">Practice questions retrieve passages from the same indexed course materials and retain their source references.</div></section></div>
+  <div class="studio-bottom-grid"><section class="panel"><div class="panel-head"><div><h3>Learning tutorial</h3><p>Get a focused lesson for one of your learning areas.</p></div><span class="habit-badge">✧</span></div><div class="studio-action-row"><select id="lessonCourse">${courseOptions()}</select><button class="primary-btn" data-action="generate-tutorial">Create tutorial</button></div><div class="source-hint">Uses your linked learning materials first. Without course materials, Eduvia creates a general study guide from your learning details. Use the link below to search the web for an outline.</div><button class="text-btn" data-action="find-curriculum">Find a course outline online ↗</button></section>
+  <section class="panel"><div class="panel-head"><div><h3>Practice and tests</h3><p>Try questions from your notes or learning topics.</p></div><span class="habit-badge">✓</span></div><div class="studio-action-row"><select id="practiceCourse">${courseOptions()}</select><button class="secondary-btn" data-page="practice">Open practice →</button></div><div class="source-hint">Practice questions retrieve passages from the same indexed course materials and retain their source references.</div></section></div>
   ${studioLesson?renderGeneratedCard(studioLesson,'tutorial'):''}`;
 }
 
 function renderPractice(){
   const course=data.courses.find(c=>c.id===(window.practiceCourseId||''))||data.courses[0];
   return `${pageHead('RECALL IT. APPLY IT.','Practice & tests','Generate questions from your saved learning materials, then check your answers against the source.','<button class="secondary-btn" data-page="study">← Study studio</button>')}
-  <section class="panel practice-setup"><details class="action-disclosure"><summary><div><h3>Build a practice set</h3><p>Choose a learning area, question style and number of questions</p></div><span class="disclosure-cta">＋ Build set</span></summary><div class="disclosure-body"><p>Use your saved learning materials first. Without notes, questions use your learning topics and may be broader.</p><div class="practice-controls"><label>Learning area<select id="practiceCourseSelect">${courseOptions(course?.id||'')}</select></label><label>Question style<select id="questionStyle"><option value="mixed">Mixed review</option><option value="short">Short answer</option><option value="essay">Exam-style essay</option><option value="mcq">Multiple choice</option></select></label><label>Number of questions<select id="questionCount"><option>5</option><option selected>10</option><option>15</option></select></label><button class="primary-btn" data-action="generate-practice">Generate practice set</button></div><p class="privacy-note-inline">Practice questions are created on this device from your uploaded materials and course topics.</p></div></details></section>
+  <section class="panel practice-setup"><details class="action-disclosure"><summary><div><h3>Build a practice set</h3><p>Choose a learning area, question style and number of questions</p></div><span class="disclosure-cta">＋ Build set</span></summary><div class="disclosure-body"><p>Use your saved learning materials first. Without notes, questions use your learning topics and may be broader.</p><div class="practice-controls"><label>Learning area<select id="practiceCourseSelect">${courseOptions(course?.id||'')}</select></label><label>Question style<select id="questionStyle"><option value="mixed">Mixed review</option><option value="short">Short answer</option><option value="essay">Exam-style essay</option><option value="mcq">Multiple choice</option></select></label><label>Number of questions<select id="questionCount"><option>5</option><option selected>10</option><option>15</option></select></label><button class="primary-btn" data-action="generate-practice">Generate practice set</button></div><p class="privacy-note-inline">Practice questions are created on this device from your uploaded materials and learning topics.</p></div></details></section>
   ${studioPractice.length?`<section class="panel practice-results"><div class="panel-head"><div><h3>${safe(studioPractice.title||'Your practice set')}</h3><p>${safe(studioPractice.source||'Generated from your study materials')} · ${studioPractice.questions.length} questions</p></div><button class="panel-link" data-action="generate-practice">Make another set ↻</button></div><div class="question-list">${studioPractice.questions.map((q,i)=>`<article class="question-card"><div class="question-number">${String(i+1).padStart(2,'0')}</div><div class="question-content"><strong>${safe(q.question)}</strong>${q.options?`<div class="question-options">${q.options.map((opt,j)=>`<label><input type="radio" name="q${i}" value="${j}"> ${safe(opt)}</label>`).join('')}</div>`:`<textarea placeholder="Write your answer here…"></textarea>`}<details><summary>Show source passage / sample answer</summary><p>${safe(q.answer||'Review the linked course material and explain the key idea in your own words.')}</p>${q.source?`<small>From: ${safe(q.citation||([q.source,q.location].filter(Boolean).join(' · ')))}</small>`:''}</details></div></article>`).join('')}</div></section>`:emptyState('✓','Your practice space is ready','Choose a course and generate a short practice set from your course materials.','', '')}`;
 }
 
@@ -351,14 +351,14 @@ async function previewMaterial(file,text,linkedCourseId=''){
  const material={id:materialId,name:file.name,ext,characters:content.length,courseId:linkedCourseId||'',status:index?'ready':'text-extracted',indexVersion:index?.version||0,chunkCount:index?.chunkCount||0,pageCount:index?.pageCount||0,slideCount:index?.slideCount||0,indexedAt:index?.indexedAt||0};
  pendingStudioImport={kind:'material',material,text:content,index};
  const processing=index?index.chunkCount+' searchable sections created'+(index.pageCount?' · '+index.pageCount+' pages':'')+(index.slideCount?' · '+index.slideCount+' slides':'')+'.':'Text extracted. Search indexing will be available after the reader loads.';
- openModal('Add course material',file.name,`<div class="form-field full"><label for="materialCourseSelect">Link it to a course</label><select id="materialCourseSelect">${courseOptionsHtml}</select></div><p class="preview-note">${content.length.toLocaleString()} characters extracted on this device. ${safe(processing)} The original file is not uploaded to a server.</p><div class="material-excerpt">${safe(content.slice(0,520))}${content.length>520?'…':''}</div>`,'Save material',async()=>{
+ openModal('Add learning material',file.name,`<div class="form-field full"><label for="materialCourseSelect">Link it to a learning area</label><select id="materialCourseSelect">${courseOptionsHtml}</select></div><p class="preview-note">${content.length.toLocaleString()} characters extracted on this device. ${safe(processing)} The original file is not uploaded to a server.</p><div class="material-excerpt">${safe(content.slice(0,520))}${content.length>520?'…':''}</div>`,'Save material',async()=>{
   const pending=pendingStudioImport;if(!pending?.material)return;
   const m=pending.material,select=document.getElementById('materialCourseSelect');m.courseId=select?.value||'';
   const record={id:m.id,name:m.name,ext:m.ext,text:pending.text,index:pending.index,courseId:m.courseId,createdAt:Date.now(),status:m.status};
   try{await storeMaterial(record)}
   catch{data.materialText=data.materialText||[];data.materialText.push(record);m.warning='stored in browser backup instead'}
   data.materials.push(m);pendingStudioImport=null;closeModal();
-  studioNotice='Course material saved and indexed on this device. Ask, tutorials, practice and flashcards can retrieve passages with source references.';
+  studioNotice='Learning material saved and indexed on this device. Ask, tutorials, practice and flashcards can retrieve passages with source references.';
   save();toast('Course material saved and indexed');
  });
 }
@@ -448,7 +448,7 @@ function localPractice(course,sources,count,style){
  }));
  for(let i=0;questions.length<count&&topics.length;i++){
   const topic=topics[i%topics.length];
-  questions.push({question:style==='essay'?'Write an exam-style response about '+topic+'. Support your explanation with a definition and a course example.':'Explain '+topic+' using your course notes and give one example.',answer:'Use the terminology and examples from your instructor’s material for '+topic+'. No matching passage was retrieved for this topic, so check your notes before treating this prompt as course-specific.',source:'Course topic list',location:'No matching passage'});
+  questions.push({question:style==='essay'?'Write an exam-style response about '+topic+'. Support your explanation with a definition and a course example.':'Explain '+topic+' using your learning notes and give one example.',answer:'Use the terminology and examples from your instructor’s material for '+topic+'. No matching passage was retrieved for this topic, so check your notes before treating this prompt as course-specific.',source:'Course topic list',location:'No matching passage'});
  }
  if(!questions.length)questions.push({question:'Upload course notes to generate source-based practice questions for '+course.name+'.',answer:'No course material has been indexed for this course yet.',source:'No source material'});
  return {title:(course.code||course.name)+' · practice',source:questions.some(question=>question.materialId)?'Retrieved passages from course materials':sources.length?'Course topic prompts · no matching source passages':'Course topic list',questions:questions.slice(0,count)};
@@ -642,7 +642,7 @@ function openCarryoverActivation(){
   if(!pending.length){toast('There are no pending carryover courses.');return}
   const years=[...new Set(pending.map(item=>item.sourceAcademicYear).filter(Boolean))];
   const currentYear=firstAcademicYear(data.profile.academicSession,data.profile.academicYear,data.profile.term);
-  if(!currentYear){toast('Set the active academic year in your student profile before activating carryovers. Use a format such as 2026/2027.');return}
+  if(!currentYear){toast('Set the active academic year in your learning profile before activating carryovers. Use a format such as 2026/2027.');return}
   if(pending.some(item=>!academicYearKey(item.sourceAcademicYear))){toast('Some carryover records are missing a valid original academic year. Edit those results before activating carryovers.');return}
   const body='<p class="preview-note"><strong>Important:</strong> Use this only after the previous academic year is complete. Carryovers must not be activated when moving from first semester to second semester. First move the active student profile into the new academic year, then add these carryovers.</p>'+
     field('New academic year','nextAcademicYear','<input id="f-nextAcademicYear" name="nextAcademicYear" required maxlength="24" placeholder="e.g. 2027/2028">')+
@@ -677,13 +677,24 @@ function openCarryoverActivation(){
 document.addEventListener('change',event=>{
   if(!['f-learnerType','f-profile-learnerType'].includes(event.target?.id))return;
   const form=event.target.closest('form'),formal=event.target.value==='formal';
-  form?.querySelectorAll('[data-profile-formal-only],[data-setup-formal-only],[data-learning-profile-formal]').forEach(group=>{group.hidden=!formal});
+  const groups=form?.querySelectorAll('[data-profile-formal-only],[data-setup-formal-only],[data-learning-profile-formal]')||[];
+  groups.forEach(group=>{
+    group.hidden=!formal;
+    group.querySelectorAll('[name]').forEach(control=>{
+      control.required=formal&&['institution','stage','degreeProgramme','programme','level','academicSession','term'].includes(control.name);
+    });
+  });
 });
 document.addEventListener('submit',event=>{
   if(event.target.id!=='studentProfileForm')return;
   event.preventDefault();
-  const fd=new FormData(event.target),name=String(fd.get('name')||'').trim(),focus=String(fd.get('learningFocus')||'').trim();
+  const fd=new FormData(event.target),name=String(fd.get('name')||'').trim(),focus=String(fd.get('learningFocus')||'').trim(),learnerType=String(fd.get('learnerType')||'independent');
   if(!name||!focus){toast('Enter your name and main learning focus before saving.');return}
+  const requiredFormal=['institution','stage','degreeProgramme','level','academicSession'];
+  if(learnerType==='formal'&&requiredFormal.some(key=>!String(fd.get(key)||'').trim())){
+    toast('Complete your school, learning stage, programme, level and academic session for a formal education profile.');
+    return;
+  }
   for(const key of ['name','email','country','learnerType','learningFocus','institution','stage','department','matricNumber','faculty','specialization','studyMode','studentStatus','level','academicSession','semester','degreeProgramme'])data.profile[key]=String(fd.get(key)||'').trim();
   data.profile.programme=data.profile.degreeProgramme||data.profile.programme||data.profile.learningFocus||'';
   save();
@@ -697,12 +708,12 @@ function renderProfile(){
   const stageOptions=stages.map(([v,t])=>'<option value="'+v+'" '+(profile.stage===v?'selected':'')+'>'+t+'</option>').join('');
   const avatar=profile.avatarData?'<img src="'+safe(profile.avatarData)+'" alt="Profile photograph">':'<span>'+safe(Array.from(String(profile.name||'Learner').trim())[0]?.toUpperCase()||'L')+'</span>';
   const info=(symbol,label,value,colour='blue')=>'<div class="student-id-field"><span class="student-id-icon '+colour+'">'+symbol+'</span><div class="student-id-copy"><span>'+label+'</span><strong>'+safe(value||'Not provided')+'</strong></div></div>';
-  const primary=[info('✎','Full name',profile.name||'Learner','navy'),info('✦','Learning focus',profile.learningFocus||profile.degreeProgramme||profile.programme,'purple'),info('◎','Learning path',learnerTypeLabel(learnerType),'blue'),info('⌖','Country',profile.country,'green')];
+  const primary=[info('✎','Full name',profile.name||'Learner','navy'),info('✦','Learning focus',profile.learningFocus||(formal?(profile.degreeProgramme||profile.programme):''),'purple'),info('◎','Learning path',learnerTypeLabel(learnerType),'blue'),info('⌖','Country',profile.country,'green')];
   const secondary=formal?[
     info('▣','Student number',profile.matricNumber,'gold'),info('▦','Faculty',profile.faculty,'green'),info('▤','Department',profile.department,'purple'),
     info('◈','Programme',profile.degreeProgramme||profile.programme,'blue'),info('♙','Learning mode',profile.studyMode,'gold'),info('●','Status',profile.studentStatus||'Active','grey')
   ]:[
-    info('▦','Learning provider',profile.institution,'green'),info('↗','Current level',profile.level,'blue'),info('♙','Learning mode',profile.studyMode,'gold'),info('●','Learning status',profile.studentStatus||'Active','grey')
+    info('♙','Learning mode',profile.studyMode,'gold'),info('●','Learning status',profile.studentStatus||'Active','grey')
   ];
   const bottom=formal?[
     info('↗','Level',profile.level,'navy'),info('▣','Academic session',profile.academicSession||profile.term,'blue'),info('▦','Term or semester',profile.semester,'purple')
@@ -711,12 +722,12 @@ function renderProfile(){
     info('▤','Learning days',(profile.studyDays||[]).map(day=>STUDIO_DAYS[day]?.slice(0,3)).filter(Boolean).join(', '),'purple')
   ];
   const card='<section class="panel student-id-card">'+
-    '<header class="student-id-header"><div><strong>'+safe(profile.learningFocus||profile.institution||'Eduvia')+'</strong><span>LEARNING PROFILE · '+safe(learnerTypeLabel(learnerType).toUpperCase())+'</span></div><span class="student-id-mark">'+(formal?'ST':'LP')+'</span></header>'+
+    '<header class="student-id-header"><div><strong>'+safe(profile.learningFocus||(formal?profile.institution:'')||'Eduvia')+'</strong><span>LEARNING PROFILE · '+safe(learnerTypeLabel(learnerType).toUpperCase())+'</span></div><span class="student-id-mark">'+(formal?'ST':'LP')+'</span></header>'+
     '<div class="student-id-top"><div class="student-id-photo-col"><div class="student-id-photo">'+avatar+'</div></div><div class="student-id-primary-grid">'+primary.join('')+'</div></div>'+
     '<div class="student-id-secondary-grid">'+secondary.join('')+'</div><div class="student-id-divider"></div><div class="student-id-bottom-grid">'+bottom.join('')+'</div></section>';
   const editForm='<details class="profile-edit-details"><summary><span>Edit learning profile</span><small>Update your learning path, details and photograph</small></summary>'+
     '<form id="studentProfileForm" class="profile-edit-panel">'+profilePhotoSettingsMarkup()+
-      '<div class="form-grid">'+field('Full name','name','<input id="f-name" name="name" required maxlength="60" autocomplete="name" value="'+safe(profile.name||'')+'" placeholder="Your full name">')+field('Learning path','learnerType','<select id="f-learnerType" name="learnerType">'+typeOptions+'</select>')+'</div>'+
+      '<div class="form-grid">'+field('Full name','name','<input id="f-name" name="name" required maxlength="60" autocomplete="name" value="'+safe(profile.name||'')+'" placeholder="Your full name">')+field('Learning path','learnerType','<select id="f-learnerType" name="learnerType" required>'+typeOptions+'</select>')+'</div>'+
       '<div class="form-grid">'+field('What are you learning?','learningFocus','<input id="f-learningFocus" name="learningFocus" required maxlength="120" value="'+safe(profile.learningFocus||profile.degreeProgramme||profile.programme||'')+'" placeholder="e.g. Data analysis, French, Computer Science">')+field('Country','country',studioCountrySelect(profile.country))+'</div>'+
       '<div class="profile-formal-fields" data-profile-formal-only '+(formal?'':'hidden')+'>'+
       '<div class="form-grid">'+field('School, organisation or provider','institution','<input id="f-institution" name="institution" maxlength="100" value="'+safe(profile.institution||'')+'" placeholder="Only if applicable">')+field('Learning stage','stage','<select id="f-stage" name="stage"><option value="">Choose if applicable</option>'+stageOptions+'</select>')+'</div>'+
@@ -1143,20 +1154,20 @@ function editStudyProfile(){
   const stageOptions=stages.map(([value,label])=>'<option value="'+value+'" '+(data.profile.stage===value?'selected':'')+'>'+label+'</option>').join('');
   const academicFields='<div data-learning-profile-formal '+(formal?'':'hidden')+'>'+
     '<div class="form-grid">'+
-      field('Learning provider','institution','<input name="institution" value="'+safe(data.profile.institution||'')+'" placeholder="Your school or organisation">')+
-      field('Learning stage','stage','<select name="stage"><option value="">Choose your stage</option>'+stageOptions+'</select>')+
+      field('Learning provider','institution','<input id="f-institution" name="institution" value="'+safe(data.profile.institution||'')+'" placeholder="Your school or organisation">')+
+      field('Learning stage','stage','<select id="f-stage" name="stage"><option value="">Choose your stage</option>'+stageOptions+'</select>')+
     '</div><div class="form-grid">'+
-      field('Programme, course or qualification','programme','<input name="programme" value="'+safe(data.profile.programme||'')+'" placeholder="e.g. B.Sc. Computer Science">')+
-      field('Level or grade','level','<input name="level" value="'+safe(data.profile.level||'')+'" placeholder="e.g. 300 Level">')+
+      field('Programme, course or qualification','programme','<input id="f-programme" name="programme" value="'+safe(data.profile.programme||'')+'" placeholder="e.g. B.Sc. Computer Science">')+
+      field('Level or grade','level','<input id="f-level" name="level" value="'+safe(data.profile.level||'')+'" placeholder="e.g. 300 Level">')+
     '</div><div class="form-grid">'+
-      field('Academic session or period','term','<input name="term" value="'+safe(data.profile.term||'')+'" placeholder="e.g. 2026/2027">')+
+      field('Academic session or period','term','<input id="f-term" name="term" value="'+safe(data.profile.term||data.profile.academicSession||'')+'" placeholder="e.g. 2026/2027">')+
       field('Faculty or department (optional)','department','<input name="department" value="'+safe(data.profile.department||'')+'" placeholder="Only if applicable">')+
     '</div></div>';
   const body='<div class="form-grid">'+
-    field('Learning path','learnerType','<select id="f-profile-learnerType" name="learnerType">'+typeOptions+'</select>')+
-    field('What are you learning?','learningFocus','<input name="learningFocus" required maxlength="120" value="'+safe(data.profile.learningFocus||data.profile.degreeProgramme||data.profile.programme||'')+'" placeholder="e.g. Data analysis, French or Computer Science">')+
+    field('Learning path','learnerType','<select id="f-profile-learnerType" name="learnerType" required>'+typeOptions+'</select>')+
+    field('What are you learning?','learningFocus','<input id="f-profile-learningFocus" name="learningFocus" required maxlength="120" value="'+safe(data.profile.learningFocus||data.profile.degreeProgramme||data.profile.programme||'')+'" placeholder="e.g. Data analysis, French or Computer Science">')+
     '</div><div class="form-grid">'+
-    field('Country or region','country','<input name="country" value="'+safe(data.profile.country||'')+'">')+
+    field('Country or region','country','<input id="f-profile-country" name="country" value="'+safe(data.profile.country||'')+'">')+
     field('Learning mode (optional)','studyMode','<input name="studyMode" value="'+safe(data.profile.studyMode||'')+'" placeholder="e.g. Online, full-time or self-paced">')+
     '</div>'+academicFields+
     '<div class="form-grid">'+field('Email address (optional)','email','<input type="email" name="email" value="'+safe(data.profile.email||'')+'" placeholder="you@example.com">')+'</div>';
@@ -1164,10 +1175,15 @@ function editStudyProfile(){
     const focus=String(fd.get('learningFocus')||'').trim();
     if(!focus){toast('Add the main subject, skill or topic you are learning.');return}
     const type=String(fd.get('learnerType')||'independent');
+    const requiredFormal=['institution','stage','programme','level','term'];
+    if(type==='formal'&&requiredFormal.some(key=>!String(fd.get(key)||'').trim())){
+      toast('Complete your learning provider, stage, programme, level and academic session for a formal education profile.');
+      return;
+    }
     for(const key of ['learnerType','learningFocus','country','studyMode','email'])data.profile[key]=String(fd.get(key)||'').trim();
     if(type==='formal'){
       for(const key of ['institution','stage','programme','level','term','department'])data.profile[key]=String(fd.get(key)||'').trim();
-      data.profile.degreeProgramme=data.profile.programme||'';
+      data.profile.degreeProgramme=data.profile.programme||'';data.profile.academicSession=data.profile.term||'';
     }else{
       data.profile.programme=data.profile.learningFocus;
     }

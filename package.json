@@ -2,10 +2,11 @@
   "name": "eduvia-study-planner",
   "version": "1.0.0",
   "private": true,
-  "description": "Eduvia study planner web and Android app",
+  "description": "Eduvia universal learning platform for web and Android",
   "scripts": {
     "build:web": "node scripts/build-web.mjs",
-    "android:prepare": "npm run build:web && node scripts/prepare-android.mjs"
+    "android:prepare": "npm run build:web && node scripts/prepare-android.mjs",
+    "test": "node --test"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",

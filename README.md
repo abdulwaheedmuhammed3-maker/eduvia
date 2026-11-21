@@ -33,7 +33,7 @@ To deploy the free service, follow `notifications-worker/README.md`, then set it
 
 New installations open with the Eduvia brand splash and a short introduction to learning, practice, and progress. The learner then chooses a country and completes the learning profile and study routine before the main app is unlocked. The profile is saved locally and can be updated later from Learning Profile. The flow does not ask for ethnicity or a nickname.
 
-The same HTML/CSS/JavaScript entry flow is included in the website and the Capacitor Android build. Existing planner data, local privacy, and saved academic records are retained; academic tools are shown in the context of formal education.
+The same HTML/CSS/JavaScript entry flow is included in the website and the Capacitor Android build. Existing learning data, local privacy, and saved academic records are retained; academic tools are shown in the context of formal education.
 
 ## Android APK
 
@@ -48,4 +48,4 @@ The app shell can open offline after its first load, but each phone keeps its ow
 
 ## Scheduled scheduled class and learning-session alarms
 
-Eduvia schedules lecture and study notifications for the event's actual start time. The Android app uses local notifications with an audible multi-pulse sound and requests notification and exact-alarm permissions. Android notification-channel settings, silent mode, battery policies, and Do Not Disturb can still affect delivery or sound. Eduvia does not silently bypass Do Not Disturb; Android requires separate user-granted special access for apps that are allowed to override it. The browser version depends on the configured push service for delivery while closed; foreground browser timers alone are not guaranteed in the background.
+Eduvia schedules class and learning-session notifications for the event's actual start time. The Android app uses local notifications with an audible multi-pulse sound and requests notification and exact-alarm permissions. Android notification-channel settings, silent mode, battery policies, and Do Not Disturb can still affect delivery or sound. Eduvia does not silently bypass Do Not Disturb; Android requires separate user-granted special access for apps that are allowed to override it. The browser version depends on the configured push service for delivery while closed; foreground browser timers alone are not guaranteed in the background.

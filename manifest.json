@@ -1,7 +1,7 @@
 {
-  "name": "Eduvia — Your study planner",
+  "name": "Eduvia — Your learning space",
   "short_name": "Eduvia",
-  "description": "A colourful, calm study companion for your courses, classes, and learning goals.",
+  "description": "A calm learning space for exploring skills, subjects, ideas and personal goals.",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#f7f8fd",

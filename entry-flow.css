@@ -349,3 +349,49 @@
 .entry-splash p span { color: #7583ce; }
 .entry-splash-loader { background: #e7eaf2; }
 .entry-splash-loader i { background: linear-gradient(90deg, #657fd0, #8a79cb); }
+
+
+/* Required first-use student profile: full-width, scrollable onboarding card */
+.entry-flow-card.entry-flow-profile-screen{width:min(100%,900px);min-height:0;max-height:calc(100dvh - 36px);padding:clamp(20px,3vw,32px)}
+.entry-flow-profile-screen .entry-flow-progress{margin-top:18px}
+.entry-flow-profile-content{display:block;flex:none;padding:10px 0 0;text-align:left}
+.entry-flow-profile-content .entry-flow-title{max-width:none;margin:0;text-align:left;font-size:clamp(25px,4vw,33px)}
+.entry-flow-profile-content .entry-flow-copy{max-width:none;margin:10px 0 22px;text-align:left;font-size:12px}
+.entry-profile-form{display:grid;gap:17px}
+.entry-profile-section{padding:17px;border:1px solid rgba(185,159,255,.16);border-radius:17px;background:rgba(255,255,255,.035)}
+.entry-profile-section h2{margin:0;color:#fff;font:800 15px/1.3 Manrope,sans-serif}
+.entry-profile-section>p{margin:5px 0 15px;color:#bdb3d2;font-size:11px;line-height:1.5}
+.entry-profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.entry-profile-field{display:flex;min-width:0;flex-direction:column;gap:7px;color:#f6f3ff;font-size:11px;font-weight:700}
+.entry-profile-field>span{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.entry-profile-field i{color:#c8ed8c;font-size:9px;font-style:normal;font-weight:700}
+.entry-profile-field span small{color:#988eae;font-size:9px;font-weight:500}
+.entry-profile-field>input,.entry-profile-field>select{width:100%;min-width:0;height:44px;padding:0 12px;border:1px solid rgba(185,159,255,.25);border-radius:11px;background:rgba(8,6,18,.58);color:#fff;font:500 12px "DM Sans",system-ui,sans-serif;color-scheme:dark}
+.entry-profile-field>input::placeholder{color:#857a9e}
+.entry-profile-field>input:focus,.entry-profile-field>select:focus{outline:2px solid rgba(173,145,255,.65);outline-offset:1px;border-color:#a58aff}
+.entry-profile-field>select option{background:#fff;color:#211b32}
+.entry-profile-field>input[type=file]{height:auto;min-height:44px;padding:10px}
+.entry-profile-field>small{color:#a79bbd;font-size:9px;line-height:1.45;font-weight:500}
+.entry-profile-field-full{grid-column:1/-1}
+.entry-profile-days{margin-top:15px}
+.entry-profile-days>strong{display:block;margin-bottom:10px;color:#f5f1ff;font-size:11px}
+.entry-profile-days>strong i{margin-left:5px;color:#c8ed8c;font-size:9px;font-style:normal;font-weight:600}
+.entry-profile-day-list{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
+.entry-profile-day-list label{position:relative;cursor:pointer}
+.entry-profile-day-list input{position:absolute;opacity:0;inset:0}
+.entry-profile-day-list span{display:grid;min-height:37px;place-items:center;border:1px solid rgba(185,159,255,.24);border-radius:10px;background:rgba(255,255,255,.045);color:#c9bfdc;font-size:10px;font-weight:700}
+.entry-profile-day-list input:checked+span{border-color:#a8cf70;background:rgba(168,207,112,.15);color:#e1f3be}
+.entry-profile-day-list input:focus-visible+span{outline:2px solid #c0a5ff;outline-offset:2px}
+.entry-profile-actions{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:0 0 4px}
+.entry-profile-actions>span{color:#a99fbd;font-size:10px;line-height:1.5}
+.entry-profile-actions .entry-flow-primary{width:auto;min-width:min(100%,300px);padding:0 18px}
+.entry-flow-profile-screen .entry-flow-error{margin:0;color:#ffb7bc;font-size:11px}
+@media(max-width:680px){
+  .entry-flow-card.entry-flow-profile-screen{width:100%;min-height:100dvh;max-height:none;padding:max(20px,env(safe-area-inset-top)) 18px max(25px,env(safe-area-inset-bottom))}
+  .entry-profile-grid{grid-template-columns:minmax(0,1fr);gap:11px}
+  .entry-profile-section{padding:14px}
+  .entry-profile-field-full{grid-column:auto}
+  .entry-profile-day-list{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .entry-profile-actions{align-items:stretch;flex-direction:column}
+  .entry-profile-actions .entry-flow-primary{width:100%}
+}

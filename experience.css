@@ -302,3 +302,38 @@ html[data-theme="dark"] .discover-article p{color:#c5c9df}
     font-size:10px;
   }
 }
+
+
+/* Home screen: next scheduled lecture announcement */
+.exp-next-lecture{
+  display:grid;grid-template-columns:54px minmax(0,1fr) auto;align-items:center;gap:16px;
+  padding:18px 20px;margin:-7px 0 25px;border:1px solid #e1e5fa;border-radius:20px;
+  background:linear-gradient(112deg,#f0efff 0%,#f9f9ff 58%,#eef7ff 100%);
+  box-shadow:0 9px 25px rgba(49,48,106,.055);
+}
+.exp-next-lecture-icon{width:52px;height:52px;display:grid;place-items:center;border-radius:16px;color:#5c56d1;background:#fff;box-shadow:0 4px 12px rgba(67,65,135,.08)}
+.exp-next-lecture-icon svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.exp-next-lecture-copy{min-width:0}
+.exp-next-lecture-copy .eyebrow{margin:0 0 5px;color:#625bd7}
+.exp-next-lecture-copy h3{margin:0;color:#252943;font:800 16px/1.3 Manrope,sans-serif;overflow-wrap:anywhere}
+.exp-next-lecture-copy p{margin:6px 0 3px;color:#565d78;font-size:11px;font-weight:700}
+.exp-next-lecture-copy>span{display:block;color:#8188a0;font-size:10px;line-height:1.45}
+.exp-next-lecture-actions{display:flex;flex-direction:column;align-items:flex-end;gap:7px;white-space:nowrap}
+.exp-next-lecture-date{color:#858ba1;font-size:10px;font-weight:700}
+.exp-next-lecture-actions button{border:0;border-radius:10px;padding:9px 12px;background:#655ee0;color:#fff;font-size:10px;font-weight:800}
+.exp-next-lecture-actions button.exp-next-lecture-link{padding:3px 4px;background:transparent;color:#625bd7}
+.exp-next-lecture-empty{background:linear-gradient(112deg,#f7f8fc,#f9faff);border-color:#e8eaf3}
+.exp-next-lecture-empty .exp-next-lecture-icon{background:#fff;color:#8a91a9}
+.exp-next-lecture-empty .exp-next-lecture-actions{justify-content:center}
+html[data-theme="dark"] .exp-next-lecture{background:linear-gradient(112deg,#292747,#222b43);border-color:#39375e;box-shadow:0 10px 28px rgba(0,0,0,.16)}
+html[data-theme="dark"] .exp-next-lecture-copy h3{color:#f1f2ff}
+html[data-theme="dark"] .exp-next-lecture-copy p{color:#d1d3eb}
+html[data-theme="dark"] .exp-next-lecture-copy>span,html[data-theme="dark"] .exp-next-lecture-date{color:#a8aec8}
+html[data-theme="dark"] .exp-next-lecture-icon{background:#302d52;color:#c5c0ff}
+@media(max-width:760px){
+  .exp-next-lecture{grid-template-columns:44px minmax(0,1fr);gap:12px;padding:15px;margin:-6px 0 21px;border-radius:17px}
+  .exp-next-lecture-icon{width:44px;height:44px;border-radius:13px}
+  .exp-next-lecture-actions{grid-column:2;flex-direction:row;align-items:center;justify-content:flex-start;flex-wrap:wrap;white-space:normal}
+  .exp-next-lecture-date{margin-right:4px}
+  .exp-next-lecture-actions button{padding:9px 11px}
+}

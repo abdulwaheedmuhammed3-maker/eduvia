@@ -660,7 +660,7 @@ document.addEventListener('submit',event=>{
   const fd=new FormData(event.target);
   const name=String(fd.get('name')||'').trim();
   if(!name){toast('Enter your name before saving your profile.');return}
-  for(const key of ['name','email','institution','stage','department','matricNumber','faculty','specialization','studyMode','studentStatus','level','academicSession','semester','degreeProgramme'])data.profile[key]=String(fd.get(key)||'').trim();
+  for(const key of ['name','email','country','institution','stage','department','matricNumber','faculty','specialization','studyMode','studentStatus','level','academicSession','semester','degreeProgramme'])data.profile[key]=String(fd.get(key)||'').trim();
   data.profile.programme=data.profile.degreeProgramme||data.profile.programme||'';
   save();
   toast('Your student profile has been saved.');
@@ -719,7 +719,9 @@ function renderProfile(){
         field('Semester','semester','<input id="f-semester" name="semester" maxlength="50" value="'+safe(profile.semester||'')+'" placeholder="e.g. Harmattan Semester">')+
         field('Institution','institution','<input id="f-institution" name="institution" maxlength="100" value="'+safe(profile.institution||'')+'" placeholder="Your university or institution">')+
       '</div><div class="form-grid">'+
+        field('Country','country',studioCountrySelect(profile.country))+
         field('Learning stage','stage','<select id="f-stage" name="stage"><option value="">Choose your learning stage</option>'+stageOptions+'</select>')+
+      '</div><div class="form-grid">'+
         field('Email address (optional)','email','<input id="f-email" name="email" type="email" maxlength="120" autocomplete="email" value="'+safe(profile.email||'')+'" placeholder="you@example.com">')+
       '</div><div class="profile-form-actions"><button class="primary-btn" type="submit">Save student details</button></div>'+
     '</form></details>';

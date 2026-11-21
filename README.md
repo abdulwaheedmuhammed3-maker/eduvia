@@ -2,7 +2,7 @@
 
 Eduvia is a school-, course-, and level-neutral study planner for primary and high school learners, college and university students, postgraduate learners, and people in vocational or professional training.
 
-At first use, each learner enters their own school or provider, country, programme, level, term, study days, and available hours. They can import a course list and class timetable, add study materials, generate a weekly plan, create local study guides, and practise with questions based on their own course details. My education lets learners backfill past school years, semesters, and sessions with their subjects and results, then save current results when they archive a term and move forward.
+Before the main app opens on a new installation, each learner completes a student profile with their name, country, school or provider, learning stage, programme, level, academic session, and study preferences. Matriculation number, faculty, department, specialization, email, and semester are collected when relevant but remain optional. They can import a course list and class timetable, add study materials, generate a weekly plan, create local study guides, and practise with questions based on their own course details. My education lets learners backfill past school years, semesters, and sessions with their subjects and results, then save current results when they archive a term and move forward.
 
 ## Start Eduvia locally
 
@@ -31,7 +31,7 @@ The browser notification service stores a device subscription and scheduled remi
 To deploy the free service, follow `notifications-worker/README.md`, then set its Worker URL in `push-config.js`.
 ## First launch and welcome screens
 
-New installations open with the Eduvia brand splash, a short introduction to learning, practice, and progress, and a country picker. The introduction is shown once per device; the country choice is saved into the existing study profile and prefilled in the planner setup screen. The country screen asks only for a country — it does not ask for ethnicity or a nickname.
+New installations open with the Eduvia brand splash and a short introduction to learning, practice, and progress. The learner then chooses a country and completes the student profile and study routine before the main app is unlocked. The profile is saved locally and can be updated later from Student Profile. The flow does not ask for ethnicity or a nickname.
 
 The same HTML/CSS/JavaScript entry flow is included in the website and the Capacitor Android build. Existing planner data, local privacy, and study tools are unchanged.
 

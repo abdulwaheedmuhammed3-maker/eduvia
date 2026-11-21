@@ -1,5 +1,5 @@
 (function(){
-let askResult=null,askCourse='';
+let askResult=null,askCourse='',discoverSearchQuery='';
 const ic=(s,t='purple')=>'<span class="exp-icon exp-icon-'+t+'">'+s+'</span>';
 const hd=(k,t,d)=>'<header class="exp-heading"><div><div class="eyebrow">'+k+'</div><h1>'+t+'</h1><p>'+d+'</p></div></header>';
 const tile=(p,t,s,n,d,m='')=>'<button class="exp-tile exp-tile-'+t+'" data-page="'+p+'"><span class="exp-tile-top">'+ic(s,t)+'<b>↗</b></span><strong>'+n+'</strong><span>'+d+'</span>'+(m?'<small>'+m+'</small>':'')+'</button>';
@@ -18,7 +18,7 @@ function discover(){
  return hd('STAY CURIOUS','Discover','Explore ideas and learning resources beyond your timetable.')+
  '<section class="exp-discover-hero"><div class="eyebrow">A LITTLE MORE CURIOUS</div><h2>Explore.<br><em>Learn. Grow.</em></h2><p>Find useful study methods, strengthen your academic skills and discover resources that support your goals.</p><div class="exp-chips"><span>Study smarter</span><span>Learn independently</span><span>Find opportunities</span></div></section>'+
  '<section class="exp-section"><div class="exp-section-heading"><div><div class="eyebrow">EXPLORE BY INTEREST</div><h2>What would you like to learn?</h2></div></div><div class="exp-discover-grid">'+cats.map(c=>'<button class="exp-discover-card exp-discover-'+c[0]+'" data-discover-search="'+safe(c[4])+'">'+ic(c[1],c[0])+'<b>'+c[2]+'</b><span>'+c[3]+'</span><small>Search resources ↗</small></button>').join('')+'</div></section>'+
- '<section class="panel exp-panel"><div class="panel-head"><div><h3>Find a learning resource</h3><p>Search for a topic, course outline or study guide.</p></div></div><form id="discoverSearchForm" class="exp-search-form"><input id="discoverQuery" type="search" maxlength="180" placeholder="e.g. data structures, academic writing..." required><button class="primary-btn">Search ↗</button></form></section>'+
+ '<section class="panel exp-panel" id="discoverResourceSearch"><div class="panel-head"><div><h3>Find a learning resource</h3><p>Search for a topic, course outline or study guide.</p></div></div><form id="discoverSearchForm" class="exp-search-form"><input id="discoverQuery" type="search" maxlength="180" value="'+safe(discoverSearchQuery)+'" placeholder="e.g. data structures, academic writing..." required><button class="primary-btn">Continue to web search ↗</button></form>'+(discoverSearchQuery?'<div class="discover-search-preview"><div class="eyebrow">SEARCH READY</div><p>Eduvia has prepared your search: <strong>'+safe(discoverSearchQuery)+'</strong></p><p>Tap Continue to open results. Selecting an interest card no longer automatically launches an external browser.</p></div>':'')+'</section>'+
  '<section class="panel exp-panel"><div class="panel-head"><div><h3>Your saved learning kit</h3><p>Links and notes saved in Eduvia.</p></div><button class="panel-link" data-page="tutorials">Manage ↗</button></div>'+(data.resources.length?resourceMarkup(data.resources.slice(0,4)):'<div class="exp-empty"><b>No saved resources yet.</b><p>Save useful tutorials and your own notes here.</p><button class="secondary-btn" data-page="tutorials">Open tutorials & notes</button></div>')+'</section>';
 }
 function play(){
@@ -80,7 +80,7 @@ document.addEventListener('submit',async e=>{
  askResult={course:course.name,mode,rows:rows.length?rows:all.slice(0,3)};render();
 });
 document.addEventListener('click',e=>{
- const s=e.target.closest('[data-discover-search]');if(s){search(s.dataset.discoverSearch);return}
+ const s=e.target.closest('[data-discover-search]');if(s){discoverSearchQuery=s.dataset.discoverSearch;render();document.getElementById('discoverResourceSearch')?.scrollIntoView({behavior:'smooth',block:'center'});document.getElementById('discoverQuery')?.focus();return}
  if(e.target.closest('[data-ask-clear]')){askResult=null;render()}
 });
 window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{today:home,discover,play,ask,'my-study':myStudy});

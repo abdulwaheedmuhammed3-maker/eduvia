@@ -29,10 +29,13 @@ jobs:
           grep -q 'app.js?v=' index.html
           grep -q 'entry-flow.js' index.html
           grep -q 'entry-flow.css' index.html
+          grep -q 'visual-refresh.css' index.html
           grep -q 'entry-flow.js' service-worker.js
           grep -q 'entry-flow.css' service-worker.js
+          grep -q 'visual-refresh.css' service-worker.js
           grep -q 'entry-flow.js' scripts/build-web.mjs
           grep -q 'feature-hub.js' scripts/build-web.mjs
           grep -q 'entry-flow.css' scripts/build-web.mjs
+          grep -q 'visual-refresh.css' scripts/build-web.mjs
           grep -q 'app.js?v=' service-worker.js
           grep -q 'eduvia-study-alarms-v2' native-bridge-src.js

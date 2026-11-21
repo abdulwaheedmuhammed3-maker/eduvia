@@ -132,23 +132,22 @@
       '<option value="' + escapeHtml(value) + '"' + (profile.stage === value ? ' selected' : '') + '>' +
       escapeHtml(label) + '</option>'
     ).join('');
-    const statusOptions = ['Active','Inactive','Graduated','Deferred'].map(status =>
+    const learnerTypes = [
+      ['formal','Formal education (school, college or university)'],
+      ['independent','Self-directed learning'],
+      ['professional','Professional or career development'],
+      ['exam-prep','Exam or certification preparation'],
+      ['general','General knowledge and personal interests']
+    ];
+    const savedType = profile.learnerType || ((profile.institution || profile.stage || profile.matricNumber || profile.academicSession || profile.degreeProgramme) ? 'formal' : '');
+    const learnerTypeOptions = learnerTypes.map(([value,label]) =>
+      '<option value="' + value + '"' + (savedType === value ? ' selected' : '') + '>' + label + '</option>'
+    ).join('');
+    const statusOptions = ['Active','Paused','Completed'].map(status =>
       '<option value="' + status + '"' + ((profile.studentStatus || 'Active') === status ? ' selected' : '') + '>' + status + '</option>'
     ).join('');
     const days = Array.isArray(profile.studyDays) ? profile.studyDays : [1,2,3,4,5,6];
     const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    const field = (label, name, value, options = {}) => {
-      const type = options.type || 'text';
-      const required = options.required ? ' required' : '';
-      const placeholder = options.placeholder ? ' placeholder="' + escapeHtml(options.placeholder) + '"' : '';
-      const maxLength = options.maxLength ? ' maxlength="' + options.maxLength + '"' : '';
-      const help = options.help ? '<small>' + options.help + '</small>' : '';
-      const full = options.full ? ' entry-profile-field-full' : '';
-      return '<label class="entry-profile-field' + full + '"><span>' + label +
-        (options.required ? ' <i>Required</i>' : ' <small>Optional</small>') + '</span>' +
-        '<input name="' + name + '" type="' + type + '" value="' + escapeHtml(value || '') + '"' +
-        required + placeholder + maxLength + '>' + help + '</label>';
-    };
 
     return '<section class="entry-flow-card entry-flow-profile-screen">' +
       headerMarkup(false) +
@@ -157,54 +156,71 @@
         '<i class="is-active"></i><i class="is-active"></i>' +
       '</div>' +
       '<main class="entry-flow-content entry-flow-profile-content">' +
-        '<p class="entry-flow-kicker">YOUR STUDENT PROFILE</p>' +
-        '<h1 class="entry-flow-title">Let’s complete your profile.</h1>' +
-        '<p class="entry-flow-copy">Enter the details Eduvia needs to organise your courses, timetable and study plan. You can update them later in Student Profile.</p>' +
+        '<p class="entry-flow-kicker">YOUR LEARNING PROFILE</p>' +
+        '<h1 class="entry-flow-title">Let’s make this learning space yours.</h1>' +
+        '<p class="entry-flow-copy">Tell Eduvia what you are learning and how you prefer to learn. Academic details are only required when you are in formal education.</p>' +
         '<form id="entryProfileForm" class="entry-profile-form">' +
           '<section class="entry-profile-section">' +
-            '<h2>Personal and academic details</h2>' +
-            '<p>These details help Eduvia identify your current learning programme.</p>' +
+            '<h2>About you and what you are learning</h2>' +
+            '<p>Eduvia supports formal study, personal learning, professional development and exam preparation.</p>' +
             '<div class="entry-profile-grid">' +
               '<label class="entry-profile-field"><span>Full name <i>Required</i></span><input name="name" type="text" required maxlength="60" autocomplete="name" value="' + escapeHtml(profile.name === 'Student' ? '' : profile.name || '') + '" placeholder="Your full name"></label>' +
               '<label class="entry-profile-field"><span>Country <i>Required</i></span><select name="country" required><option value="">Choose your country</option>' + countryOptionsHtml + '</select></label>' +
-              '<label class="entry-profile-field"><span>School, university or provider <i>Required</i></span><input name="institution" type="text" required maxlength="100" value="' + escapeHtml(profile.institution || '') + '" placeholder="Your institution (or Independent learner)"></label>' +
-              '<label class="entry-profile-field"><span>Learning stage <i>Required</i></span><select name="stage" required><option value="">Choose your learning stage</option>' + stageOptions + '</select></label>' +
-              '<label class="entry-profile-field"><span>Programme, course or subject <i>Required</i></span><input name="degreeProgramme" type="text" required maxlength="120" value="' + escapeHtml(profile.degreeProgramme || profile.programme || '') + '" placeholder="e.g. B.Sc. Computer Science"></label>' +
-              '<label class="entry-profile-field"><span>Level, grade or year <i>Required</i></span><input name="level" type="text" required maxlength="40" value="' + escapeHtml(profile.level || '') + '" placeholder="e.g. 300 Level or Year 2"></label>' +
-              '<label class="entry-profile-field"><span>Academic session <i>Required</i></span><input name="academicSession" type="text" required maxlength="40" value="' + escapeHtml(profile.academicSession || profile.term || '') + '" placeholder="e.g. 2026/2027"></label>' +
-              '<label class="entry-profile-field"><span>Semester or term <small>Optional</small></span><input name="semester" type="text" maxlength="50" value="' + escapeHtml(profile.semester || '') + '" placeholder="e.g. First semester"></label>' +
-              field('Faculty', 'faculty', profile.faculty, {maxLength:120, placeholder:'Your faculty'}) +
-              field('Department', 'department', profile.department || '', {maxLength:100, placeholder:'Your department'}) +
-              field('Matriculation or student number', 'matricNumber', profile.matricNumber, {maxLength:40, placeholder:'Your student number'}) +
-              field('Specialization', 'specialization', profile.specialization, {maxLength:100, placeholder:'Your specialization'}) +
-              field('Mode of study', 'studyMode', profile.studyMode, {maxLength:80, placeholder:'e.g. Full-time, part-time or online'}) +
-              '<label class="entry-profile-field"><span>Student status <i>Required</i></span><select name="studentStatus" required>' + statusOptions + '</select></label>' +
+              '<label class="entry-profile-field"><span>Which best describes your learning? <i>Required</i></span><select name="learnerType" id="entryLearnerType" required><option value="">Choose your learning path</option>' + learnerTypeOptions + '</select></label>' +
+              '<label class="entry-profile-field"><span>What are you learning? <i>Required</i></span><input name="learningFocus" type="text" required maxlength="120" value="' + escapeHtml(profile.learningFocus || profile.degreeProgramme || profile.programme || '') + '" placeholder="e.g. Data analysis, French, Computer Science"></label>' +
+              '<label class="entry-profile-field"><span>School, organisation or learning provider <i data-formal-marker>Optional · required for formal education</i></span><input name="institution" id="entryInstitution" type="text" maxlength="100" value="' + escapeHtml(profile.institution || '') + '" placeholder="Leave blank for independent learning"></label>' +
+              '<label class="entry-profile-field"><span>Learning stage <i data-formal-marker>Optional · required for formal education</i></span><select name="stage" id="entryStage"><option value="">Choose if applicable</option>' + stageOptions + '</select></label>' +
+              '<label class="entry-profile-field"><span>Programme, course or qualification <i data-formal-marker>Optional · required for formal education</i></span><input name="degreeProgramme" id="entryProgramme" type="text" maxlength="120" value="' + escapeHtml(profile.degreeProgramme || profile.programme || '') + '" placeholder="e.g. B.Sc. Computer Science or AWS certification"></label>' +
+              '<label class="entry-profile-field"><span>Level, grade or experience level <i data-formal-marker>Optional · required for formal education</i></span><input name="level" id="entryLevel" type="text" maxlength="40" value="' + escapeHtml(profile.level || '') + '" placeholder="e.g. 300 Level, beginner or advanced"></label>' +
+              '<label class="entry-profile-field"><span>Academic session <i data-formal-marker>Optional · required for formal education</i></span><input name="academicSession" id="entryAcademicSession" type="text" maxlength="40" value="' + escapeHtml(profile.academicSession || profile.term || '') + '" placeholder="e.g. 2026/2027"></label>' +
+              '<label class="entry-profile-field"><span>Term or semester <small>Optional</small></span><input name="semester" type="text" maxlength="50" value="' + escapeHtml(profile.semester || '') + '" placeholder="Only if your learning follows terms or semesters"></label>' +
+              '<label class="entry-profile-field"><span>Faculty <small>Optional</small></span><input name="faculty" type="text" maxlength="120" value="' + escapeHtml(profile.faculty || '') + '" placeholder="Your faculty, if applicable"></label>' +
+              '<label class="entry-profile-field"><span>Department <small>Optional</small></span><input name="department" type="text" maxlength="100" value="' + escapeHtml(profile.department || '') + '" placeholder="Your department, if applicable"></label>' +
+              '<label class="entry-profile-field"><span>Student or member ID <small>Optional</small></span><input name="matricNumber" type="text" maxlength="40" value="' + escapeHtml(profile.matricNumber || '') + '" placeholder="Only if you have one"></label>' +
+              '<label class="entry-profile-field"><span>Mode of learning <small>Optional</small></span><input name="studyMode" type="text" maxlength="80" value="' + escapeHtml(profile.studyMode || '') + '" placeholder="e.g. Full-time, part-time, online or self-paced"></label>' +
+              '<label class="entry-profile-field"><span>Learning status <small>Optional</small></span><select name="studentStatus">' + statusOptions + '</select></label>' +
               '<label class="entry-profile-field"><span>Email address <small>Optional</small></span><input name="email" type="email" maxlength="120" autocomplete="email" value="' + escapeHtml(profile.email || '') + '" placeholder="you@example.com"></label>' +
-              '<label class="entry-profile-field"><span>Profile photo <small>Optional</small></span><input id="profilePhotoFile" name="profilePhotoFile" type="file" accept="image/*"><small>You can also add or change this later.</small></label>' +
             '</div>' +
           '</section>' +
           '<section class="entry-profile-section">' +
-            '<h2>Your study routine</h2>' +
-            '<p>Set a starting routine. You can change it whenever your timetable changes.</p>' +
+            '<h2>Your learning routine</h2>' +
+            '<p>Set a starting routine for practice, reading, revision or any other kind of learning.</p>' +
             '<div class="entry-profile-grid">' +
-              '<label class="entry-profile-field"><span>Study goal per week <i>Required</i></span><input name="weeklyGoal" type="number" min="1" max="30" required value="' + escapeHtml(profile.weeklyGoal || 5) + '"></label>' +
-              '<label class="entry-profile-field"><span>Preferred session length <i>Required</i></span><select name="planSessionMinutes" required>' + [25,30,45,60,75,90].map(n => '<option value="' + n + '"' + (Number(profile.planSessionMinutes || 45) === n ? ' selected' : '') + '>' + n + ' minutes</option>').join('') + '</select></label>' +
-              '<label class="entry-profile-field"><span>Usual study start time <i>Required</i></span><input name="studyStart" type="time" required value="' + escapeHtml(profile.studyStart || '17:00') + '"></label>' +
-              '<label class="entry-profile-field"><span>Usual study end time <i>Required</i></span><input name="studyEnd" type="time" required value="' + escapeHtml(profile.studyEnd || '21:00') + '"></label>' +
-              '<label class="entry-profile-field entry-profile-field-full"><span>Usual exam or test format <small>Optional</small></span><input name="examStyle" type="text" maxlength="160" value="' + escapeHtml(profile.examStyle || '') + '" placeholder="e.g. Multiple choice, essays, short answers or practicals"></label>' +
+              '<label class="entry-profile-field"><span>Learning goal per week <i>Required</i></span><input name="weeklyGoal" type="number" min="1" max="30" required value="' + escapeHtml(profile.weeklyGoal || 5) + '"></label>' +
+              '<label class="entry-profile-field"><span>Preferred session length <i>Required</i></span><select name="planSessionMinutes" required>' + [15,20,25,30,45,60,75,90].map(n => '<option value="' + n + '"' + (Number(profile.planSessionMinutes || profile.sessionMinutes || 25) === n ? ' selected' : '') + '>' + n + ' minutes</option>').join('') + '</select></label>' +
+              '<label class="entry-profile-field"><span>Usual learning start time <i>Required</i></span><input name="studyStart" type="time" required value="' + escapeHtml(profile.studyStart || '17:00') + '"></label>' +
+              '<label class="entry-profile-field"><span>Usual learning end time <i>Required</i></span><input name="studyEnd" type="time" required value="' + escapeHtml(profile.studyEnd || '21:00') + '"></label>' +
             '</div>' +
-            '<div class="entry-profile-days"><strong>Which days can you usually study? <i>Choose at least one</i></strong><div class="entry-profile-day-list">' +
+            '<div class="entry-profile-days"><strong>Which days can you usually learn? <i>Choose at least one</i></strong><div class="entry-profile-day-list">' +
               dayNames.map((day, index) => '<label><input type="checkbox" name="studyDay" value="' + index + '"' + (days.includes(index) ? ' checked' : '') + '><span>' + day.slice(0,3) + '</span></label>').join('') +
             '</div></div>' +
           '</section>' +
           '<p id="entryProfileError" class="entry-flow-error" role="alert"></p>' +
-          '<div class="entry-profile-actions"><span>Your profile and study data stay on this device.</span><button class="entry-flow-primary" type="submit">Complete profile and open Eduvia <span aria-hidden="true">→</span></button></div>' +
+          '<div class="entry-profile-actions"><span>Your profile and learning data stay on this device.</span><button class="entry-flow-primary" type="submit">Complete profile and open Eduvia <span aria-hidden="true">→</span></button></div>' +
         '</form>' +
       '</main>' +
     '</section>';
   }
 
-  function renderSlide() {
+  function syncFormalProfileFields(form) {
+    const formal = form.querySelector('[name="learnerType"]')?.value === 'formal';
+    const requirements = {
+      institution:'School, organisation or learning provider',
+      stage:'Learning stage',
+      degreeProgramme:'Programme, course or qualification',
+      level:'Level, grade or year',
+      academicSession:'Academic session'
+    };
+    Object.entries(requirements).forEach(([name,label]) => {
+      const control = form.elements.namedItem(name);
+      if (!control) return;
+      control.required = formal;
+      const marker = control.closest('label')?.querySelector('[data-formal-marker]');
+      if (marker) marker.textContent = formal ? 'Required' : 'Optional · only for formal education';
+    });
+  }
+
+    function renderSlide() {
     const isCountry = currentStep === slides.length;
     const isProfile = currentStep === slides.length + 1;
     if (isProfile) {
@@ -287,8 +303,10 @@
     const formData = new FormData(form);
     const chosenCountry = String(formData.get('country') || selectedCountry || '').trim();
     const fullName = String(formData.get('name') || '').trim();
-    const stage = String(formData.get('stage') || '').trim();
+    const learnerType = String(formData.get('learnerType') || '').trim();
+    const learningFocus = String(formData.get('learningFocus') || '').trim();
     const institution = String(formData.get('institution') || '').trim();
+    const stage = String(formData.get('stage') || '').trim();
     const programme = String(formData.get('degreeProgramme') || '').trim();
     const level = String(formData.get('level') || '').trim();
     const academicSession = String(formData.get('academicSession') || '').trim();
@@ -296,22 +314,29 @@
     const start = String(formData.get('studyStart') || '');
     const end = String(formData.get('studyEnd') || '');
     const error = document.getElementById('entryProfileError');
-    if (!chosenCountry || !fullName || !stage || !institution || !programme || !level || !academicSession) {
-      if (error) error.textContent = 'Complete every required personal and academic field before continuing.';
+    if (!chosenCountry || !fullName || !learnerType || !learningFocus) {
+      if (error) error.textContent = 'Complete your name, country, learning path and main learning focus before continuing.';
+      return;
+    }
+    if (learnerType === 'formal' && (!institution || !stage || !programme || !level || !academicSession)) {
+      if (error) error.textContent = 'Formal education profiles also need a school or provider, learning stage, programme, level and academic session.';
       return;
     }
     if (!days.length) {
-      if (error) error.textContent = 'Choose at least one day you can study.';
+      if (error) error.textContent = 'Choose at least one day you can learn.';
       return;
     }
     if (!start || !end || start >= end) {
-      if (error) error.textContent = 'Choose a valid study time. The end time must be later than the start time.';
+      if (error) error.textContent = 'Choose a valid learning time. The end time must be later than the start time.';
       return;
     }
 
+    if (!data.profile) data.profile = {};
     Object.assign(data.profile, {
       name: fullName,
       country: chosenCountry,
+      learnerType,
+      learningFocus,
       institution,
       stage,
       department: String(formData.get('department') || '').trim(),
@@ -322,15 +347,14 @@
       studentStatus: String(formData.get('studentStatus') || 'Active').trim(),
       level,
       academicSession,
-      term: academicSession,
+      term: academicSession || String(formData.get('semester') || '').trim(),
       semester: String(formData.get('semester') || '').trim(),
       degreeProgramme: programme,
-      programme,
+      programme: programme || learningFocus,
       email: String(formData.get('email') || '').trim(),
-      examStyle: String(formData.get('examStyle') || '').trim(),
       weeklyGoal: Math.min(30, Math.max(1, Number(formData.get('weeklyGoal')) || 5)),
-      planSessionMinutes: Number(formData.get('planSessionMinutes')) || 45,
-      sessionMinutes: Number(formData.get('planSessionMinutes')) || 45,
+      planSessionMinutes: Number(formData.get('planSessionMinutes')) || 25,
+      sessionMinutes: Number(formData.get('planSessionMinutes')) || 25,
       studyStart: start,
       studyEnd: end,
       studyDays: days,
@@ -348,7 +372,7 @@
     if (typeof setPage === 'function') setPage('today');
     else if (typeof render === 'function') render();
     root.classList.add('is-leaving');
-    if (typeof toast === 'function') toast('Your profile is complete. Welcome to Eduvia.');
+    if (typeof toast === 'function') toast('Your learning profile is ready. Welcome to Eduvia.');
     window.setTimeout(() => root.remove(), 430);
   }
 

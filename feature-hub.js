@@ -29,14 +29,25 @@
     return {level,nextReview:new Date(Date.now()+(remembered?steps[Math.max(0,level-1)]:1)*86400000).toLocaleDateString('en-CA')};
   }
   function renderFlashcards(){
-    const due=data.flashcards.filter(c=>!c.nextReview||c.nextReview<=today());
-    return pageHead('ACTIVE RECALL','Flashcards','Turn topics and your own notes into short questions, then schedule reviews based on recall.','<button class="primary-btn" data-feature="add-card">＋ Create card</button>')+
-      '<div class="stats-row"><div class="stat-card"><div class="stat-label">TOTAL CARDS</div><div class="stat-value">'+data.flashcards.length+'</div></div><div class="stat-card"><div class="stat-label">DUE TODAY</div><div class="stat-value">'+due.length+'</div></div><div class="stat-card"><div class="stat-label">MASTERED REVIEWS</div><div class="stat-value">'+data.flashcards.filter(c=>(c.level||0)>=3).length+'</div></div></div>'+
-      cardBox('Create from a course topic or uploaded notes','<details class="action-disclosure"><summary><div><strong>Create review cards</strong><p>Choose a course and topic, optionally add notes</p></div><span class="disclosure-cta">＋ Create</span></summary><div class="disclosure-body"><form id="cardGenerateForm" class="form-grid"><label class="form-field">Learning area'+selectCourse()+'</label><label class="form-field">Topic'+input('topic','text','','required maxlength="120" placeholder="e.g. Database normalisation"')+'</label><label class="form-field full">Notes or explanation<textarea name="notes" rows="4" placeholder="Paste notes here, or leave blank to create a topic prompt."></textarea></label><div class="form-field full"><button class="primary-btn" type="submit">Create review cards</button></div></form></div></details>')+
-      cardBox('Review queue',due.length?'<div class="resource-list">'+due.map(c=>'<article class="resource-card"><div class="resource-icon">✧</div><div style="min-width:0;flex:1"><h4>'+esc(c.front)+'</h4><p>'+esc(courseName(c.courseId)||'Personal review')+' · due '+esc(c.nextReview||today())+'</p><details><summary>Reveal answer</summary><p>'+esc(c.back)+'</p>'+(c.sourceCitation?'<small class=\"source-hint\">Source: '+esc(c.sourceCitation)+'</small>':'')+'</details><div style="display:flex;gap:8px;margin-top:10px"><button class="secondary-btn" data-feature="rate-card" data-id="'+esc(c.id)+'" data-known="1">I remembered</button><button class="secondary-btn" data-feature="rate-card" data-id="'+esc(c.id)+'" data-known="0">Review again</button></div></div><button class="icon-btn" data-feature="delete-card" data-id="'+esc(c.id)+'">×</button></article>').join('')+'</div>':emptyState('✧','You are up to date','Create cards from a course topic or your own notes.','',''))+
-      cardBox('All cards',data.flashcards.length?'<div class="resource-list">'+data.flashcards.map(c=>'<article class="resource-card"><div class="resource-icon">▤</div><div style="flex:1"><h4>'+esc(c.front)+'</h4><p>'+esc(courseName(c.courseId)||'Personal')+' · next review '+esc(c.nextReview||'Now')+(c.sourceCitation?' · '+esc(c.sourceCitation):'')+'</p></div></article>').join('')+'</div>': '<p class="privacy-note-inline">No cards saved yet.</p>');
+    const context=window.eduRoadmapFlashcardContext||null;
+    const core=window.EduviaRoadmapCore;
+    const cards=context&&core?core.cardsForMilestone(data.flashcards,context.roadmapId,context.milestoneId):data.flashcards;
+    const due=core?core.dueCards(cards,today()):cards.filter(c=>!c.nextReview||c.nextReview<=today());
+    const totalDue=data.flashcards.filter(c=>!c.nextReview||c.nextReview<=today()).length;
+    const contextBanner=context?'<section class="roadmap-flashcard-context"><div><span class="eyebrow">LINKED ROADMAP</span><strong>'+esc(context.roadmapTitle||'Learning roadmap')+'</strong><p>'+esc(context.milestoneTitle||'Milestone')+' · Cards created here will stay linked to this step.</p></div><button type="button" data-roadmap-action="clear-flashcard-context">Show all cards</button></section>':'';
+    const courseOptionsHtml=selectCourse('courseId',context?.courseId||'');
+    const topicValue=context?.milestoneTitle||'';
+    const form=cardBox('Create from a course topic or uploaded notes','<details class="action-disclosure" '+(context?.intent==='create'?'open':'')+'><summary><div><strong>'+(context?'Create cards for this milestone':'Create review cards')+'</strong><p>Choose a learning area and topic, or add your own notes</p></div><span class="disclosure-cta">＋ Create</span></summary><div class="disclosure-body"><form id="cardGenerateForm" class="form-grid"><label class="form-field">Learning area<select name="courseId">'+courseOptionsHtml+'</select></label><label class="form-field">Topic'+input('topic','text',topicValue,'required maxlength="120" placeholder="e.g. Database normalisation"')+'</label><label class="form-field full">Notes or explanation<textarea name="notes" rows="4" placeholder="Paste notes here, or leave blank to search the selected learning area materials."></textarea></label><div class="form-field full"><p class="privacy-note-inline">'+(context?'Use notes linked to this milestone, or choose the learning area that contains the material. New cards will be attached to this roadmap step.':'New cards are created from your saved materials or the notes you provide.')+'</p><button class="primary-btn" type="submit">Create review cards</button></div></form></div></details>');
+    const queue=due.length?'<div class="resource-list">'+due.map(c=>'<article class="resource-card"><div class="resource-icon">✧</div><div style="min-width:0;flex:1"><h4>'+esc(c.front)+'</h4><p>'+esc(courseName(c.courseId)||'Personal review')+' · due '+esc(c.nextReview||today())+'</p><details><summary>Reveal answer</summary><p>'+esc(c.back)+'</p>'+(c.sourceCitation?'<small class="source-hint">Source: '+esc(c.sourceCitation)+'</small>':'')+'</details><div class="roadmap-flashcard-actions"><button class="secondary-btn" data-feature="rate-card" data-id="'+esc(c.id)+'" data-known="1">I remembered</button><button class="secondary-btn" data-feature="rate-card" data-id="'+esc(c.id)+'" data-known="0">Review again</button></div></div><button class="icon-btn" data-feature="delete-card" data-id="'+esc(c.id)+'" aria-label="Delete flashcard">×</button></article>').join('')+'</div>':emptyState('✧',context?'No linked cards are due':'You are up to date',context?'Create the first revision cards for this milestone, or return later when the next review is due.':'Create cards from a course topic or your own notes.','','');
+    const allCards=cards.length?'<div class="resource-list">'+cards.map(c=>{
+      const link=c.roadmapId&&c.milestoneId?'<small class="roadmap-flashcard-linked">Linked to a learning roadmap milestone</small>':'';
+      return '<article class="resource-card"><div class="resource-icon">▤</div><div style="flex:1;min-width:0"><h4>'+esc(c.front)+'</h4><p>'+esc(courseName(c.courseId)||'Personal review')+' · next review '+esc(c.nextReview||'Now')+(c.sourceCitation?' · '+esc(c.sourceCitation):'')+'</p>'+link+'</div></article>';
+    }).join('')+'</div>':'<p class="privacy-note-inline">'+(context?'No revision cards are linked to this milestone yet.':'No cards saved yet.')+'</p>';
+    const header=pageHead('ACTIVE RECALL',context?'Milestone flashcards':'Flashcards',context?'Review the material connected to this step in your learning roadmap.':'Turn topics and your own notes into short questions, then schedule reviews based on recall.',context?'<button class="secondary-btn" data-roadmap-action="back-to-roadmap">← Back to roadmap</button>':'<button class="primary-btn" data-feature="add-card">＋ Create card</button>');
+    const stats='<div class="stats-row"><div class="stat-card"><div class="stat-label">'+(context?'LINKED CARDS':'TOTAL CARDS')+'</div><div class="stat-value">'+cards.length+'</div></div><div class="stat-card"><div class="stat-label">DUE NOW</div><div class="stat-value">'+due.length+'</div>'+(context?'<div class="stat-note">of '+totalDue+' across Eduvia</div>':'')+'</div><div class="stat-card"><div class="stat-label">MASTERED REVIEWS</div><div class="stat-value">'+cards.filter(c=>(c.level||0)>=3).length+'</div></div></div>';
+    return header+contextBanner+stats+form+cardBox('Review queue',queue)+cardBox('All cards',allCards);
   }
-  function masteryKey(courseId, topic){return courseId+'::'+topic;}
+function masteryKey(courseId, topic){return courseId+'::'+topic;}
   function renderMastery(){
     const selected=window.eduMasteryCourse||data.courses[0]?.id||'';
     const course=data.courses.find(c=>c.id===selected);
@@ -347,7 +358,7 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
     if(action==='import-reflection-deadline'){if(!data.deadlines.some(x=>x.sourceId===idValue)){data.deadlines.push({id:uid(),sourceId:idValue,title:b.dataset.title||'Class reflection deadline',kind:'assignment',courseId:b.dataset.course||'',dueDate:b.dataset.date,completed:false,createdAt:Date.now()});save();}return}
     if(action==='toggle-deadline'){const item=data.deadlines.find(x=>x.id===idValue);if(item)item.completed=!item.completed;save();return}
     if(action==='delete-deadline'){data.deadlines=data.deadlines.filter(x=>x.id!==idValue);save();return}
-    if(action==='add-card'){openModal('Create a flashcard','Write a clear prompt and a concise answer.','<label class="form-field">Course'+selectCourse('courseId')+'</label><label class="form-field">Question<input name="front" required maxlength="180"></label><label class="form-field">Answer<textarea name="back" required maxlength="500"></textarea></label>','Save card',fd=>{data.flashcards.push({id:uid(),courseId:fd.get('courseId'),front:fd.get('front').trim(),back:fd.get('back').trim(),level:0,nextReview:today(),createdAt:Date.now()});closeModal();save()});return}
+    if(action==='add-card'){const context=window.eduRoadmapFlashcardContext||null;openModal('Create a flashcard','Write a clear prompt and a concise answer.','<label class="form-field">Course'+selectCourse('courseId',context?.courseId||'')+'</label><label class="form-field">Question<input name="front" required maxlength="180" value="'+(context?esc('Explain: '+context.milestoneTitle):'')+'"></label><label class="form-field">Answer<textarea name="back" required maxlength="500"></textarea></label>','Save card',fd=>{const roadmap=data.roadmaps?.find(item=>String(item.id)===String(context?.roadmapId)),milestone=roadmap?.milestones?.find(item=>String(item.id)===String(context?.milestoneId));data.flashcards.push({id:uid(),courseId:fd.get('courseId'),front:fd.get('front').trim(),back:fd.get('back').trim(),roadmapId:milestone?roadmap.id:'',milestoneId:milestone?milestone.id:'',level:0,nextReview:today(),createdAt:Date.now()});if(milestone){context.intent='review';context.courseId=String(fd.get('courseId')||'')}closeModal();save()});return}
     if(action==='rate-card'){const card=data.flashcards.find(x=>x.id===idValue);if(card){const next=reviewInterval(card,b.dataset.known==='1');Object.assign(card,next);card.lastReviewed=Date.now();save();}return}
     if(action==='delete-card'){data.flashcards=data.flashcards.filter(x=>x.id!==idValue);save();return}
     if(action==='open-mastery'){window.eduMasteryCourse=b.dataset.course;setPage('mastery');return}
@@ -359,6 +370,10 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
     if(e.target.id==='cardGenerateForm'){
       e.preventDefault();
       const fd=new FormData(e.target),topic=String(fd.get('topic')||'').trim(),courseId=String(fd.get('courseId')||'');
+      const context=window.eduRoadmapFlashcardContext||null;
+      const linkedRoadmap=data.roadmaps?.find(item=>String(item.id)===String(context?.roadmapId));
+      const linkedMilestone=linkedRoadmap?.milestones?.find(item=>String(item.id)===String(context?.milestoneId));
+      const cardLink=linkedMilestone?{roadmapId:linkedRoadmap.id,milestoneId:linkedMilestone.id}:{roadmapId:'',milestoneId:''};
       let notes=String(fd.get('notes')||'').trim(),matched=[];
       if(!notes&&courseId&&typeof loadCourseText==='function'){
         try{
@@ -374,7 +389,7 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
         matched.forEach((item,index)=>data.flashcards.push({
           id:uid(),courseId,front:'Explain: '+(index===0?topic:topic+' — key point '+(index+1)),
           back:item.text.slice(0,480),source:item.name,sourceLocation:item.location,
-          sourceCitation:item.citation,materialId:item.materialId,
+          sourceCitation:item.citation,materialId:item.materialId,...cardLink,
           level:0,nextReview:today(),createdAt:Date.now()
         }));
       }else{
@@ -383,10 +398,11 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
         sentences.slice(0,12).forEach((sentence,index)=>data.flashcards.push({
           id:uid(),courseId,front:'Explain: '+(index===0?topic:topic+' — key point '+(index+1)),
           back:sentence.slice(0,480),source:'Text entered by student',sourceLocation:'Pasted notes',
-          sourceCitation:'Student-provided notes',level:0,nextReview:today(),createdAt:Date.now()
+          sourceCitation:'Student-provided notes',...cardLink,level:0,nextReview:today(),createdAt:Date.now()
         }));
       }
-      save();toast('Source-linked review cards created.');return
+      if(linkedMilestone&&context){context.intent='review';context.courseId=courseId}
+      save();toast(linkedMilestone?'Revision cards linked to this milestone.':'Source-linked review cards created.');return
     }
   });
   document.addEventListener('input',e=>{if(e.target.id==='documentSearch'){const q=e.target.value.toLowerCase();document.querySelectorAll('[data-doc-search]').forEach(el=>el.hidden=!el.dataset.docSearch.includes(q));}});

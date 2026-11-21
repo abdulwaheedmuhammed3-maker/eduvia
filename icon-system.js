@@ -54,6 +54,7 @@
     layers:'<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5"/>',
     circle:'<circle cx="12" cy="12" r="8.5"/>',
     checkCircle:'<circle cx="12" cy="12" r="9"/><path d="m7.5 12.2 3 3 6-6.4"/>',
+    school:'<path d="M3 21V8l9-5 9 5v13M3 10h18M8 21v-6h8v6M7 11h.01M17 11h.01"/>',
     dashboard:'<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/>',
     library:'<path d="M4 5.5h11a3 3 0 0 1 3 3V20H7a3 3 0 0 0-3 1.5z"/><path d="M4 5.5v16M18 8.5h2a1 1 0 0 1 1 1V20h-3M8 10h6m-6 4h6"/>',
     quiz:'<rect x="4" y="3.5" width="16" height="18" rx="2"/><path d="M9 3.5V2h6v1.5M8 9h8M8 13h3m3.5 0h.5M8 17h8"/>',
@@ -74,7 +75,7 @@
     '⌂':'dashboard','▣':'library','◇':'puzzle','✧':'sparkles','✳':'brain','✦':'award','⌕':'explore',
     '•••':'more','⚙':'settings','＋':'plus','+':'plus','✓':'check','✔':'check','✎':'edit','✏':'edit',
     '×':'close','✕':'close','↓':'download','↑':'upload','◷':'event','▦':'dashboard','↗':'arrow',
-    '♧':'school','▤':'article','▷':'quiz','▶':'quiz','☆':'award','★':'award','♡':'heart',
+    '♧':'graduation','▤':'article','▷':'quiz','▶':'quiz','☆':'award','★':'award','♡':'heart',
     '♙':'user','●':'circle','🎓':'graduation','📚':'libraryBooks','🧠':'brain','🕒':'event','⭐':'award','🎯':'target','📅':'event','📄':'article','💡':'lightbulb','🔔':'bell',
     '♥':'heart','⌖':'target','☼':'forum','☀':'forum','⌚':'timer','↻':'refresh','☷':'list',
     '▧':'folder','▱':'file','?':'forum'

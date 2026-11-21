@@ -9,23 +9,23 @@ const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Satur
 const SHORT_DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const todayISO = () => new Date().toLocaleDateString('en-CA');
 const id = () => Math.random().toString(36).slice(2,10);
-const defaultData = () => ({profile:{name:'Student',goal:'Build a consistent study habit',weeklyGoal:5,sessionMinutes:25,studyReminder:true,theme:'system',themePreferenceVersion:1},courses:[],events:[],resources:[],completed:[],studyRecords:[],academicHistory:[],personalDocuments:[],exams:[],revisionTasks:[],mockExamAttempts:[],lastMockExam:null,createdAt:Date.now()});
+const defaultData = () => ({profile:{name:'Student',learnerType:'',learningFocus:'',goal:'Make steady progress with learning',weeklyGoal:5,sessionMinutes:25,studyReminder:true,theme:'system',themePreferenceVersion:1},courses:[],events:[],resources:[],completed:[],studyRecords:[],academicHistory:[],personalDocuments:[],exams:[],revisionTasks:[],mockExamAttempts:[],lastMockExam:null,createdAt:Date.now()});
 const MOTIVATION_QUOTES = [
-  'Every page you study today brings tomorrow’s goal closer.',
-  'Small study steps build big academic wins.',
-  'Your future self will thank you for the effort you put in today.',
+  'Every new idea you explore adds another layer to what you know.',
+  'Small learning steps build lasting understanding.',
+  'Your future self will thank you for the effort you make today.',
   'One focused session is progress worth celebrating.',
-  'Learning grows each time you choose to keep going.',
-  'You don’t need to know it all today—just take the next step.',
-  'Your goals deserve the time you give them.',
-  'A little revision today can make exam day feel lighter.',
+  'Learning grows each time you choose to stay curious.',
+  'You do not need to master everything today. Take the next step.',
+  'Your goals deserve the time and attention you give them.',
+  'A little practice today can make a difficult skill feel easier tomorrow.',
   'Stay curious, keep showing up, and trust your progress.',
-  'Every lesson mastered starts with the courage to begin.',
-  'Build your future one study session at a time.',
-  'Be proud of the work no one else sees.',
-  'Your pace is valid. Keep making steady progress.',
+  'Every skill you develop starts with the courage to begin.',
+  'Build your future one learning session at a time.',
+  'Be proud of the progress that nobody else sees.',
+  'Your pace is valid. Keep moving forward.',
   'Today’s effort is tomorrow’s confidence.',
-  'You can learn hard things one concept at a time.'
+  'You can learn difficult things one idea at a time.'
 ];
 function chooseEntryMotivationQuote(){let previous=-1;try{const value=localStorage.getItem('eduvia-entry-quote-v1'),saved=value===null?-1:Number(value);if(Number.isInteger(saved))previous=saved}catch{}const choices=MOTIVATION_QUOTES.map((_,index)=>index).filter(index=>index!==previous);const selected=choices[Math.floor(Math.random()*choices.length)];try{localStorage.setItem('eduvia-entry-quote-v1',String(selected))}catch{}return MOTIVATION_QUOTES[selected]}
 const entryMotivationQuote = chooseEntryMotivationQuote();
@@ -67,6 +67,17 @@ let pushSyncTimer = null;
 let pushSyncPromise = null;
 
 function loadData(){try{const d=JSON.parse(localStorage.getItem(STORE_KEY));if(!d||typeof d!=='object'||!d.profile)return defaultData();const defaults=defaultData();return {...defaults,...d,profile:{...defaults.profile,...d.profile},courses:Array.isArray(d.courses)?d.courses:[],events:Array.isArray(d.events)?d.events:[],resources:Array.isArray(d.resources)?d.resources:[],completed:Array.isArray(d.completed)?d.completed:[],studyRecords:Array.isArray(d.studyRecords)?d.studyRecords:[],academicHistory:Array.isArray(d.academicHistory)?d.academicHistory:[],personalDocuments:Array.isArray(d.personalDocuments)?d.personalDocuments:[],exams:Array.isArray(d.exams)?d.exams:[],revisionTasks:Array.isArray(d.revisionTasks)?d.revisionTasks:[],mockExamAttempts:Array.isArray(d.mockExamAttempts)?d.mockExamAttempts:[]}}catch{return defaultData()}}
+function learnerTypeOf(profile=data.profile||{}){
+  const allowed=['formal','independent','professional','exam-prep','general'];
+  if(allowed.includes(profile.learnerType))return profile.learnerType;
+  const academicFields=['institution','stage','matricNumber','faculty','department','degreeProgramme','academicSession','term'];
+  return academicFields.some(key=>String(profile[key]||'').trim())?'formal':'independent';
+}
+function learnerTypeLabel(type){
+  return ({formal:'Formal education',independent:'Self-directed learning',professional:'Professional development','exam-prep':'Exam & certification preparation',general:'General knowledge & personal interests'})[type]||'Independent learning';
+}
+function isFormalLearner(profile=data.profile||{}){return learnerTypeOf(profile)==='formal'}
+
 function save(){applyTheme();try{localStorage.setItem(STORE_KEY,JSON.stringify(data))}catch(error){toast(error?.name==='QuotaExceededError'?'Storage is full. Export a backup and remove large files or photos.':'Eduvia could not save your changes. Check your device storage.');return false}render();scheduleEventAlert();schedulePushSync();return true}
 function safe(value=''){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function toast(message){const el=document.getElementById('toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600)}
@@ -89,7 +100,7 @@ function isStudyCompletionEntry(item){
 function studyCompletionsForDate(date){return completedForDate(date).filter(isStudyCompletionEntry)}
 function classRecordForDate(eventId,date){return (data.studyRecords||[]).find(record=>record.type==='class'&&record.eventId===eventId&&record.date===date&&record.completedAt)}
 function setPage(page,courseId=''){currentPage=page;if(page==='course-detail'){selectedCourseId=String(courseId||selectedCourseId||'');location.hash='course/'+encodeURIComponent(selectedCourseId)}else{location.hash=page}render()}
-function syncNav(){const morePages=['study','practice','education','vault','records','settings'];document.querySelectorAll('[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page===currentPage||(morePages.includes(currentPage)&&el.dataset.page==='more')));const labels={today:'Today',courses:'My courses',timetable:'Timetable',habit:'Study habit',tutorials:'Tutorials & notes',study:'Study studio',practice:'Practice & tests',setup:'Set up your planner',progress:'My progress',education:'Education history',vault:'Personal documents',records:'Session records',settings:'Settings',more:'More'};document.getElementById('crumbCurrent').textContent=labels[currentPage]||'Today'}
+function syncNav(){const morePages=['study','practice','education','vault','records','settings'];document.querySelectorAll('[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page===currentPage||(morePages.includes(currentPage)&&el.dataset.page==='more')));const labels={today:'Home',courses:'My learning',timetable:'Schedule',habit:'Learning habit',tutorials:'Learning resources',study:'Learning studio',practice:'Practice & tests',setup:'Set up your learning',progress:'Learning progress',education:'Academic history',vault:'Personal documents',records:'Learning records',settings:'Settings',more:'More'};document.getElementById('crumbCurrent').textContent=labels[currentPage]||'Home'}
 function pageHead(eyebrow,title,description,button=''){return `<div class="page-heading"><div><div class="eyebrow">${eyebrow}</div><h1>${title}</h1><p>${description}</p></div>${button}</div>`}
 function emptyState(icon,title,text,buttonText,action){return `<div class="empty-state"><div class="empty-icon">${icon}</div><h3>${title}</h3><p>${text}</p>${buttonText?`<button class="primary-btn" data-action="${action}">${buttonText}</button>`:''}</div>`}
 function courseColor(course){return course?.color||COLORS[0]}
@@ -119,7 +130,7 @@ function todayPlanDisplay(today,now=new Date()){
   return {date:isTomorrow?addDays(parseISO(today),1).toLocaleDateString('en-CA'):today,isTomorrow,switchAt:isTomorrow?null:switchAt};
 }
 
-function renderCourses(){const btn='<button class="primary-btn" data-action="add-course"><span class="btn-icon">＋</span>Add a course</button>';return `${pageHead('YOUR LEARNING','My courses','Keep your courses, training, and learning resources together.',btn)}${data.courses.length?`<div class="course-grid">${data.courses.map(c=>`<article class="course-card"><a class="course-open-button" href="#course/${encodeURIComponent(c.id)}" aria-label="Open ${safe(c.name)}"><div class="course-card-head"><i class="course-swatch" style="background:${safe(c.color)}"></i><div><h3>${safe(c.name)}</h3><span class="course-code">${safe(c.code||'COURSE')}</span></div></div><p class="course-desc">${safe(c.note||'Add a short note about what you want to learn.')}</p><span class="course-open-label">Open course →</span></a><div class="course-card-foot"><span>${data.events.filter(e=>e.courseId===c.id).length} scheduled item${data.events.filter(e=>e.courseId===c.id).length===1?'':'s'}</span><div class="course-actions"><button class="icon-btn" title="Edit course" data-action="edit-course" data-id="${c.id}">✎</button><button class="icon-btn" title="Remove course" data-action="delete-course" data-id="${c.id}">×</button></div></div></article>`).join('')}</div>`:emptyState('▦','Your courses, all in one place','Add the courses, subjects, or training you’re working on. Then tie each class and study session to a course.','Add your first course','add-course')}`}
+function renderCourses(){const btn='<button class="primary-btn" data-action="add-course"><span class="btn-icon">＋</span>Add learning</button>';return `${pageHead('YOUR LEARNING','My learning','Keep the subjects, skills, topics, courses and training you are exploring together.',btn)}${data.courses.length?`<div class="course-grid">${data.courses.map(c=>`<article class="course-card"><a class="course-open-button" href="#course/${encodeURIComponent(c.id)}" aria-label="Open ${safe(c.name)}"><div class="course-card-head"><i class="course-swatch" style="background:${safe(c.color)}"></i><div><h3>${safe(c.name)}</h3><span class="course-code">${safe(c.code||'LEARNING AREA')}</span></div></div><p class="course-desc">${safe(c.note||'Add a short note about what you want to learn.')}</p><span class="course-open-label">Open learning area →</span></a><div class="course-card-foot"><span>${data.events.filter(e=>e.courseId===c.id).length} scheduled item${data.events.filter(e=>e.courseId===c.id).length===1?'':'s'}</span><div class="course-actions"><button class="icon-btn" title="Edit learning area" data-action="edit-course" data-id="${c.id}">✎</button><button class="icon-btn" title="Remove learning area" data-action="delete-course" data-id="${c.id}">×</button></div></div></article>`).join('')}</div>`:emptyState('▦','Your learning starts here','Add a skill, subject, topic, course or training area. Then connect sessions and materials to it.','Add your first learning area','add-course')}`}
 
 function addCourseNote(courseId){
  const course=courseById(courseId);if(!course)return;

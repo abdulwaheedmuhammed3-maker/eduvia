@@ -70,8 +70,9 @@ function loadData(){try{const d=JSON.parse(localStorage.getItem(STORE_KEY));if(!
 function learnerTypeOf(profile=data.profile||{}){
   const allowed=['formal','independent','professional','exam-prep','general'];
   if(allowed.includes(profile.learnerType))return profile.learnerType;
-  const academicFields=['institution','stage','matricNumber','faculty','department','degreeProgramme','academicSession','term'];
-  return academicFields.some(key=>String(profile[key]||'').trim())?'formal':'independent';
+  const academicFields=['institution','matricNumber','faculty','department','degreeProgramme','academicSession','term'];
+  const hasAcademicStage=Boolean(String(profile.stage||'').trim())&&profile.stage!=='other';
+  return academicFields.some(key=>String(profile[key]||'').trim())||hasAcademicStage?'formal':'independent';
 }
 function learnerTypeLabel(type){
   return ({formal:'Formal education',independent:'Self-directed learning',professional:'Professional development','exam-prep':'Exam & certification preparation',general:'General knowledge & personal interests'})[type]||'Independent learning';

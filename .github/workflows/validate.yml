@@ -49,8 +49,15 @@ jobs:
           grep -q 'icon-system.js' service-worker.js
           grep -q 'icon-system.css' scripts/build-web.mjs
           grep -q 'icon-system.js' scripts/build-web.mjs
-          grep -q 'outline-icons-1' index.html
-          grep -q 'outline-icons-1' service-worker.js
+          grep -q 'material-outline-2' index.html
+          grep -q 'material-outline-2' service-worker.js
+          grep -q 'Footer navigation keeps its original' icon-system.js
+          ! grep -q "querySelectorAll('.mobile-nav-icon" icon-system.js
+          ! grep -q '\.mobile-nav-item' icon-system.css
+          grep -q 'dashboard:' icon-system.js
+          grep -q 'forum:' icon-system.js
+          grep -q 'explore:' icon-system.js
+          grep -q '<svg viewBox="0 0 24 24"' index.html
           grep -q 'entry-flow.js' service-worker.js
           grep -q 'entry-flow.css' service-worker.js
           grep -q 'visual-refresh.css' service-worker.js

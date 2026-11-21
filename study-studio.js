@@ -105,8 +105,11 @@ function renderPractice(){
 }
 
 function renderSetup(){
-  const stages=educationStages();
-  return `${pageHead('WELCOME TO EDUVIA','Let’s set up your study planner','Eduvia is for students across schools, courses, and levels. Tell it what you are studying so your timetable, lessons, and practice can fit your programme.','')}<section class="panel onboarding-panel"><div class="setup-restore-panel"><div><strong>Already set up Eduvia on another device?</strong><p>Choose the backup you saved from your phone to restore your planner without setting it up again. JSON restores planner details; use the portable ZIP for personal files and full education records.</p></div><label class="secondary-btn setup-restore-label">Restore from backup<input id="setupBackupFile" type="file" accept=".json,.zip,application/json,application/zip"></label></div><div class="onboarding-intro"><span class="habit-badge">✳</span><div><h2>Your learning, your plan</h2><p>You can change these details at any time. Add your real course list and school timetable after setup.</p></div></div><form id="onboardingForm"><div class="form-grid">${field('Country','country',studioCountrySelect(data.profile.country))}${field('School, university, or training provider (optional)','institution',`<input id="f-institution" name="institution" maxlength="100" placeholder="Your school or provider" value="${safe(data.profile.institution)}">`)}</div><div class="form-grid">${field('Your level of study','stage',`<select id="f-stage" name="stage"><option value="">Choose one</option>${stages.map(([v,t])=>`<option value="${v}" ${data.profile.stage===v?'selected':''}>${t}</option>`).join('')}</select>`)}${field('Programme, course, class, or subject (optional)','programme',`<input id="f-programme" name="programme" maxlength="100" placeholder="e.g. your subject, programme, or class" value="${safe(data.profile.programme)}">`)}</div><div class="form-grid">${field('Level, grade, or year (optional)','level',`<input id="f-level" name="level" maxlength="40" placeholder="e.g. Year 2 or Grade 10" value="${safe(data.profile.level)}">`)}${field('Term, semester, or session (optional)','term',`<input id="f-term" name="term" maxlength="60" placeholder="e.g. Semester 1, 2026/27" value="${safe(data.profile.term)}">`)}</div><div class="form-field full"><label for="f-examStyle">How are your tests or exams usually set? (optional)</label><input id="f-examStyle" name="examStyle" maxlength="160" placeholder="e.g. Multiple choice, short answers, essays, practicals" value="${safe(data.profile.examStyle||"")}"><small>Upload a sample or past paper too, and practice can use its format.</small></div><div class="form-grid">${field('Study goal per week','weeklyGoal',`<input id="f-weeklyGoal" name="weeklyGoal" type="number" min="1" max="30" value="${Number(data.profile.weeklyGoal)||5}">`)}${field('Preferred session length','planSessionMinutes',`<select id="f-planSessionMinutes" name="planSessionMinutes">${[25,30,45,60,75,90].map(n=>`<option value="${n}" ${Number(data.profile.planSessionMinutes)===n?'selected':''}>${n} minutes</option>`).join('')}</select>`)}</div><div class="form-grid">${field('When can you study?','studyStart',`<input id="f-studyStart" name="studyStart" type="time" value="${safe(data.profile.studyStart)}">`)}${field('Until','studyEnd',`<input id="f-studyEnd" name="studyEnd" type="time" value="${safe(data.profile.studyEnd)}">`)}</div><div class="onboarding-days"><strong>Choose study days</strong><div class="availability-days">${STUDIO_DAYS.map((day,i)=>`<label class="day-check"><input type="checkbox" name="studyDay" value="${i}" ${(data.profile.studyDays||[]).includes(i)?'checked':''}><span>${day.slice(0,3)}</span></label>`).join('')}</div></div><div class="onboarding-foot"><span>Course materials and study drafts stay on this device.</span><button class="primary-btn" type="submit">Set up my planner →</button></div></form></section>`;
+  const stages=educationStages(),stage=data.profile.stage||'',learnerType=learnerTypeOf(data.profile);
+  const types=[['formal','Formal education'],['independent','Self-directed learning'],['professional','Professional development'],['exam-prep','Exam or certification preparation'],['general','General knowledge and personal interests']];
+  const typeOptions=types.map(([v,t])=>'<option value="'+v+'" '+(learnerType===v?'selected':'')+'>'+t+'</option>').join('');
+  const stageOptions=stages.map(([v,t])=>'<option value="'+v+'" '+(stage===v?'selected':'')+'>'+t+'</option>').join('');
+  return `${pageHead('WELCOME TO EDUVIA','Set up your learning space','Tell Eduvia what you are learning. Formal academic details are optional unless you choose formal education.','')}<section class="panel onboarding-panel"><div class="setup-restore-panel"><div><strong>Already set up Eduvia on another device?</strong><p>Choose your backup to restore your learning space without setting it up again.</p></div><label class="secondary-btn setup-restore-label">Restore from backup<input id="setupBackupFile" type="file" accept=".json,.zip,application/json,application/zip"></label></div><div class="onboarding-intro"><span class="habit-badge">✳</span><div><h2>Your learning, your plan</h2><p>You can change these details at any time. Add learning areas, sessions and materials after setup.</p></div></div><form id="onboardingForm"><div class="form-grid">${field('Learning path','learnerType','<select id="f-learnerType" name="learnerType" required>'+typeOptions+'</select>')}${field('What are you learning?','learningFocus',`<input id="f-learningFocus" name="learningFocus" required maxlength="120" placeholder="e.g. Python, French, design, mathematics" value="${safe(data.profile.learningFocus||data.profile.programme||'')}">`)}</div><div class="form-grid">${field('Country or region','country',studioCountrySelect(data.profile.country))}${field('School, organisation or provider (optional)','institution',`<input id="f-institution" name="institution" maxlength="100" placeholder="Only if applicable" value="${safe(data.profile.institution)}">`)}</div><div class="form-grid">${field('Learning stage (optional)','stage',`<select id="f-stage" name="stage"><option value="">Choose if applicable</option>${stageOptions}</select>`)}${field('Programme, course or qualification (optional)','programme',`<input id="f-programme" name="programme" maxlength="100" placeholder="e.g. B.Sc. Computer Science or professional certificate" value="${safe(data.profile.programme)}">`)}</div><div class="form-grid">${field('Level, grade or experience level (optional)','level',`<input id="f-level" name="level" maxlength="40" placeholder="e.g. 300 Level, beginner or advanced" value="${safe(data.profile.level)}">`)}${field('Academic period (optional)','term',`<input id="f-term" name="term" maxlength="60" placeholder="e.g. 2026/2027 or First semester" value="${safe(data.profile.term)}">`)}</div><div class="form-grid">${field('Learning goal per week','weeklyGoal',`<input id="f-weeklyGoal" name="weeklyGoal" type="number" min="1" max="30" value="${Number(data.profile.weeklyGoal)||5}">`)}${field('Preferred session length','planSessionMinutes',`<select id="f-planSessionMinutes" name="planSessionMinutes">${[15,20,25,30,45,60,75,90].map(n=>`<option value="${n}" ${Number(data.profile.planSessionMinutes||data.profile.sessionMinutes)===n?'selected':''}>${n} minutes</option>`).join('')}</select>`)}</div><div class="form-grid">${field('When can you learn?','studyStart',`<input id="f-studyStart" name="studyStart" type="time" value="${safe(data.profile.studyStart)}">`)}${field('Until','studyEnd',`<input id="f-studyEnd" name="studyEnd" type="time" value="${safe(data.profile.studyEnd)}">`)}</div><div class="onboarding-days"><strong>Choose learning days</strong><div class="availability-days">${STUDIO_DAYS.map((day,i)=>`<label class="day-check"><input type="checkbox" name="studyDay" value="${i}" ${(data.profile.studyDays||[]).includes(i)?'checked':''}><span>${day.slice(0,3)}</span></label>`).join('')}</div></div><div class="onboarding-foot"><span>Your profile, materials and learning records stay on this device.</span><button class="primary-btn" type="submit">Save learning setup →</button></div></form></section>`;
 }
 
 function renderMore(){return `${pageHead('MORE TOOLS','More','Tools and app controls that do not belong in the main study tabs.','')}<div class="course-grid"><button class="course-card" style="text-align:left;border:1px solid var(--line)" data-page="study"><div class="course-card-head"><span class="habit-badge">✧</span><h3>Study studio</h3></div><p class="course-desc">Import your course form and timetable, add learning materials, set availability, and generate a study plan.</p></button><button class="course-card" style="text-align:left;border:1px solid var(--line)" data-page="settings"><div class="course-card-head"><span class="habit-badge">⚙</span><h3>Settings</h3></div><p class="course-desc">Appearance, reminders, notification permissions, and backup controls.</p></button></div>`}
@@ -417,13 +420,14 @@ async function generateTutorial(){
   studioNotice=sources.length?(studioLesson.text.includes('No searchable passage')?'No relevant passage matched the selected topic. The guide shows revision prompts, not invented course facts.':'Tutorial created from retrieved passages stored on this device. Check the cited locations in your class notes.'):'Study guide created from your course details. Add a textbook or slides for a guide that follows your class material more closely.';
   currentPage='study';render();document.querySelector('.generated-card')?.scrollIntoView({behavior:'smooth',block:'start'});
 }function editStudyProfile(){
-  const stages=educationStages();
-  const options=stages.map(([value,label])=>'<option value="'+value+'" '+(data.profile.stage===value?'selected':'')+'>'+label+'</option>').join('');
-  const body='<div class="form-grid">'+field('Country or region','country','<input id="f-country" name="country" value="'+safe(data.profile.country)+'">')+field('School or learning provider','institution','<input id="f-institution" name="institution" value="'+safe(data.profile.institution)+'">')+'</div>'+
-    '<div class="form-grid">'+field('Learning stage','stage','<select id="f-stage" name="stage"><option value="">Choose one</option>'+options+'</select>')+field('Centre or study mode (optional)','centre','<input id="f-centre" name="centre" value="'+safe(data.profile.centre)+'">')+'</div>'+
-    '<div class="form-grid">'+field('Programme, class, or subject','programme','<input id="f-programme" name="programme" value="'+safe(data.profile.programme)+'">')+field('Level, grade, or year','level','<input id="f-level" name="level" value="'+safe(data.profile.level)+'">')+'</div>'+
-    '<div class="form-grid">'+field('Term or session','term','<input id="f-term" name="term" value="'+safe(data.profile.term)+'">')+field('Usual exam or test style','examStyle','<input id="f-examStyle" name="examStyle" value="'+safe(data.profile.examStyle||'')+'" placeholder="Multiple choice, essays, practicals, etc.">')+'</div>';
-  openModal('Study profile','Set the school and study details used to personalize your study plan.',body,'Save profile',fd=>{for(const key of ['country','institution','stage','centre','programme','level','term','examStyle' ,])data.profile[key]=String(fd.get(key)||'').trim();closeModal();save();toast('Study profile updated')});
+  const stages=educationStages(),types=[['formal','Formal education'],['independent','Self-directed learning'],['professional','Professional development'],['exam-prep','Exam or certification preparation'],['general','General knowledge and personal interests']];
+  const typeOptions=types.map(([value,label])=>'<option value="'+value+'" '+(learnerTypeOf(data.profile)===value?'selected':'')+'>'+label+'</option>').join('');
+  const stageOptions=stages.map(([value,label])=>'<option value="'+value+'" '+(data.profile.stage===value?'selected':'')+'>'+label+'</option>').join('');
+  const body='<div class="form-grid">'+field('Learning path','learnerType','<select name="learnerType">'+typeOptions+'</select>')+field('What are you learning?','learningFocus','<input name="learningFocus" value="'+safe(data.profile.learningFocus||data.profile.programme||'')+'" placeholder="e.g. Data analysis, French or Computer Science">')+'</div>'+
+    '<div class="form-grid">'+field('Country or region','country','<input name="country" value="'+safe(data.profile.country)+'">')+field('School, organisation or provider (optional)','institution','<input name="institution" value="'+safe(data.profile.institution)+'">')+'</div>'+
+    '<div class="form-grid">'+field('Learning stage (optional)','stage','<select name="stage"><option value="">Choose if applicable</option>'+stageOptions+'</select>')+field('Programme, course or qualification (optional)','programme','<input name="programme" value="'+safe(data.profile.programme||'')+'">')+'</div>'+
+    '<div class="form-grid">'+field('Level or experience level (optional)','level','<input name="level" value="'+safe(data.profile.level)+'">')+field('Academic period (optional)','term','<input name="term" value="'+safe(data.profile.term)+'">')+'</div>';
+  openModal('Learning profile','Set your learning path and optional education details used to personalise your learning tools.',body,'Save profile',fd=>{for(const key of ['learnerType','learningFocus','country','institution','stage','programme','level','term'])data.profile[key]=String(fd.get(key)||'').trim();closeModal();save();toast('Learning profile updated')});
 }
 function searchUrl(course){const q=[data.profile.institution,data.profile.country,data.profile.stage,data.profile.programme,data.profile.level,course?.code,course?.name,'official syllabus course outline curriculum'].filter(Boolean).join(' ');return`https://www.google.com/search?q=${encodeURIComponent(q)}`}
 
@@ -458,7 +462,20 @@ document.addEventListener('change',e=>{if(e.target.id==='materialImportFile'&&e.
 document.addEventListener('change',e=>{if(e.target.id==='courseImportFile')handleStudioFile('courses',e.target.files[0]);if(e.target.id==='timetableImportFile')handleStudioFile('timetable',e.target.files[0]);if(e.target.id==='materialImportFile')handleStudioFile('material',e.target.files[0])});
 document.addEventListener('submit',e=>{if(e.target.id==='availabilityForm'){e.preventDefault();saveAvailability(e.target)}});
 document.addEventListener('click',e=>{const p=e.target.closest('[data-page="practice"]');if(p){window.practiceCourseId=document.getElementById('practiceCourse')?.value||'';queueMicrotask(render)}});
-document.addEventListener('submit',e=>{if(e.target.id!=='onboardingForm')return;e.preventDefault();const fd=new FormData(e.target),days=fd.getAll('studyDay').map(Number);if(!fd.get('stage')){toast('Choose your school or learning stage to continue.');return}if(!days.length){toast('Choose at least one day you can study.');return}for(const key of ['country','institution','stage','programme','level','term','examStyle'])data.profile[key]=String(fd.get(key)||'').trim();data.profile.weeklyGoal=Math.min(30,Math.max(1,Number(fd.get('weeklyGoal'))||5));data.profile.studyStart=fd.get('studyStart');data.profile.studyEnd=fd.get('studyEnd');data.profile.planSessionMinutes=Number(fd.get('planSessionMinutes'))||45;data.profile.studyDays=days;data.profile.setupComplete=true;save();setPage('study');toast('Your planner is ready. Add your course list to begin.')});
+document.addEventListener('submit',e=>{
+ if(e.target.id!=='onboardingForm')return;
+ e.preventDefault();
+ const fd=new FormData(e.target),days=fd.getAll('studyDay').map(Number),learnerType=String(fd.get('learnerType')||'').trim(),focus=String(fd.get('learningFocus')||'').trim(),formal=learnerType==='formal';
+ if(!learnerType||!focus){toast('Choose your learning path and add what you are learning.');return}
+ if(formal&&['institution','stage','programme','level','term'].some(key=>!String(fd.get(key)||'').trim())){toast('Formal education learners should complete their institution, learning stage, programme, level and academic period.');return}
+ if(!days.length){toast('Choose at least one day you can learn.');return}
+ for(const key of ['country','institution','stage','programme','level','term'])data.profile[key]=String(fd.get(key)||'').trim();
+ data.profile.learnerType=learnerType;data.profile.learningFocus=focus;data.profile.goal=data.profile.goal||'Make steady progress with learning';
+ data.profile.weeklyGoal=Math.min(30,Math.max(1,Number(fd.get('weeklyGoal'))||5));
+ data.profile.studyStart=fd.get('studyStart');data.profile.studyEnd=fd.get('studyEnd');
+ data.profile.planSessionMinutes=Number(fd.get('planSessionMinutes'))||25;data.profile.sessionMinutes=data.profile.planSessionMinutes;
+ data.profile.studyDays=days;data.profile.setupComplete=true;save();setPage('my-study');toast('Your learning space is ready. Add a learning area to begin.');
+});
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-action]');if(!b)return;
   switch(b.dataset.action){
@@ -657,73 +674,49 @@ function openCarryoverActivation(){
 document.addEventListener('submit',event=>{
   if(event.target.id!=='studentProfileForm')return;
   event.preventDefault();
-  const fd=new FormData(event.target);
-  const name=String(fd.get('name')||'').trim();
-  if(!name){toast('Enter your name before saving your profile.');return}
-  for(const key of ['name','email','country','institution','stage','department','matricNumber','faculty','specialization','studyMode','studentStatus','level','academicSession','semester','degreeProgramme'])data.profile[key]=String(fd.get(key)||'').trim();
-  data.profile.programme=data.profile.degreeProgramme||data.profile.programme||'';
+  const fd=new FormData(event.target),name=String(fd.get('name')||'').trim(),focus=String(fd.get('learningFocus')||'').trim();
+  if(!name||!focus){toast('Enter your name and main learning focus before saving.');return}
+  for(const key of ['name','email','country','learnerType','learningFocus','institution','stage','department','matricNumber','faculty','specialization','studyMode','studentStatus','level','academicSession','semester','degreeProgramme'])data.profile[key]=String(fd.get(key)||'').trim();
+  data.profile.programme=data.profile.degreeProgramme||data.profile.programme||data.profile.learningFocus||'';
   save();
-  toast('Your student profile has been saved.');
+  toast('Your learning profile has been saved.');
 });
 
 function renderProfile(){
-  const profile=data.profile||{},stages=educationStages();
-  const stageOptions=stages.map(([value,label])=>'<option value="'+value+'" '+(profile.stage===value?'selected':'')+'>'+label+'</option>').join('');
-  const avatar=profile.avatarData?'<img src="'+safe(profile.avatarData)+'" alt="Student photograph">':'<span>'+safe(Array.from(String(profile.name||'Student').trim())[0]?.toUpperCase()||'S')+'</span>';
-  const displayLevel=profile.level?(/^\\d+$/.test(String(profile.level).trim())?String(profile.level).trim()+' Level':profile.level):'Not provided';
+  const profile=data.profile||{},stages=educationStages(),learnerType=learnerTypeOf(profile),formal=learnerType==='formal';
+  const types=[['formal','Formal education'],['independent','Self-directed learning'],['professional','Professional development'],['exam-prep','Exam or certification preparation'],['general','General knowledge and personal interests']];
+  const typeOptions=types.map(([v,t])=>'<option value="'+v+'" '+(learnerType===v?'selected':'')+'>'+t+'</option>').join('');
+  const stageOptions=stages.map(([v,t])=>'<option value="'+v+'" '+(profile.stage===v?'selected':'')+'>'+t+'</option>').join('');
+  const avatar=profile.avatarData?'<img src="'+safe(profile.avatarData)+'" alt="Profile photograph">':'<span>'+safe(Array.from(String(profile.name||'Learner').trim())[0]?.toUpperCase()||'L')+'</span>';
   const info=(symbol,label,value,colour='blue')=>'<div class="student-id-field"><span class="student-id-icon '+colour+'">'+symbol+'</span><div class="student-id-copy"><span>'+label+'</span><strong>'+safe(value||'Not provided')+'</strong></div></div>';
-  const institution=profile.institution||'Eduvia';
+  const primary=[info('✎','Full name',profile.name||'Learner','navy'),info('✦','Learning focus',profile.learningFocus||profile.degreeProgramme||profile.programme,'purple'),info('◎','Learning path',learnerTypeLabel(learnerType),'blue'),info('⌖','Country',profile.country,'green')];
+  const secondary=formal?[
+    info('▣','Student number',profile.matricNumber,'gold'),info('▦','Faculty',profile.faculty,'green'),info('▤','Department',profile.department,'purple'),
+    info('◈','Programme',profile.degreeProgramme||profile.programme,'blue'),info('♙','Learning mode',profile.studyMode,'gold'),info('●','Status',profile.studentStatus||'Active','grey')
+  ]:[
+    info('▦','Learning provider',profile.institution,'green'),info('↗','Current level',profile.level,'blue'),info('♙','Learning mode',profile.studyMode,'gold'),info('●','Learning status',profile.studentStatus||'Active','grey')
+  ];
+  const bottom=formal?[
+    info('↗','Level',profile.level,'navy'),info('▣','Academic session',profile.academicSession||profile.term,'blue'),info('▦','Term or semester',profile.semester,'purple')
+  ]:[
+    info('◎','Weekly learning goal',(Number(profile.weeklyGoal)||5)+' sessions','navy'),info('◷','Session length',(Number(profile.planSessionMinutes||profile.sessionMinutes)||25)+' minutes','blue'),
+    info('▤','Learning days',(profile.studyDays||[]).map(day=>STUDIO_DAYS[day]?.slice(0,3)).filter(Boolean).join(', '),'purple')
+  ];
   const card='<section class="panel student-id-card">'+
-    '<header class="student-id-header"><div><strong>'+safe(institution)+'</strong><span>STUDENT IDENTITY CARD</span></div><span class="student-id-mark">ID</span></header>'+
-    '<div class="student-id-top">'+
-      '<div class="student-id-photo-col"><div class="student-id-photo">'+avatar+'</div></div>'+
-      '<div class="student-id-primary-grid">'+
-        info('✎','Full Name',profile.name||'Student','navy')+
-        info('▣','Matriculation Number',profile.matricNumber,'gold')+
-        info('▦','Department',profile.department||profile.programme,'purple')+
-        info('▤','Programme',profile.degreeProgramme||profile.programme,'blue')+
-      '</div>'+
-    '</div>'+
-    '<div class="student-id-secondary-grid">'+
-      info('▦','Faculty',profile.faculty,'green')+
-      info('⌕','Specialization',profile.specialization||'No Specialization','rust')+
-      info('♙','Mode',profile.studyMode||'No Mode of Study','gold')+
-      info('●','Status',profile.studentStatus||'Active','grey')+
-    '</div>'+
-    '<div class="student-id-divider"></div>'+
-    '<div class="student-id-bottom-grid">'+
-      info('↗','Level',displayLevel,'navy')+
-      info('▣','Session',profile.academicSession||profile.term,'blue')+
-      info('▦','Semester',profile.semester,'purple')+
-    '</div>'+
-  '</section>';
-  const editForm='<details class="profile-edit-details"><summary><span>Edit student details</span><small>Update your photo and academic information</small></summary>'+
-    '<form id="studentProfileForm" class="profile-edit-panel">'+
-      profilePhotoSettingsMarkup()+
-      '<div class="form-grid">'+
-        field('Full name','name','<input id="f-name" name="name" required maxlength="60" autocomplete="name" value="'+safe(profile.name||'')+'" placeholder="Your full name">')+
-        field('Matriculation number','matricNumber','<input id="f-matricNumber" name="matricNumber" maxlength="40" value="'+safe(profile.matricNumber||'')+'" placeholder="Your matriculation number">')+
-      '</div><div class="form-grid">'+
-        field('Faculty','faculty','<input id="f-faculty" name="faculty" maxlength="120" value="'+safe(profile.faculty||'')+'" placeholder="Your faculty">')+
-        field('Department','department','<input id="f-department" name="department" maxlength="100" value="'+safe(profile.department||'')+'" placeholder="Your department">')+
-      '</div><div class="form-grid">'+
-        field('Programme','degreeProgramme','<input id="f-degreeProgramme" name="degreeProgramme" maxlength="120" value="'+safe(profile.degreeProgramme||profile.programme||'')+'" placeholder="e.g. B.Sc. Computer Science">')+
-        field('Specialization','specialization','<input id="f-specialization" name="specialization" maxlength="100" value="'+safe(profile.specialization||'')+'" placeholder="Your specialization">')+
-      '</div><div class="form-grid">'+
-        field('Mode of study','studyMode','<input id="f-studyMode" name="studyMode" maxlength="80" value="'+safe(profile.studyMode||'')+'" placeholder="e.g. Full-time">')+
-        field('Student status','studentStatus','<select id="f-studentStatus" name="studentStatus"><option '+(profile.studentStatus==='Active'?'selected':'')+'>Active</option><option '+(profile.studentStatus==='Inactive'?'selected':'')+'>Inactive</option><option '+(profile.studentStatus==='Graduated'?'selected':'')+'>Graduated</option><option '+(profile.studentStatus==='Deferred'?'selected':'')+'>Deferred</option></select>')+
-      '</div><div class="form-grid">'+
-        field('Level','level','<input id="f-level" name="level" maxlength="40" value="'+safe(profile.level||'')+'" placeholder="e.g. 300">')+
-        field('Academic session','academicSession','<input id="f-academicSession" name="academicSession" maxlength="30" value="'+safe(profile.academicSession||profile.term||'')+'" placeholder="e.g. 2026/2027">')+
-      '</div><div class="form-grid">'+
-        field('Semester','semester','<input id="f-semester" name="semester" maxlength="50" value="'+safe(profile.semester||'')+'" placeholder="e.g. Harmattan Semester">')+
-        field('Institution','institution','<input id="f-institution" name="institution" maxlength="100" value="'+safe(profile.institution||'')+'" placeholder="Your university or institution">')+
-      '</div><div class="form-grid">'+
-        field('Country','country',studioCountrySelect(profile.country))+
-        field('Learning stage','stage','<select id="f-stage" name="stage"><option value="">Choose your learning stage</option>'+stageOptions+'</select>')+
-      '</div><div class="form-grid">'+
-        field('Email address (optional)','email','<input id="f-email" name="email" type="email" maxlength="120" autocomplete="email" value="'+safe(profile.email||'')+'" placeholder="you@example.com">')+
-      '</div><div class="profile-form-actions"><button class="primary-btn" type="submit">Save student details</button></div>'+
+    '<header class="student-id-header"><div><strong>'+safe(profile.learningFocus||profile.institution||'Eduvia')+'</strong><span>'+(formal?'FORMAL EDUCATION PROFILE':'PERSONAL LEARNING PROFILE')+'</span></div><span class="student-id-mark">ID</span></header>'+
+    '<div class="student-id-top"><div class="student-id-photo-col"><div class="student-id-photo">'+avatar+'</div></div><div class="student-id-primary-grid">'+primary.join('')+'</div></div>'+
+    '<div class="student-id-secondary-grid">'+secondary.join('')+'</div><div class="student-id-divider"></div><div class="student-id-bottom-grid">'+bottom.join('')+'</div></section>';
+  const editForm='<details class="profile-edit-details"><summary><span>Edit learning profile</span><small>Update your learning path, details and photograph</small></summary>'+
+    '<form id="studentProfileForm" class="profile-edit-panel">'+profilePhotoSettingsMarkup()+
+      '<div class="form-grid">'+field('Full name','name','<input id="f-name" name="name" required maxlength="60" autocomplete="name" value="'+safe(profile.name||'')+'" placeholder="Your full name">')+field('Learning path','learnerType','<select id="f-learnerType" name="learnerType">'+typeOptions+'</select>')+'</div>'+
+      '<div class="form-grid">'+field('What are you learning?','learningFocus','<input id="f-learningFocus" name="learningFocus" maxlength="120" value="'+safe(profile.learningFocus||profile.degreeProgramme||profile.programme||'')+'" placeholder="e.g. Data analysis, French, Computer Science">')+field('Country','country',studioCountrySelect(profile.country))+'</div>'+
+      '<div class="form-grid">'+field('School, organisation or provider','institution','<input id="f-institution" name="institution" maxlength="100" value="'+safe(profile.institution||'')+'" placeholder="Only if applicable">')+field('Learning stage','stage','<select id="f-stage" name="stage"><option value="">Choose if applicable</option>'+stageOptions+'</select>')+'</div>'+
+      '<div class="form-grid">'+field('Programme, course or qualification','degreeProgramme','<input id="f-degreeProgramme" name="degreeProgramme" maxlength="120" value="'+safe(profile.degreeProgramme||profile.programme||'')+'" placeholder="Only if applicable">')+field('Level, grade or experience level','level','<input id="f-level" name="level" maxlength="40" value="'+safe(profile.level||'')+'" placeholder="e.g. 300 Level, beginner or advanced">')+'</div>'+
+      '<div class="form-grid">'+field('Academic session or period','academicSession','<input id="f-academicSession" name="academicSession" maxlength="40" value="'+safe(profile.academicSession||profile.term||'')+'" placeholder="e.g. 2026/2027">')+field('Term or semester','semester','<input id="f-semester" name="semester" maxlength="50" value="'+safe(profile.semester||'')+'" placeholder="Only if applicable">')+'</div>'+
+      '<div class="form-grid">'+field('Faculty','faculty','<input id="f-faculty" name="faculty" maxlength="120" value="'+safe(profile.faculty||'')+'" placeholder="Only if applicable">')+field('Department','department','<input id="f-department" name="department" maxlength="100" value="'+safe(profile.department||'')+'" placeholder="Only if applicable">')+'</div>'+
+      '<div class="form-grid">'+field('Student or member ID','matricNumber','<input id="f-matricNumber" name="matricNumber" maxlength="40" value="'+safe(profile.matricNumber||'')+'" placeholder="Only if applicable">')+field('Learning mode','studyMode','<input id="f-studyMode" name="studyMode" maxlength="80" value="'+safe(profile.studyMode||'')+'" placeholder="e.g. Full-time, online or self-paced">')+'</div>'+
+      '<div class="form-grid">'+field('Learning status','studentStatus','<select id="f-studentStatus" name="studentStatus"><option '+(['Active','active'].includes(profile.studentStatus)?'selected':'')+' value="Active">Active</option><option '+(['Paused','Inactive'].includes(profile.studentStatus)?'selected':'')+' value="Paused">Paused</option><option '+(['Completed','Graduated'].includes(profile.studentStatus)?'selected':'')+' value="Completed">Completed</option><option '+(profile.studentStatus==='Deferred'?'selected':'')+' value="Deferred">Deferred</option></select>')+field('Email address','email','<input id="f-email" name="email" type="email" maxlength="120" autocomplete="email" value="'+safe(profile.email||'')+'" placeholder="you@example.com">')+'</div>'+
+      '<div class="profile-form-actions"><button class="primary-btn" type="submit">Save learning profile</button></div>'+
     '</form></details>';
   return card.slice(0,-'</section>'.length)+editForm+'</section>';
 }

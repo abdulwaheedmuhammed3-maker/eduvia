@@ -6,7 +6,7 @@
   const MAX_TITLE=100,MAX_DESCRIPTION=600,MAX_MILESTONES=80;
   function validDate(value){
     const text=String(value||'').trim();
-    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(text))return false;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(text))return false;
     const date=new Date(text+'T00:00:00Z');
     return Number.isFinite(date.getTime())&&date.toISOString().slice(0,10)===text;
   }

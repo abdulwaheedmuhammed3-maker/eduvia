@@ -107,13 +107,71 @@ document.addEventListener('submit',async e=>{
  askResult=rows.length?{course:course.name,mode,rows}:{course:course.name,mode,noMatch:true,message:'Try the exact topic name, a key term from the lecture or a different wording. Eduvia only shows passages that match the uploaded material; it will not invent an answer.'};
  render();
 });
+/* Handle mobile navigation and Discover cards in the capture phase.
+   This keeps taps from being swallowed by other delegated page handlers. */
 document.addEventListener('click',e=>{
- const cat=e.target.closest('[data-discover-category]');if(cat){discoverCategory=cat.dataset.discoverCategory;discoverArticle=null;discoverSearchQuery='';render();return}
- const art=e.target.closest('[data-discover-article]');if(art){discoverArticle=art.dataset.discoverArticle;render();return}
- if(e.target.closest('[data-discover-back]')){const back=e.target.closest('[data-discover-back]');discoverArticle=null;if(back.dataset.discoverBack==='all')discoverCategory='';render();return}
- if(e.target.closest('[data-discover-clear]')){discoverSearchQuery='';render();return}
- if(e.target.closest('[data-ask-clear]')){askResult=null;render()}
-});
+ const target=e.target instanceof Element?e.target:e.target?.parentElement;
+ if(!target)return;
+
+ const nav=target.closest('.mobile-nav-item[data-page]');
+ if(nav){
+  const page=String(nav.dataset.page||'');
+  if(page){
+   e.preventDefault();
+   e.stopPropagation();
+   if(page!==currentPage)setPage(page);
+  }
+  return;
+ }
+
+ const cat=target.closest('[data-discover-category]');
+ if(cat){
+  e.preventDefault();
+  e.stopPropagation();
+  discoverCategory=cat.dataset.discoverCategory||'';
+  discoverArticle=null;
+  discoverSearchQuery='';
+  render();
+  return;
+ }
+
+ const art=target.closest('[data-discover-article]');
+ if(art){
+  const title=String(art.dataset.discoverArticle||'');
+  if(discoverLibrary.some(item=>item.title===title)){
+   e.preventDefault();
+   e.stopPropagation();
+   discoverArticle=title;
+   render();
+  }
+  return;
+ }
+
+ const back=target.closest('[data-discover-back]');
+ if(back){
+  e.preventDefault();
+  e.stopPropagation();
+  discoverArticle=null;
+  if(back.dataset.discoverBack==='all')discoverCategory='';
+  render();
+  return;
+ }
+
+ if(target.closest('[data-discover-clear]')){
+  e.preventDefault();
+  e.stopPropagation();
+  discoverSearchQuery='';
+  render();
+  return;
+ }
+
+ if(target.closest('[data-ask-clear]')){
+  e.preventDefault();
+  e.stopPropagation();
+  askResult=null;
+  render();
+ }
+},true);
 window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{today:home,discover,play,ask,'my-study':myStudy});
 if(typeof window.render==='function')window.render();
 })();

@@ -84,7 +84,7 @@ function myStudy(){
  const p=data.profile||{},w=getWeekStats(),type=learnerTypeOf(p),formal=type==='formal',examLearner=type==='exam-prep';
  const focus=p.learningFocus||p.degreeProgramme||p.programme||'Your interests, skills and subjects';
  const academicTools=formal?'<button data-page="education">'+ic('▤','pink')+'<b>Results & CGPA</b><small>Academic results, semester history and carryover courses</small></button>':'';
- const examTools=(formal||examLearner)?'<button data-page="more">'+ic('🎓','orange')+'<b>Examination centre</b><small>Exam dates, revision plans and mock examinations</small></button>':'';
+ const examTools=(formal||examLearner)?'<button data-page="exams">'+ic('🎓','orange')+'<b>Examination centre</b><small>Exam dates, revision plans and mock examinations</small></button>':'';
  return hd('YOUR LEARNING SPACE','My Learning','Your subjects, skills, ideas, materials and learning progress — organised around what matters to you.')+
  '<section class="exp-my-study-hero"><div class="eyebrow">YOUR PERSONAL LEARNING SPACE</div><h2>Explore more.<br><em>Learn your way.</em></h2><p>'+safe(focus)+(formal&&p.institution?' · '+safe(p.institution):'')+'</p><span>✦</span></section>'+
  '<section class="exp-section"><div class="exp-section-heading"><div><div class="eyebrow">YOUR DAILY TOOLS</div><h2>Organise your learning.</h2></div></div><div class="exp-tile-grid exp-my-study-grid">'+

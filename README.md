@@ -24,7 +24,11 @@ python server.py
 
 Open `http://127.0.0.1:8000`. Learning-area lists and schedules can be imported as CSV, TSV, Excel, JSON, PDF, Word, PowerPoint, text, or PNG/JPG/WebP images. Photos and scanned PDFs are read with in-browser OCR, then the detected learning areas or scheduled items appear in a review step before they are added. The first PDF, Office, image OCR, or portable ZIP import loads its reader from a public CDN, so an internet connection is needed for that first use.
 
-## Personal learning roadmaps\n\nLearners can create personal roadmaps around academic, career, professional-skill, exam-preparation, creative or personal-interest goals. Each roadmap can be linked to a learning area and broken into dated or undated milestones. Progress is tracked from completed milestones and saved with the learner's local Eduvia data; it does not require an account or cloud service.\n\n## Study guides and practice
+## Personal learning roadmaps
+
+Learners can create personal roadmaps around academic, career, professional-skill, exam-preparation, creative or personal-interest goals. Each roadmap can be linked to a learning area and broken into dated or undated milestones. Progress is tracked from completed milestones and saved with the learner's local Eduvia data; it does not require an account or cloud service.
+
+## Study guides and practice
 
 Eduvia creates study guides and practice questions on the device from learning-area topics and uploaded materials. It has no AI connection or API key requirement. Use **Find a learning resource online** to open a normal web search; review the results yourself and save useful links or notes to the learning kit.
 

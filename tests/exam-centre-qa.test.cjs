@@ -48,3 +48,9 @@ test('exam countdown shortcut opens the dedicated examination centre',()=>{
 test('exam centre contains only one examination timetable renderer',()=>{
  assert.equal(source.split('function renderExamTimetable(').length-1,1);
 });
+
+test('examination centre routes to the Play tab instead of More tools',()=>{
+ const nav=source.slice(source.indexOf('const destinations={'),source.indexOf('const destination='));
+ assert.ok(nav.includes("exams:'play'"));
+ assert.ok(!nav.includes("exams:'more'"));
+});

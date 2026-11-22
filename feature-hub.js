@@ -78,7 +78,7 @@ function masteryKey(courseId, topic){return courseId+'::'+topic;}
     window.eduFeatureNavWrapped=true;
     window.syncNav=function(){
       originalSyncNav();
-      const destinations={planner:'timetable',flashcards:'courses',mastery:'courses',practice:'courses',tutorials:'courses','mock-exam':'courses','mock-results':'courses',progress:'habit',records:'habit',education:'more',vault:'more',profile:'more',study:'more',settings:'more',setup:'more',exams:'more'};
+      const destinations={planner:'timetable',flashcards:'courses',mastery:'courses',practice:'courses',tutorials:'courses','mock-exam':'courses','mock-results':'courses',progress:'habit',records:'habit',education:'more',vault:'more',profile:'more',study:'more',settings:'more',setup:'more',exams:'play'};
       const destination=destinations[currentPage]||currentPage;
       document.querySelectorAll('.mobile-nav-item[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page===destination));
       const labels={planner:'Assignments & deadlines',flashcards:'Flashcards',mastery:'Learning mastery',practice:'Practice & tests',tutorials:'Tutorials & notes','mock-exam':'Timed mock examination','mock-results':'Mock exam review',progress:'Study progress',records:'Session records',education:'Academic history',exams:'Examination centre',vault:'Personal library'};

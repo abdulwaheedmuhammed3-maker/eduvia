@@ -36,10 +36,10 @@ test('theme asset URLs and service-worker cache are versioned together',()=>{
   assert.ok(html.includes('rev=theme-audit-1'));
   assert.ok(worker.includes('eduvia-v79-theme-audit'));
   for(const asset of ['entry-flow.css','visual-refresh.css','experience.css','icon-system.css']){
-    const htmlAsset=html.match(new RegExp(asset+'[^"]*'))?.[0];
-    const workerAsset=worker.match(new RegExp('./'+asset+'[^\\\\']*'))?.[0];
-    assert.ok(htmlAsset,asset+' is linked in index.html');
-    assert.ok(workerAsset,asset+' is cached by the service worker');
-    assert.ok(htmlAsset.slice(asset.length)===workerAsset.slice(2+asset.length),asset+' URL version matches between HTML and service worker');
+    const htmlVersion=html.split('href="'+asset)[1]?.split('"')[0];
+    const workerVersion=worker.split("'./"+asset)[1]?.split("'")[0];
+    assert.ok(htmlVersion,asset+' is linked in index.html');
+    assert.ok(workerVersion,asset+' is cached by the service worker');
+    assert.equal(htmlVersion,workerVersion,asset+' URL version matches between HTML and service worker');
   }
 });

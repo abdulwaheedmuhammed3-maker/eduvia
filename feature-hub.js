@@ -116,11 +116,14 @@ function generateRevisionPlan(examId){
  const left=examDaysLeft(exam);if(left<0){toast('This examination date has passed.');return}
  const existing=data.revisionTasks.filter(task=>task.examId===examId);
  if(existing.length&&!confirm('Replace the existing revision plan? Completed checklist items will be replaced.'))return;
- const topics=topicsForExam(exam),examDate=parseISO(exam.date),studyDays=(Array.isArray(data.profile.studyDays)&&data.profile.studyDays.length?data.profile.studyDays:[1,2,3,4,5,6]).map(Number);
+ const topics=topicsForExam(exam),examDate=parseISO(exam.date),rawStudyDays=Array.isArray(data.profile?.studyDays)?data.profile.studyDays:[1,2,3,4,5,6];
+ const studyDays=[...new Set(rawStudyDays.map(Number).filter(day=>Number.isInteger(day)&&day>=0&&day<=6))];
  const firstDate=addDays(examDate,-Math.min(14,Math.max(1,left)));
+ const startDate=new Date(Math.max(parseISO(today()).getTime(),firstDate.getTime()));
+ const localISO=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
  let dates=[];
- for(let d=new Date(Math.max(parseISO(today()).getTime(),firstDate.getTime()));d<examDate;d=addDays(d,1)){if(studyDays.includes(d.getDay()))dates.push(d.toLocaleDateString('en-CA'))}
- if(!dates.length){for(let d=new Date(Math.max(parseISO(today()).getTime(),firstDate.getTime()));d<examDate;d=addDays(d,1))dates.push(d.toLocaleDateString('en-CA'))}
+ for(let d=new Date(startDate);d<examDate;d=addDays(d,1)){if(studyDays.length===0||studyDays.includes(d.getDay()))dates.push(localISO(d))}
+ if(!dates.length){for(let d=new Date(startDate);d<examDate;d=addDays(d,1))dates.push(localISO(d))}
  if(!dates.length){toast('No revision days are available before this exam.');return}
  const work=topics.length?topics.map(topic=>({title:'Review '+topic,topic,type:'Topic review'})):[
   {title:'Review uploaded learning materials',topic:'Learning materials',type:'Notes review'},
@@ -128,8 +131,8 @@ function generateRevisionPlan(examId){
  ];
  work.push({title:'Complete a practice set and review mistakes',topic:topics[0]||exam.title,type:'Practice'});
  work.push({title:'Final active recall and light revision',topic:'Final review',type:'Final review'});
- // Spread revision tasks across available study dates, keeping the exam day free.
- const tasks=work.map((item,index)=>({id:uid(),examId:exam.id,courseId:exam.courseId||'',date:dates[Math.min(dates.length-1,Math.floor(index*dates.length/work.length))],title:item.title,topic:item.topic,type:item.type,completed:false,createdAt:Date.now()}));
+ // Spread tasks evenly over valid study dates; never schedule on exam day.
+ const tasks=work.map((item,index)=>({id:uid(),examId:exam.id,courseId:exam.courseId||'',date:dates[Math.min(dates.length-1,Math.floor((index+0.5)*dates.length/work.length))],title:item.title,topic:item.topic,type:item.type,completed:false,createdAt:Date.now()}));
  data.revisionTasks=data.revisionTasks.filter(task=>task.examId!==examId).concat(tasks);
  save();toast(tasks.length+' revision tasks added to your plan.');
 }
@@ -212,7 +215,9 @@ function renderMockExam(){
 }
 function finishMockExam(autoSubmitted){
  const active=data.activeMockExam;if(!active||active.status!=='in-progress')return;
+ const expired=Number(active.endsAt)<=Date.now();autoSubmitted=!!autoSubmitted||expired;
  if(!autoSubmitted&&!confirm('Submit this mock examination now? You can review your answers afterwards.'))return;
+ if(data.mockExamAttempts.some(attempt=>attempt.id===active.id)){data.activeMockExam=null;save();return;}
  if(mockExamTicker){clearInterval(mockExamTicker);mockExamTicker=null}
  active.status='submitted';active.submittedAt=Date.now();active.autoSubmitted=!!autoSubmitted;
  active.answers=(active.answers||[]).map(value=>String(value||''));active.answeredCount=active.answers.filter(value=>value.trim()).length;

@@ -34,7 +34,7 @@ test('Performance Insights uses recorded quiz and mastery data without inventing
  assert.ok(source.includes('function renderInsights()'));
  assert.ok(source.includes('record.quizAttempts'));
  assert.ok(source.includes('data.topicMastery'));
- assert.ok(source.includes('recorded academic results'));
+ assert.ok(source.includes('Recorded academic results'));
  assert.ok(source.includes('does not estimate or invent grades'));
 });
 test('Wellness and insights are reachable from My Learning and More',()=>{

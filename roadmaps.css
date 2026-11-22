@@ -110,3 +110,63 @@ html[data-theme="dark"] .roadmap-flashcard-context{background:#282642;border-col
 html[data-theme="dark"] .roadmap-flashcard-context strong{color:#e8e6ff}
 html[data-theme="dark"] .roadmap-flashcard-context p{color:#aaa7c7}
 html[data-theme="dark"] .roadmap-flashcard-context button,html[data-theme="dark"] .roadmap-create-cards-btn{background:#3a365c;color:#d4d0ff}
+
+
+/* Roadmap surfaces and controls must follow the active Eduvia theme. */
+html[data-theme="dark"] .roadmap-overview>div,
+html[data-theme="dark"] .roadmap-card,
+html[data-theme="dark"] .roadmap-card.is-completed,
+html[data-theme="dark"] .roadmap-empty,
+html[data-theme="dark"] .roadmap-more-entry{
+  background:var(--paper,#1b2035);
+  border-color:var(--line,#303650);
+  color:var(--ink,#f1f2ff);
+}
+html[data-theme="dark"] .roadmap-category,
+html[data-theme="dark"] .roadmap-status,
+html[data-theme="dark"] .roadmap-meta-item,
+html[data-theme="dark"] .roadmap-no-milestones{
+  background:var(--surface-soft,#20263e);
+  border-color:var(--line,#303650);
+  color:var(--muted,#a8aec8);
+}
+html[data-theme="dark"] .roadmap-overview span,
+html[data-theme="dark"] .roadmap-overview strong,
+html[data-theme="dark"] .roadmap-section-head h2,
+html[data-theme="dark"] .roadmap-empty h2,
+html[data-theme="dark"] .roadmap-empty p,
+html[data-theme="dark"] .roadmap-no-milestones strong,
+html[data-theme="dark"] .roadmap-no-milestones span,
+html[data-theme="dark"] .roadmap-more-entry strong{
+  color:var(--ink,#f1f2ff);
+}
+html[data-theme="dark"] .roadmap-empty p,
+html[data-theme="dark"] .roadmap-storage-note,
+html[data-theme="dark"] .roadmap-private-note,
+html[data-theme="dark"] .roadmap-milestone-revision>span{
+  color:var(--muted,#a8aec8);
+}
+html[data-theme="dark"] .roadmap-empty-mark,
+html[data-theme="dark"] .roadmap-more-entry>span{
+  background:#302d52;color:#c5c0ff;
+}
+html[data-theme="dark"] .roadmap-quiet-btn,
+html[data-theme="dark"] .roadmap-review-btn{
+  background:var(--surface-soft,#20263e);
+  border:1px solid var(--line,#303650);
+  color:var(--ink,#f1f2ff);
+}
+html[data-theme="dark"] .roadmap-add-btn,
+html[data-theme="dark"] .roadmap-create-cards-btn{
+  background:#3a365c;border-color:#403e63;color:#d4d0ff;
+}
+html[data-theme="dark"] .roadmap-delete-btn{color:#efb0a8}
+html[data-theme="dark"] .roadmap-entry-strip{
+  background:linear-gradient(110deg,#282642,#20263e);
+  border-color:#403e63;
+}
+html[data-theme="dark"] .roadmap-entry-symbol{background:#302d52;color:#c5c0ff}
+html[data-theme="dark"] .roadmap-entry-strip strong{color:#e8e6ff}
+html[data-theme="dark"] .roadmap-entry-strip span{color:#aaa7c7}
+html[data-theme="dark"] .roadmap-entry-strip button{color:#c7c0ff}
+html[data-theme="dark"] .roadmap-flashcard-linked{color:#c5c0ff}

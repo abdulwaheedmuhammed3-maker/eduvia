@@ -41,7 +41,7 @@ test('theme asset URLs and service-worker cache are versioned together',()=>{
   const html=read('index.html');
   const worker=read('service-worker.js');
   assert.ok(html.includes('rev=theme-audit-2'));
-  assert.ok(worker.includes('eduvia-v83-exam-centre-progress'));
+  assert.ok(worker.includes('eduvia-v84-exam-centre-progress'));
   for(const asset of ['entry-flow.css','visual-refresh.css','experience.css','icon-system.css']){
     const htmlVersion=html.split('href="'+asset)[1]?.split('"')[0];
     const workerVersion=worker.split("'./"+asset)[1]?.split("'")[0];
@@ -52,4 +52,7 @@ test('theme asset URLs and service-worker cache are versioned together',()=>{
   const htmlApp=html.split('src="app.js')[1]?.split('"')[0];
   const workerApp=worker.split("'./app.js")[1]?.split("'")[0];
   assert.equal(htmlApp,workerApp,'app.js URL version matches between HTML and service worker');
+  const htmlFeatureHub=html.split('src="feature-hub.js')[1]?.split('"')[0];
+  const workerFeatureHub=worker.split("'./feature-hub.js")[1]?.split("'")[0];
+  assert.equal(htmlFeatureHub,workerFeatureHub,'feature-hub.js URL version matches between HTML and service worker');
 });

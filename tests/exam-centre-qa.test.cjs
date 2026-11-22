@@ -28,3 +28,23 @@ test('mock session recovery normalizes answers and safely handles expired or mal
  assert.ok(source.includes('if(!Number.isFinite(endsAt)||endsAt<=Date.now()){finishMockExam(true);return renderMockResults()}'));
  assert.ok(source.includes("active.status!=='in-progress'||!Array.isArray(active.questions)||!active.questions.length"));
 });
+
+test('the dedicated examination centre combines countdown, timetable, revision and mock exams',()=>{
+ assert.ok(source.includes('exams:renderExamCentre'));
+ const start=source.indexOf('function renderExamCentre(){');
+ const end=source.indexOf('function renderExamTimetable(){',start);
+ assert.ok(start>=0&&end>start,'dedicated examination centre renderer exists');
+ const centre=source.slice(start,end);
+ for(const feature of ['EXAM COUNTDOWN','renderExamTimetable()','renderRevisionPlans()','renderMockExamHub()']){
+  assert.ok(centre.includes(feature),'exam centre should include '+feature);
+ }
+});
+test('deleting an examination also removes only its linked revision tasks',()=>{
+ assert.ok(source.includes('data.revisionTasks=data.revisionTasks.filter(task=>task.examId!==idValue)'));
+});
+test('exam countdown shortcut opens the dedicated examination centre',()=>{
+ assert.ok(source.includes('data-page="exams">Open examination centre'));
+});
+test('exam centre contains only one examination timetable renderer',()=>{
+ assert.equal(source.split('function renderExamTimetable(').length-1,1);
+});

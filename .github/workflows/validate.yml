@@ -21,9 +21,10 @@ jobs:
           node --check entry-flow.js
           node --check study-studio.js
           node --check course-intelligence.js
-          node --test tests/course-intelligence.test.cjs tests/learner-profile.test.cjs tests/study-studio-structure.test.cjs tests/roadmap-core.test.cjs tests/theme-styles.test.cjs tests/exam-centre-qa.test.cjs
+          node --test tests/course-intelligence.test.cjs tests/learner-profile.test.cjs tests/study-studio-structure.test.cjs tests/roadmap-core.test.cjs tests/theme-styles.test.cjs tests/exam-centre-qa.test.cjs tests/learning-expansions.test.cjs
           node --check feature-hub.js
           node --check experience.js
+          node --check learning-expansions.js
           node --check icon-system.js
           node --check native-bridge-src.js
           node --check scripts/prepare-android.mjs
@@ -77,6 +78,9 @@ jobs:
           grep -q 'entry-flow.css' service-worker.js
           grep -q 'visual-refresh.css' service-worker.js
           grep -q 'experience.js' service-worker.js
+          grep -q 'learning-expansions.js' index.html
+          grep -q 'learning-expansions.js' service-worker.js
+          grep -q 'learning-expansions.js' scripts/build-web.mjs
           grep -q 'experience.css' service-worker.js
           grep -q 'entry-flow.js' scripts/build-web.mjs
           grep -q 'feature-hub.js' scripts/build-web.mjs
@@ -86,7 +90,7 @@ jobs:
           grep -q 'experience.css' scripts/build-web.mjs
           grep -q 'app.js?v=' service-worker.js
           grep -q 'eduvia-study-alarms-v2' native-bridge-src.js
-          grep -q 'eduvia-v88-exam-revision-centre' service-worker.js
+          grep -q 'eduvia-v89-learning-expansions' service-worker.js
           grep -q 'theme-audit-2' index.html
           grep -q 'profile-audit-3-knowledge-check' index.html
           grep -q 'profile-audit-3-knowledge-check' service-worker.js

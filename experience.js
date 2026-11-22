@@ -194,6 +194,7 @@ document.addEventListener('click',e=>{
   render();
  }
 },true);
+window.eduDiscoverLibrary=discoverLibrary;
 window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{today:home,discover,play,ask,'my-study':myStudy});
 if(typeof window.render==='function')window.render();
 })();

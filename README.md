@@ -63,3 +63,8 @@ The app shell can open offline after its first load, but each phone keeps its ow
 ## Scheduled scheduled class and learning-session alarms
 
 Eduvia schedules class and learning-session notifications for the event's actual start time. The Android app uses local notifications with an audible multi-pulse sound and requests notification and exact-alarm permissions. Android notification-channel settings, silent mode, battery policies, and Do Not Disturb can still affect delivery or sound. Eduvia does not silently bypass Do Not Disturb; Android requires separate user-granted special access for apps that are allowed to override it. The browser version depends on the configured push service for delivery while closed; foreground browser timers alone are not guaranteed in the background.
+
+
+## Learning experiences, wellness and insights
+
+Play & Learn includes a short recall sprint using saved flashcards; completed cards receive the existing spaced-review intervals. Ask Eduvia searches the learner's own uploaded materials and keeps a local recent-search list; it does not connect to an online AI model. Discover includes saved guides, reading history and digital-skills and career-readiness topics. Study Wellness stores one editable daily study-balance check-in on the device. Performance Insights summarises saved study quizzes, topic mastery, mock-exam self-assessments and activity; it does not infer or invent official grades.

@@ -128,6 +128,7 @@ function generateRevisionPlan(examId){
  ];
  work.push({title:'Complete a practice set and review mistakes',topic:topics[0]||exam.title,type:'Practice'});
  work.push({title:'Final active recall and light revision',topic:'Final review',type:'Final review'});
+ // Spread revision tasks across available study dates, keeping the exam day free.
  const tasks=work.map((item,index)=>({id:uid(),examId:exam.id,courseId:exam.courseId||'',date:dates[Math.min(dates.length-1,Math.floor(index*dates.length/work.length))],title:item.title,topic:item.topic,type:item.type,completed:false,createdAt:Date.now()}));
  data.revisionTasks=data.revisionTasks.filter(task=>task.examId!==examId).concat(tasks);
  save();toast(tasks.length+' revision tasks added to your plan.');
@@ -136,8 +137,8 @@ function renderRevisionPlans(){
  const exams=data.exams.filter(exam=>examDaysLeft(exam)>=0&&data.revisionTasks.some(task=>task.examId===exam.id));
  return exams.map(exam=>{
   const tasks=data.revisionTasks.filter(task=>task.examId===exam.id).sort((a,b)=>a.date.localeCompare(b.date));
-  const done=tasks.filter(task=>task.completed).length;
-  return '<section class="exam-plan-summary"><div class="panel-head"><div><h4>'+esc(exam.title)+'</h4><p>'+done+' of '+tasks.length+' tasks completed</p></div><span class="upload-count">'+Math.round(done/Math.max(1,tasks.length)*100)+'%</span></div><div class="revision-task-list">'+tasks.slice(0,10).map(renderRevisionTask).join('')+(tasks.length>10?'<small>+'+(tasks.length-10)+' more</small>':'')+'</div></section>';
+  const done=tasks.filter(task=>task.completed).length,overdue=tasks.filter(task=>!task.completed&&task.date<today()).length,dueToday=tasks.filter(task=>!task.completed&&task.date===today()).length,upcoming=tasks.filter(task=>!task.completed&&task.date>today()).length;
+  return '<section class="exam-plan-summary"><div class="panel-head"><div><h4>'+esc(exam.title)+'</h4><p>'+done+' of '+tasks.length+' completed · '+overdue+' overdue · '+dueToday+' due today · '+upcoming+' upcoming</p></div><span class="upload-count">'+Math.round(done/Math.max(1,tasks.length)*100)+'%</span></div><div class="revision-task-list">'+tasks.slice(0,10).map(renderRevisionTask).join('')+(tasks.length>10?'<small>+'+(tasks.length-10)+' more</small>':'')+'</div></section>';
  }).join('');
 }
 function renderExamTimetable(){

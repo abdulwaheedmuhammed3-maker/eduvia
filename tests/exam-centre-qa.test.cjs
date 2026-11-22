@@ -21,3 +21,10 @@ test('mock answers are persisted on input and timer auto-submits',()=>{
  assert.ok(source.includes('if(mockExamTicker){clearInterval(mockExamTicker);mockExamTicker=null}'));
  assert.ok(source.includes('Number(active.endsAt)-Date.now()'));
 });
+
+test('mock session recovery normalizes answers and safely handles expired or malformed sessions',()=>{
+ assert.ok(source.includes('active.answers=Array.isArray(active.answers)?active.answers: []'));
+ assert.ok(source.includes('active.questions.map((_,index)=>String(active.answers[index]||\'\'))'));
+ assert.ok(source.includes('if(!Number.isFinite(endsAt)||endsAt<=Date.now()){finishMockExam(true);return renderMockResults()}'));
+ assert.ok(source.includes("active.status!=='in-progress'||!Array.isArray(active.questions)||!active.questions.length"));
+});

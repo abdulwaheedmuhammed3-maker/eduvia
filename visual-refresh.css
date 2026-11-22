@@ -374,3 +374,8 @@ html[data-theme="dark"] .toast{background:#292746;color:#f1f2ff}
 html[data-theme="dark"] .avatar{background:#302d52;color:#c5c0ff}
 html[data-theme="dark"] .mini-track,
 html[data-theme="dark"] .progress-track{background:#303650}
+
+
+/* Theme-aware copy used inside dynamically rendered learning panels. */
+.habit-reminder-copy{font-size:10px;color:var(--muted);line-height:1.6;margin:0 0 12px}
+.resource-note-copy{font-size:10px;line-height:1.55;color:var(--muted);white-space:pre-wrap}

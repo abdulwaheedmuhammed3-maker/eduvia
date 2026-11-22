@@ -25,3 +25,17 @@ test('non-formal profile editor does not clear saved academic details', () => {
   assert.ok(editor.includes('data.profile.programme=data.profile.learningFocus'));
   assert.ok(!editor.includes("data.profile.institution=''"));
 });
+
+test('study completion requires five key points and starts an unlimited 10-question recall quiz',()=>{
+  assert.ok(source.includes("field('Five key points learned','keyPoints'"));
+  assert.ok(source.includes("if(keyPoints.length!==5)"));
+  assert.ok(source.includes('openSessionQuiz(record.id)'));
+  assert.ok(source.includes('10 questions'));
+  assert.ok(source.includes('data-action="retake-session-quiz"'));
+});
+test('study quiz attempts calculate first, latest and best without limiting retakes',()=>{
+  assert.ok(source.includes('function sessionQuizStats(attempts)'));
+  assert.ok(source.includes('const first=list[list.length-1],latest=list[0]'));
+  assert.ok(source.includes('best:'));
+  assert.ok(source.includes('attempts.unshift(attempt)'));
+});

@@ -1010,11 +1010,14 @@ function beginSessionCompletion(event,date){
     attendanceSelect.addEventListener('change',syncAttendanceFields);syncAttendanceFields();
     return;
   }
-  const body='<p class="session-modal-intro">Save what you studied, then take a 10-question recall quiz.</p>'+
+  const body='<p class="session-modal-intro">Capture what you studied and five key takeaways. Eduvia will follow with a 10-question recall check. You can retake it as often as you like.</p>'+
     field('Topics studied','topics','<textarea id="f-topics" name="topics" required placeholder="List the topics you reviewed"></textarea>',true)+
-    field('What you gained from the study hour','gained','<textarea id="f-gained" name="gained" required placeholder="Write key ideas you learned, one per line if possible"></textarea>',true);
+    field('Five key points learned','keyPoints','<textarea id="f-keyPoints" name="keyPoints" required placeholder="Enter five key points, one per line"></textarea>',true)+
+    field('Additional reflection (optional)','gained','<textarea id="f-gained" name="gained" placeholder="Anything else you gained from this session"></textarea>',true);
   openModal('Study reflection',subtitle,body,'Save and start 10-question quiz',fd=>{
-    const record=saveCompletedSession(event,date,{topics:String(fd.get('topics')||'').trim(),gained:String(fd.get('gained')||'').trim()},false);
+    const keyPoints=splitSessionList(String(fd.get('keyPoints')||''));
+    if(keyPoints.length!==5){toast('Please enter exactly five key points, one per line.');return}
+    const record=saveCompletedSession(event,date,{topics:String(fd.get('topics')||'').trim(),keyPoints,gained:String(fd.get('gained')||'').trim()},false);
     toast('Study reflection saved');
     openSessionQuiz(record.id);
   });
@@ -1049,7 +1052,7 @@ function buildSessionQuiz(record,sources){
     }
     addQuestion('Complete the missing topic or key term: “'+masked+'”',answer,'term',item.source);
   }
-  const learned=splitSessionList(reflection.gained);
+  const learned=[...splitSessionList(reflection.keyPoints),...splitSessionList(reflection.gained)];
   if(questions.length<10&&learned.length){
     const templates=['What key point did you record about ','State one detail you learned about ','How would you explain your main takeaway on ','What idea from your study notes can you recall about ','Which important point did you gain about '];
     for(let index=0;questions.length<10;index++){
@@ -1076,11 +1079,11 @@ async function openSessionQuiz(recordId){
   if(!Array.isArray(record.quizQuestions)||record.quizQuestions.length!==10){
     const sources=await sessionQuizSources(record.courseId);
     record.quizQuestions=buildSessionQuiz(record,sources);
-    const fallbackPoints=splitSessionList(record.reflection?.gained),fallbackTopics=splitSessionList(record.reflection?.topics);while(record.quizQuestions.length<10){const number=record.quizQuestions.length+1,topic=fallbackTopics[(number-1)%Math.max(1,fallbackTopics.length)]||record.title||'your topic',answer=fallbackPoints[(number-1)%Math.max(1,fallbackPoints.length)]||record.reflection?.gained||topic;record.quizQuestions.push({prompt:'Recall check '+number+': Write one key idea you learned about '+topic+'.',answer,mode:'keywords',source:'Your study reflection'})}
+    const fallbackPoints=[...splitSessionList(record.reflection?.keyPoints),...splitSessionList(record.reflection?.gained)],fallbackTopics=splitSessionList(record.reflection?.topics);while(record.quizQuestions.length<10){const number=record.quizQuestions.length+1,topic=fallbackTopics[(number-1)%Math.max(1,fallbackTopics.length)]||record.title||'your topic',answer=fallbackPoints[(number-1)%Math.max(1,fallbackPoints.length)]||record.reflection?.gained||topic;record.quizQuestions.push({prompt:'Recall check '+number+': Write one key idea you learned about '+topic+'.',answer,mode:'keywords',source:'Your study reflection'})}
     save();
   }
   const questions=record.quizQuestions;
-  const content='<p class="session-modal-intro">10 questions · on-device grading checks key terms from your course notes or study reflection.</p><div class="quick-quiz-list">'+questions.map((question,index)=>'<div class="form-field full"><label for="f-quiz-'+index+'">'+String(index+1).padStart(2,'0')+'. '+safe(question.prompt)+'</label><input id="f-quiz-'+index+'" name="answer'+index+'" required autocomplete="off" placeholder="Your short answer"></div>').join('')+'</div>';
+  const keyPoints=record.reflection?.keyPoints||[];const content='<p class="session-modal-intro">10 questions · on-device grading checks key terms from your course notes or study reflection. Unlimited retakes are saved.</p>'+(keyPoints.length?'<section class="session-key-points"><h3>Five key points from your session</h3><ol>'+keyPoints.map(point=>'<li>'+safe(point)+'</li>').join('')+'</ol></section>':'')+'<div class="quick-quiz-list">'+questions.map((question,index)=>'<div class="form-field full"><label for="f-quiz-'+index+'">'+String(index+1).padStart(2,'0')+'. '+safe(question.prompt)+'</label><input id="f-quiz-'+index+'" name="answer'+index+'" required autocomplete="off" placeholder="Your short answer"></div>').join('')+'</div>';
   openModal('10-question study quiz',record.title,content,'Grade my quiz',fd=>{
     const responses=questions.map((question,index)=>{const answer=String(fd.get('answer'+index)||'').trim();return {question:question.prompt,answer,key:question.answer,source:question.source,correct:gradeSessionAnswer(question,answer)}});
     const score=responses.filter(item=>item.correct).length,attempts=record.quizAttempts=Array.isArray(record.quizAttempts)?record.quizAttempts:[];
@@ -1090,8 +1093,14 @@ async function openSessionQuiz(recordId){
 function showSessionQuizResult(recordId,attempt){
   const record=(data.studyRecords||[]).find(item=>item.id===recordId);if(!record)return;
   const rows=attempt.responses.map((result,index)=>'<article class="quiz-result-row '+(result.correct?'correct':'incorrect')+'"><div><strong>'+String(index+1).padStart(2,'0')+'. '+(result.correct?'Correct':'Review this answer')+'</strong><p>'+safe(result.question)+'</p><small>Your answer: '+safe(result.answer||'No answer')+'</small><small>Answer key: '+safe(result.key)+'</small></div></article>').join('');
-  const body='<div class="quiz-score-banner"><strong>'+attempt.score+'/'+attempt.total+'</strong><span>Attempt '+attempt.number+' · '+Math.round(attempt.score/attempt.total*100)+'%</span></div><div class="quiz-result-list">'+rows+'</div><button type="button" class="secondary-btn quiz-retake-btn" data-action="retake-session-quiz" data-record-id="'+safe(record.id)+'">Retake this quiz</button>';
+  const stats=sessionQuizStats(record.quizAttempts||[]);const body='<div class="quiz-score-banner"><strong>'+attempt.score+'/'+attempt.total+'</strong><span>Attempt '+attempt.number+' · '+Math.round(attempt.score/attempt.total*100)+'%</span></div><div class="quiz-performance-summary"><div><span>First</span><strong>'+stats.first.score+'/'+stats.first.total+'</strong></div><div><span>Latest</span><strong>'+stats.latest.score+'/'+stats.latest.total+'</strong></div><div><span>Best</span><strong>'+stats.best.score+'/'+stats.best.total+'</strong></div></div><div class="quiz-result-list">'+rows+'</div><button type="button" class="secondary-btn quiz-retake-btn" data-action="retake-session-quiz" data-record-id="'+safe(record.id)+'">Retake this quiz</button>';
   openModal('Quiz result',record.title,body,'Close',()=>closeModal());
+}
+function sessionQuizStats(attempts){
+  const list=Array.isArray(attempts)?attempts:[];
+  if(!list.length)return {first:null,latest:null,best:null};
+  const first=list[list.length-1],latest=list[0],best=list.reduce((top,item)=>!top||Number(item.score)>Number(top.score)?item:top,null);
+  return {first,latest,best};
 }
 function showSessionRecord(recordId){
   const record=(data.studyRecords||[]).find(item=>item.id===recordId);if(!record)return;
@@ -1106,7 +1115,8 @@ function showSessionRecord(recordId){
       const tasks=reflection.tasks||[];body+='<h3>Assignments and classwork</h3>'+(tasks.length?'<ul>'+tasks.map(task=>'<li><strong>'+safe(task.type)+':</strong> '+safe(task.title)+' · due '+safe(task.dueDate)+'</li>').join('')+'</ul>':'<p>No assignments or classwork recorded.</p>');
     }else body+='<p>Learning details were skipped for this attendance record.</p>';
   }else{
-    body+='<h3>Topics</h3><p>'+safe(reflection.topics||'None saved')+'</p><h3>What you gained</h3><p>'+safe(reflection.gained||'None saved')+'</p><h3>10-question quiz attempts: '+attempts.length+'</h3>';
+    body+='<h3>Topics</h3><p>'+safe(reflection.topics||'None saved')+'</p><h3>Five key points</h3>'+(reflection.keyPoints?.length?'<ol>'+reflection.keyPoints.map(point=>'<li>'+safe(point)+'</li>').join('')+'</ol>':'<p>'+safe(reflection.gained||'None saved')+'</p>')+'<h3>Quiz performance</h3><p>'+attempts.length+' attempt'+(attempts.length===1?'':'s')+' · unlimited retakes</p>';
+    const stats=sessionQuizStats(attempts);if(stats.latest)body+='<div class="quiz-performance-summary"><div><span>First</span><strong>'+stats.first.score+'/'+stats.first.total+'</strong></div><div><span>Latest</span><strong>'+stats.latest.score+'/'+stats.latest.total+'</strong></div><div><span>Best</span><strong>'+stats.best.score+'/'+stats.best.total+'</strong></div></div>';
     body+=attempts.length?'<div class="quiz-attempt-list">'+attempts.map(item=>'<div><strong>Attempt '+item.number+': '+item.score+'/'+item.total+'</strong><span>'+new Date(item.completedAt).toLocaleString()+'</span></div>').join('')+'</div>':'<p>No quiz taken yet.</p>';
     body+='<button type="button" class="secondary-btn quiz-retake-btn" data-action="retake-session-quiz" data-record-id="'+safe(record.id)+'">'+(attempts.length?'Retake quiz':'Take 10-question quiz')+'</button>';
   }

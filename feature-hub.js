@@ -116,11 +116,12 @@ function generateRevisionPlan(examId){
  const left=examDaysLeft(exam);if(left<0){toast('This examination date has passed.');return}
  const existing=data.revisionTasks.filter(task=>task.examId===examId);
  if(existing.length&&!confirm('Replace the existing revision plan? Completed checklist items will be replaced.'))return;
- const topics=topicsForExam(exam),examDate=parseISO(exam.date),studyDays=(data.profile.studyDays||[1,2,3,4,5,6]).map(Number);
+ const topics=topicsForExam(exam),examDate=parseISO(exam.date),studyDays=(Array.isArray(data.profile.studyDays)&&data.profile.studyDays.length?data.profile.studyDays:[1,2,3,4,5,6]).map(Number);
  const firstDate=addDays(examDate,-Math.min(14,Math.max(1,left)));
  let dates=[];
  for(let d=new Date(Math.max(parseISO(today()).getTime(),firstDate.getTime()));d<examDate;d=addDays(d,1)){if(studyDays.includes(d.getDay()))dates.push(d.toLocaleDateString('en-CA'))}
- if(!dates.length)dates=[today()];
+ if(!dates.length){for(let d=new Date(Math.max(parseISO(today()).getTime(),firstDate.getTime()));d<examDate;d=addDays(d,1))dates.push(d.toLocaleDateString('en-CA'))}
+ if(!dates.length){toast('No revision days are available before this exam.');return}
  const work=topics.length?topics.map(topic=>({title:'Review '+topic,topic,type:'Topic review'})):[
   {title:'Review uploaded learning materials',topic:'Learning materials',type:'Notes review'},
   {title:'List key topics from your lecture notes',topic:'Lecture topics',type:'Active recall'}
@@ -155,7 +156,7 @@ function examHomeWidget(){
  const left=examDaysLeft(exam),course=data.courses.find(item=>String(item.id)===String(exam.courseId));
  const tasks=data.revisionTasks.filter(task=>task.examId===exam.id),todayTasks=tasks.filter(task=>task.date===today()),pending=todayTasks.filter(task=>!task.completed);
  return '<section class="panel exam-home-widget"><div class="exam-home-head"><div><div class="eyebrow">EXAM COUNTDOWN</div><h3>'+esc(exam.title)+'</h3><p>'+esc(course?.name||'General examination')+' · '+esc(exam.date)+'</p></div><div class="exam-countdown-number"><strong>'+left+'</strong><small>'+(left===0?'TODAY':left===1?'DAY LEFT':'DAYS LEFT')+'</small></div></div>'+
-  (tasks.length?'<div class="exam-home-tasks"><div class="panel-head"><div><h4>Today’s revision</h4><p>'+pending.length+' tasks remaining</p></div></div>'+todayTasks.map(renderRevisionTask).join('')+'</div>':'<p class="exam-home-note">Build a revision plan for this paper from the Schedule tab.</p>')+
+  (tasks.length?'<div class="exam-home-tasks"><div class="panel-head"><div><h4>Revision progress</h4><p>'+tasks.filter(task=>task.completed).length+' of '+tasks.length+' tasks completed · '+pending.length+' due today remaining</p></div></div>'+todayTasks.map(renderRevisionTask).join('')+'</div>':'<p class="exam-home-note">Build a revision plan for this paper from the Schedule tab.</p>')+
   '<div class="exam-home-actions">'+(tasks.length?'':'<button class="primary-btn" data-exam-action="build-plan" data-id="'+esc(exam.id)+'">Build revision plan</button>')+'<button class="secondary-btn" data-page="timetable">Open examination timetable →</button></div></section>';
 }
 document.addEventListener('click',event=>{

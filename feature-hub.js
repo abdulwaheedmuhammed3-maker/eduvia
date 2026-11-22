@@ -208,7 +208,11 @@ function renderMockExam(){
  if(!active)return pageHead('PRACTICE UNDER PRESSURE','No active mock examination','Start a timed paper from Courses.','<button class="secondary-btn" data-page="courses">Back to courses</button>');
  const remaining=active.endsAt-Date.now();
  const questions=(active.questions||[]).map((question,index)=>'<article class="mock-question"><div class="mock-question-head"><span>QUESTION '+String(index+1).padStart(2,'0')+' / '+active.questions.length+'</span><small>'+esc(question.source||'Course material')+'</small></div><strong>'+esc(question.question)+'</strong><label class="form-field"><span>Your answer</span><textarea rows="4" data-mock-answer="'+index+'" placeholder="Write your answer here">'+esc(active.answers?.[index]||'')+'</textarea></label></article>').join('');
- setTimeout(()=>{if(currentPage==='mock-exam'){if(mockExamTicker)clearInterval(mockExamTicker);mockExamTicker=setInterval(()=>{const clock=document.getElementById('mockExamClock'),left=data.activeMockExam?data.activeMockExam.endsAt-Date.now():0;if(clock)clock.textContent=mockClock(left);if(left<=0)finishMockExam(true)},1000)}},0);
+ // Keep a single timer interval across rerenders; persisted endsAt remains authoritative after reload.
+ if(mockExamTicker){clearInterval(mockExamTicker);mockExamTicker=null}
+ setTimeout(()=>{if(currentPage==='mock-exam'&&data.activeMockExam?.status==='in-progress'){
+  mockExamTicker=setInterval(()=>{const clock=document.getElementById('mockExamClock'),active=data.activeMockExam,left=active?Number(active.endsAt)-Date.now():0;if(clock)clock.textContent=mockClock(left);if(!active||active.status!=='in-progress'){clearInterval(mockExamTicker);mockExamTicker=null;return}if(left<=0)finishMockExam(true)},1000)
+ }},0);
  return pageHead('EXAM CONDITIONS',esc(active.courseName)+' · Mock examination','Work independently. Your answers are saved on this device as you type.','<button class="primary-btn" data-mock-action="finish">Submit paper</button>')+
   '<section class="panel mock-timer-panel"><div><span>TIME REMAINING</span><strong id="mockExamClock">'+mockClock(remaining)+'</strong></div><span>'+esc(active.durationMinutes)+' minute paper</span></section>'+
   '<section class="mock-exam-questions">'+questions+'</section><div class="mock-finish-row"><span>'+active.questions.length+' questions</span><button class="primary-btn" data-mock-action="finish">Finish examination</button></div>';

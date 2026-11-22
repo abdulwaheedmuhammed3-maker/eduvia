@@ -337,3 +337,9 @@ html[data-theme="dark"] .exp-next-lecture-icon{background:#302d52;color:#c5c0ff}
   .exp-next-lecture-date{margin-right:4px}
   .exp-next-lecture-actions button{padding:9px 11px}
 }
+
+
+/* The empty-state icon has a more-specific light selector; mirror it in dark mode. */
+html[data-theme="dark"] .exp-next-lecture-empty .exp-next-lecture-icon{
+  background:#302d52;color:#c5c0ff;
+}

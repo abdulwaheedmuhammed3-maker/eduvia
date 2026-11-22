@@ -21,7 +21,7 @@ jobs:
           node --check entry-flow.js
           node --check study-studio.js
           node --check course-intelligence.js
-          node --test tests/course-intelligence.test.cjs tests/learner-profile.test.cjs tests/study-studio-structure.test.cjs tests/roadmap-core.test.cjs
+          node --test tests/course-intelligence.test.cjs tests/learner-profile.test.cjs tests/study-studio-structure.test.cjs tests/roadmap-core.test.cjs tests/theme-styles.test.cjs
           node --check feature-hub.js
           node --check experience.js
           node --check icon-system.js
@@ -86,6 +86,9 @@ jobs:
           grep -q 'experience.css' scripts/build-web.mjs
           grep -q 'app.js?v=' service-worker.js
           grep -q 'eduvia-study-alarms-v2' native-bridge-src.js
+          grep -q 'eduvia-v79-theme-audit' service-worker.js
+          grep -q 'theme-audit-1' index.html
+          grep -q 'theme-audit-1' service-worker.js
           ! grep -q 'user-scalable=no' index.html
           ! grep -q 'touchstart.*preventDefault' index.html
           grep -q 'storage-accessibility-2' index.html

@@ -367,3 +367,10 @@ html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen .entry-
 html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen .entry-profile-day-list input:checked+span{background:#edf2ff!important;color:#354a99!important;border-color:#7180ce!important}
 html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen .entry-profile-actions>span{color:#65738b!important}
 html:not([data-theme="dark"]) .entry-flow-card.entry-flow-profile-screen .entry-flow-error{color:#b54758!important}
+
+
+/* Keep shared utility elements aligned with Eduvia's purple dark palette. */
+html[data-theme="dark"] .toast{background:#292746;color:#f1f2ff}
+html[data-theme="dark"] .avatar{background:#302d52;color:#c5c0ff}
+html[data-theme="dark"] .mini-track,
+html[data-theme="dark"] .progress-track{background:#303650}

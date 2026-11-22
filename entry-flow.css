@@ -423,3 +423,58 @@
 /* Only show university-specific onboarding fields to formal education learners. */
 .entry-profile-formal-only{grid-column:1/-1}
 .entry-profile-grid[hidden]{display:none!important}
+
+
+/* Dark-theme counterpart for the light profile-onboarding overrides above. */
+html[data-theme="dark"] .entry-flow-card.entry-flow-profile-screen .entry-profile-section{
+  background:#20263e;border-color:#39415f;
+}
+html[data-theme="dark"] .entry-flow-card.entry-flow-profile-screen .entry-profile-section h2{
+  color:#f1f2ff;
+}
+html[data-theme="dark"] .entry-flow-card.entry-flow-profile-screen .entry-profile-section>p{
+  color:#b8bfd8;
+}
+html[data-theme="dark"] .entry-flow-card.entry-flow-profile-screen .entry-profile-field,
+html[data-theme="dark"] .entry-flow-card.entry-flow-profile-screen .entry-profile-field>span{
+  color:#e0e4f7;
+}
+html[data-theme="dark"] .entry-flow-card.entry-flow-profile-screen .entry-profile-field i{
+  color:#aaa4ff;
+}
+html[data-theme="dark"] .entry-flow-card.entry-flow-profile-screen .entry-profile-field span small,
+html[data-theme="dark"] .entry-flow-card.entry-flow-profile-screen .entry-profile-field>small{
+  color:#a8aec8;
+}
+html[data-theme="dark"] .entry-flow-card.entry-flow-profile-screen .entry-profile-field>input,
+html[data-theme="dark"] .entry-flow-card.entry-flow-profile-screen .entry-profile-field>select{
+  background:#141a2d;color:#f1f2ff;border-color:#3b4262;color-scheme:dark;
+}
+html[data-theme="dark"] .entry-flow-card.entry-flow-profile-screen .entry-profile-field>input::placeholder{
+  color:#8792ad;opacity:1;
+}
+html[data-theme="dark"] .entry-flow-card.entry-flow-profile-screen .entry-profile-field>select option{
+  background:#141a2d;color:#f1f2ff;
+}
+html[data-theme="dark"] .entry-flow-card.entry-flow-profile-screen .entry-profile-field>input:focus,
+html[data-theme="dark"] .entry-flow-card.entry-flow-profile-screen .entry-profile-field>select:focus{
+  outline:2px solid rgba(170,164,255,.45);border-color:#8b84ed;
+}
+html[data-theme="dark"] .entry-flow-card.entry-flow-profile-screen .entry-profile-days>strong{
+  color:#e0e4f7;
+}
+html[data-theme="dark"] .entry-flow-card.entry-flow-profile-screen .entry-profile-days>strong i{
+  color:#aaa4ff;
+}
+html[data-theme="dark"] .entry-flow-card.entry-flow-profile-screen .entry-profile-day-list span{
+  background:#171d32;color:#c5cbe2;border-color:#39415f;
+}
+html[data-theme="dark"] .entry-flow-card.entry-flow-profile-screen .entry-profile-day-list input:checked+span{
+  background:#302d52;color:#e1ddff;border-color:#8179ef;
+}
+html[data-theme="dark"] .entry-flow-card.entry-flow-profile-screen .entry-profile-actions>span{
+  color:#a8aec8;
+}
+html[data-theme="dark"] .entry-flow-card.entry-flow-profile-screen .entry-flow-error{
+  color:#ffb7bc;
+}

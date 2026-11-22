@@ -57,3 +57,11 @@ html[data-theme="dark"] .nav-item:nth-child(3) .nav-icon{background:#34452f;colo
 html[data-theme="dark"] .nav-item:nth-child(5) .nav-icon{background:#4b3d30;color:#e0b47d}
 html[data-theme="dark"] .nav-item.active .nav-icon{background:#353159;color:#c4beff}
 html[data-theme="dark"] .student-id-icon,html[data-theme="dark"] .upload-icon{filter:saturate(.9) brightness(.92)}
+
+
+/* Semantic feature icons use deeper surfaces in dark mode while retaining their hues. */
+html[data-theme="dark"] .exp-icon-pink{background:#493044;color:#e2a4bd}
+html[data-theme="dark"] .exp-icon-blue{background:#263b57;color:#9bc9f1}
+html[data-theme="dark"] .exp-icon-lime{background:#35442b;color:#b8d98b}
+html[data-theme="dark"] .exp-icon-orange{background:#4a382c;color:#e2b47d}
+html[data-theme="dark"] .exp-icon-purple{background:#3b345e;color:#c5c0ff}

@@ -43,7 +43,7 @@ test('deleting an examination also removes only its linked revision tasks',()=>{
  assert.ok(source.includes('data.revisionTasks=data.revisionTasks.filter(task=>task.examId!==idValue)'));
 });
 test('exam countdown shortcut opens the dedicated examination centre',()=>{
- assert.ok(source.includes('data-page='+String.fromCharCode(92)+'"exams">Open examination centre'));
+ assert.ok(source.includes('data-page="exams">Open examination centre'));
 });
 test('exam centre contains only one examination timetable renderer',()=>{
  assert.equal(source.split('function renderExamTimetable(').length-1,1);

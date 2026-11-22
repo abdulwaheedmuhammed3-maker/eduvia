@@ -206,7 +206,12 @@ function mockClock(milliseconds){
 function renderMockExam(){
  const active=data.activeMockExam;
  if(!active)return pageHead('PRACTICE UNDER PRESSURE','No active mock examination','Start a timed paper from Courses.','<button class="secondary-btn" data-page="courses">Back to courses</button>');
- const remaining=active.endsAt-Date.now();
+ if(active.status!=='in-progress'||!Array.isArray(active.questions)||!active.questions.length){data.activeMockExam=null;save();return pageHead('PRACTICE UNDER PRESSURE','Exam session could not be restored','The saved session was incomplete or already finished. Your submitted attempts remain available for review.','<button class="secondary-btn" data-page="courses">Back to courses</button>')}
+ active.answers=Array.isArray(active.answers)?active.answers: [];
+ active.answers=active.questions.map((_,index)=>String(active.answers[index]||''));
+ const endsAt=Number(active.endsAt);
+ if(!Number.isFinite(endsAt)||endsAt<=Date.now()){finishMockExam(true);return renderMockResults()}
+ const remaining=endsAt-Date.now();
  const questions=(active.questions||[]).map((question,index)=>'<article class="mock-question"><div class="mock-question-head"><span>QUESTION '+String(index+1).padStart(2,'0')+' / '+active.questions.length+'</span><small>'+esc(question.source||'Course material')+'</small></div><strong>'+esc(question.question)+'</strong><label class="form-field"><span>Your answer</span><textarea rows="4" data-mock-answer="'+index+'" placeholder="Write your answer here">'+esc(active.answers?.[index]||'')+'</textarea></label></article>').join('');
  // Keep a single timer interval across rerenders; persisted endsAt remains authoritative after reload.
  if(mockExamTicker){clearInterval(mockExamTicker);mockExamTicker=null}

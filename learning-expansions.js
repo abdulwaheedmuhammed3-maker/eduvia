@@ -90,7 +90,7 @@
       toast('Recall sprint completed. Your card review dates have been updated.');
       return;
     }
-    render();
+    save();
   }
 
   function recentAskHistory(){

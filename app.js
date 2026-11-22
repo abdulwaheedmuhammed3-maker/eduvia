@@ -246,7 +246,31 @@ function renderSettings(){
  </section>
  <div class="note-callout">Your planner data stays in this browser on this device. Clearing browser storage will also remove it, so download a backup if you want to keep a copy.</div>`;
 }
-function renderMore(){const type=learnerTypeOf(data.profile),formal=type==='formal',examLearner=type==='exam-prep',items=[['study','✧','Learning studio','Add resources and materials; build a personal learning plan.'],['practice','✓','Practice & tests','Create questions from your saved learning materials.'],['habit','✳','Learning habit','Build a steady learning rhythm.'],['tutorials','▷','Learning resources','Keep useful learning materials together.'],['progress','↗','My progress','See your sessions, focus time and growth.'],['vault','▣','Personal library','Keep useful files and documents together.'],['settings','⚙','Settings','Set your weekly goal, reminders and appearance.']];if(formal)items.splice(5,0,['education','▤','Education history','Save academic periods, results and carryover courses.']);if(examLearner||formal)items.splice(items.length-1,0,['exams','🎓','Examination centre','Manage exam dates, revision plans and mock examinations.']);return `${pageHead('MORE TOOLS','More','Additional learning tools, personal resources and settings.','')}<div class="course-grid">${items.map(x=>`<button class="course-card" style="text-align:left;border:1px solid var(--line)" data-page="${x[0]}"><div class="course-card-head"><span class="habit-badge">${x[1]}</span><h3>${x[2]}</h3></div><p class="course-desc">${x[3]}</p></button>`).join('')}</div>`}
+function renderMore(){
+ const type=learnerTypeOf(data.profile),formal=type==='formal',examLearner=type==='exam-prep';
+ const sections=[
+  {eyebrow:'ORGANISE & PREPARE',title:'Make room for focused learning',items:[
+   ['study','✧','Learning studio','Add course materials, notes and availability, then build a personal learning plan.','purple'],
+   ['tutorials','▷','Learning resources','Keep useful tutorials, links and study notes together.','blue'],
+   ['planner','◷','Assignments & planner','Track coursework, tests and revision deadlines in one place.','orange'],
+   ['roadmaps','↗','Learning roadmaps','Turn a larger learning goal into practical milestones.','lime']
+  ]},
+  {eyebrow:'WELLBEING & INSIGHTS',title:'Understand your learning rhythm',items:[
+   ['wellness','♡','Study wellness','Check in with your energy and workload and review your study balance.','lime'],
+   ['insights','↗','Performance insights','Review recorded quiz results, topic confidence and learning activity.','purple']
+  ]},
+  {eyebrow:'PERSONAL SPACE',title:'Keep your records and preferences in order',items:[
+   ['vault','▣','Personal library','Keep documents, certificates and other useful files together.','blue'],
+   ['profile','♙','Learning profile','Update your learning details and personal learning path.','pink'],
+   ['settings','⚙','Settings','Manage appearance, reminders, notifications and backups.','purple']
+  ]}
+ ];
+ if(formal)sections[2].items.splice(1,0,['education','▤','Education history','Keep academic periods, results and carryover records together.','orange']);
+ if(formal||examLearner)sections[0].items.splice(3,0,['exams','🎓','Examination centre','Manage exam dates, revision plans and timed mock examinations.','pink']);
+ const card=item=>'<button type="button" class="more-tool-card more-tool-card-'+item[4]+'" data-page="'+item[0]+'"><span class="more-tool-icon">'+item[1]+'</span><span class="more-tool-copy"><strong>'+item[2]+'</strong><span>'+item[3]+'</span></span><span class="more-tool-open" aria-hidden="true">↗</span></button>';
+ return pageHead('MORE TOOLS','More tools','A considered home for the tools that support your learning, wellbeing and personal records.','')+
+  sections.map(section=>'<section class="more-tool-section"><div class="more-tool-section-head"><div><span class="eyebrow">'+section.eyebrow+'</span><h2>'+section.title+'</h2></div><span>'+section.items.length+' tools</span></div><div class="more-tool-grid">'+section.items.map(card).join('')+'</div></section>').join('');
+}
 
 function openModal(title,subtitle,body,submitText='Save',onSubmit=null){document.getElementById('modalRoot').innerHTML=`<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-label="${safe(title)}"><div class="modal-head"><div><h2>${safe(title)}</h2><p>${safe(subtitle)}</p></div><button class="modal-close" data-action="close-modal" aria-label="Close">×</button></div><form id="activeForm">${body}<div class="modal-foot"><button type="button" class="secondary-btn" data-action="close-modal">Cancel</button><button type="submit" class="primary-btn">${safe(submitText)}</button></div></form></section></div>`;document.querySelector('.modal-backdrop').addEventListener('click',e=>{if(e.target.classList.contains('modal-backdrop'))closeModal()});document.getElementById('activeForm').addEventListener('submit',e=>{e.preventDefault();if(onSubmit)onSubmit(new FormData(e.currentTarget))})}
 function closeModal(){document.getElementById('modalRoot').innerHTML=''}

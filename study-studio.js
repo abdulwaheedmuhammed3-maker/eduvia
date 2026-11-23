@@ -156,7 +156,7 @@ window.eduLectureMaterials={
     if(!save()){
       data.materials=data.materials.filter(item=>item.id!==meta.id);
       data.materialText=data.materialText.filter(item=>item.id!==meta.id);
-      if(storedInIndexedDb)await removeStoredMaterial(meta.id);
+      if(storedInIndexedDb&&!await removeStoredMaterial(meta.id))toast('The lecture was not saved, but its extracted file could not be cleaned up. Export a backup and check device storage.');
       throw new Error('Eduvia could not save this lecture. Check device storage and try again.');
     }
     return {...meta};
@@ -165,15 +165,24 @@ window.eduLectureMaterials={
   async remove(lectureId){
     const index=(data.materials||[]).findIndex(item=>item?.kind==='recorded-lecture'&&String(item.id)===String(lectureId));
     if(index<0)return false;
-    const [removed]=data.materials.splice(index,1);
+    const removed=data.materials[index];
     const fallbackIndex=(data.materialText||[]).findIndex(item=>String(item?.id)===String(lectureId));
-    const fallback=fallbackIndex>=0?data.materialText.splice(fallbackIndex,1)[0]:null;
+    const fallback=fallbackIndex>=0?data.materialText[fallbackIndex]:null;
+    const storedInIndexedDb=!fallback;
+    const storedRecord=storedInIndexedDb?await readMaterial(String(lectureId)):null;
+    if(storedInIndexedDb&&!storedRecord){toast('Eduvia could not read the stored lecture file. Nothing was removed.');return false}
+    if(storedInIndexedDb&&!await removeStoredMaterial(String(lectureId))){
+      toast('Eduvia could not remove the stored lecture file. Nothing was removed.');
+      return false;
+    }
+    data.materials.splice(index,1);
+    if(fallback)data.materialText.splice(fallbackIndex,1);
     if(!save()){
       data.materials.splice(index,0,removed);
       if(fallback)data.materialText.splice(Math.max(0,fallbackIndex),0,fallback);
+      if(storedInIndexedDb)try{await putStudioRecord(STUDIO_STORE,storedRecord)}catch{toast('The lecture file could not be restored after the planner save failed. Export a backup and check device storage.')}
       return false;
     }
-    await removeStoredMaterial(String(lectureId));
     return true;
   }
 };
@@ -199,7 +208,7 @@ window.eduDownloadCourseMaterial=async function(materialId){
  }catch(error){toast('Could not download this material: '+(error.message||'storage is unavailable'))}
 };
 
-async function removeStoredMaterial(materialId){try{const db=await studioDb();await new Promise((resolve,reject)=>{const tx=db.transaction(STUDIO_STORE,'readwrite');tx.objectStore(STUDIO_STORE).delete(materialId);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});db.close()}catch{} }
+async function removeStoredMaterial(materialId){let db;try{db=await studioDb();await new Promise((resolve,reject)=>{const tx=db.transaction(STUDIO_STORE,'readwrite');tx.objectStore(STUDIO_STORE).delete(materialId);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Could not remove the stored material.'))});return true}catch{return false}finally{db?.close()}}
 async function getStudioRecord(storeName,recordId){
   const fallback=()=>storeName===STUDIO_STORE?fallbackMaterial(recordId):null;
   try{
@@ -234,6 +243,10 @@ async function recognizeImage(image){
   }finally{bitmap?.close();await worker.terminate()}
 }
 
+function ensurePdfPageLimit(pageCount){
+  if(Number(pageCount)>250)throw new Error('This PDF has more than 250 pages. Split it into smaller files so Eduvia can process every page.');
+}
+
 async function extractDocument(file,kind=''){
   if(file.size>40*1024*1024)throw new Error('This file is over 40 MB. Try a smaller file or export selected chapters.');
   const ext=file.name.split('.').pop().toLowerCase();
@@ -255,6 +268,7 @@ async function extractDocument(file,kind=''){
     const pdfjs=await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@6.5.438/build/pdf.mjs');
     pdfjs.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@6.5.438/build/pdf.worker.mjs';
     const doc=await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+    ensurePdfPageLimit(doc.numPages);
     const pages=new Array(doc.numPages).fill(''),missingPages=[];
     for(let pageNum=1;pageNum<=Math.min(doc.numPages,250);pageNum++){
       const page=await doc.getPage(pageNum),content=await page.getTextContent();
@@ -420,7 +434,7 @@ async function handleStudioFile(kind,file,courseId=''){
   try{const ext=fileExt(file),text=await extractDocument(file,kind);if(kind==='material'){await previewMaterial(file,text,linkedCourseId);return}const parseExt=['tsv','xls','xlsx'].includes(ext)?'csv':ext;const rows=kind==='courses'?parseCourseImport(text,parseExt):parseTimetableImport(text,parseExt);if(!rows.length)throw new Error(kind==='courses'?'No course rows found. Try a clearer image showing the course codes and names, or use the course CSV template.':'No timetable rows found. Try a clearer image showing the days and times, or use the timetable CSV template.');pendingStudioImport={kind,fileName:file.name,rows};showImportPreview(kind,file.name,rows)}catch(error){studioNotice=error.message||'Could not read that file.';render();toast(studioNotice)}
 }
 function importField(label,name,value,type='text',placeholder=''){const escaped=typeof value==='string'?value:String(value??'');return `<label class="form-field"><span>${label}</span><input name="${name}" type="${type}" value="${safe(escaped)}" placeholder="${safe(placeholder)}" ${type==='time'?'required':''}></label>`}
-function showImportPreview(kind,fileName,rows){const isCourses=kind==='courses';const cards=rows.map((r,i)=>isCourses?`<article class="import-review-row"><strong>Course ${i+1}</strong><div class="import-review-grid">${importField('Course code',`code_${i}`,r.code||'','text','e.g. CSC 301')}${importField('Learning area name',`name_${i}`,r.name||'','text','Full course title')}${importField('Credits',`credits_${i}`,r.credits||'','text','')}${importField('Topics',`topics_${i}`,(r.topics||[]).join('; '),'text','Separate topics with semicolons')}</div></article>`:`<article class="import-review-row"><strong>Class ${i+1}</strong><div class="import-review-grid timetable-review-grid"><label class="form-field"><span>Day</span><select name="day_${i}" required><option value="">Choose a day</option>${STUDIO_DAYS.map((day,index)=>`<option value="${index}" ${Number(r.day)===index?'selected':''}>${day}</option>`).join('')}</select></label>${importField('Course code',`courseCode_${i}`,r.courseCode||'','text','e.g. CSC 301')}${importField('Course name / class',`title_${i}`,r.title||'','text','Class or course name')}${importField('Start time',`start_${i}`,r.start||'','time')}${importField('End time',`end_${i}`,r.end||'','time')}${importField('Room / location',`location_${i}`,r.location||'','text','Optional')}</div></article>`).join('');const note=isCourses?'These learning areas will be added to My Learning. A matching course code or name updates the existing learning area rather than creating a duplicate. Scheduled sessions can be imported separately.':'Importing replaces class entries previously imported through Learning Studio. Manually created classes and personal study sessions are kept; the new rows become the imported timetable.';openModal(isCourses?'Review learning-area list':'Review schedule',`${fileName} · ${rows.length} item${rows.length===1?'':'s'} detected`,`<div class="import-review-list">${cards}</div><p class="preview-note">${note}</p>`,'Import',formData=>{const updated=rows.map((row,i)=>isCourses?({...row,code:String(formData.get(`code_${i}`)||'').trim(),name:String(formData.get(`name_${i}`)||'').trim(),credits:String(formData.get(`credits_${i}`)||'').trim(),topics:String(formData.get(`topics_${i}`)||'').split(/[;|\n]+/).map(x=>x.trim()).filter(Boolean)}):({...row,day:Number(formData.get(`day_${i}`)),courseCode:String(formData.get(`courseCode_${i}`)||'').trim(),title:String(formData.get(`title_${i}`)||'').trim(),start:normalizeTime(formData.get(`start_${i}`)),end:normalizeTime(formData.get(`end_${i}`)),location:String(formData.get(`location_${i}`)||'').trim()}));const invalid=updated.some(row=>isCourses?(!row.code&&!row.name):(!row.title||!row.start||!row.end||minutes(row.end)<=minutes(row.start)));if(invalid){toast(isCourses?'Each course needs a course code or course name. Check the highlighted details.':'Check each class name, day, and start/end time before importing.');return}pendingStudioImport.rows=updated;commitStudioImport();closeModal()})}
+function showImportPreview(kind,fileName,rows){const isCourses=kind==='courses';const cards=rows.map((r,i)=>isCourses?`<article class="import-review-row"><strong>Course ${i+1}</strong><div class="import-review-grid">${importField('Course code',`code_${i}`,r.code||'','text','e.g. CSC 301')}${importField('Learning area name',`name_${i}`,r.name||'','text','Full course title')}${importField('Credits',`credits_${i}`,r.credits||'','text','')}${importField('Topics',`topics_${i}`,(r.topics||[]).join('; '),'text','Separate topics with semicolons')}</div></article>`:`<article class="import-review-row"><strong>Class ${i+1}</strong><div class="import-review-grid timetable-review-grid"><label class="form-field"><span>Day</span><select name="day_${i}" required><option value="">Choose a day</option>${STUDIO_DAYS.map((day,index)=>`<option value="${index}" ${Number(r.day)===index?'selected':''}>${day}</option>`).join('')}</select></label>${importField('Course code',`courseCode_${i}`,r.courseCode||'','text','e.g. CSC 301')}${importField('Course name / class',`title_${i}`,r.title||'','text','Class or course name')}${importField('Start time',`start_${i}`,r.start||'','time')}${importField('End time',`end_${i}`,r.end||'','time')}${importField('Room / location',`location_${i}`,r.location||'','text','Optional')}</div></article>`).join('');const note=isCourses?'These learning areas will be added to My Learning. A matching course code or name updates the existing learning area rather than creating a duplicate. Scheduled sessions can be imported separately.':'Importing replaces class entries previously imported through Learning Studio. Manually created classes and personal study sessions are kept; the new rows become the imported timetable.';openModal(isCourses?'Review learning-area list':'Review schedule',`${fileName} · ${rows.length} item${rows.length===1?'':'s'} detected`,`<div class="import-review-list">${cards}</div><p class="preview-note">${note}</p>`,'Import',formData=>{const updated=rows.map((row,i)=>isCourses?({...row,code:String(formData.get(`code_${i}`)||'').trim(),name:String(formData.get(`name_${i}`)||'').trim(),credits:String(formData.get(`credits_${i}`)||'').trim(),topics:String(formData.get(`topics_${i}`)||'').split(/[;|\n]+/).map(x=>x.trim()).filter(Boolean)}):({...row,day:Number(formData.get(`day_${i}`)),courseCode:String(formData.get(`courseCode_${i}`)||'').trim(),title:String(formData.get(`title_${i}`)||'').trim(),start:normalizeTime(formData.get(`start_${i}`)),end:normalizeTime(formData.get(`end_${i}`)),location:String(formData.get(`location_${i}`)||'').trim()}));const invalid=updated.some(row=>isCourses?(!row.code&&!row.name):(!row.title||!row.start||!row.end||minutes(row.end)<=minutes(row.start)));if(invalid){toast(isCourses?'Each course needs a course code or course name. Check the highlighted details.':'Check each class name, day, and start/end time before importing.');return}pendingStudioImport.rows=updated;if(commitStudioImport())closeModal()})}
 function matchCourse(value){
   const raw=String(value||'').trim();if(!raw)return null;
   const codeKey=raw.toLocaleLowerCase().replace(/\s+/g,'');
@@ -428,7 +442,7 @@ function matchCourse(value){
   return data.courses.find(course=>String(course.code||'').toLocaleLowerCase().replace(/\s+/g,'')===codeKey)||
     data.courses.find(course=>String(course.name||'').trim().toLocaleLowerCase().replace(/\s+/g,' ')===nameKey)||null;
 }
-function commitStudioImport(){if(!pendingStudioImport)return;const {kind,rows,fileName}=pendingStudioImport;let count=0;if(kind==='courses'){for(const row of rows){let course=matchCourse(row.code)||matchCourse(row.name);if(course){if(row.name)course.name=row.name;if(row.code)course.code=row.code;if(row.topics?.length)course.topics=row.topics;if(row.credits)course.credits=Number(row.credits)||row.credits}else{data.courses.push({id:id(),name:row.name||`Course ${row.code}`,code:row.code||'',instructor:'',note:'',color:COLORS[data.courses.length%COLORS.length],credits:Number(row.credits)||0,topics:row.topics||[]})}count++}data.imports.courses.push({name:fileName,count,at:Date.now()});currentPage='courses'}else{data.events=data.events.filter(e=>!e.importedTimetable);for(const row of rows){const c=matchCourse(row.courseCode)||matchCourse(row.title);const existing=data.events.some(e=>e.type==='class'&&e.day===row.day&&e.start===row.start&&e.title.toLowerCase()===row.title.toLowerCase());if(existing)continue;data.events.push({id:id(),title:row.title,type:'class',courseId:c?.id||'',date:'',day:row.day,start:row.start,end:row.end,location:row.location||'',remind:true,duration:minutes(row.end)-minutes(row.start),importedTimetable:true});count++}data.imports.timetable.push({name:fileName,count,at:Date.now()});currentPage='timetable'}location.hash=currentPage;pendingStudioImport=null;studioNotice=kind==='courses'?`${count} courses added to My Courses.`:`${count} class times added to Timetable.`;save();toast(studioNotice)}
+function commitStudioImport(){if(!pendingStudioImport)return false;const {kind,rows,fileName}=pendingStudioImport;const previousCourses=(data.courses||[]).map(course=>({...course,topics:[...(course.topics||[])]})),previousEvents=(data.events||[]).map(event=>({...event})),previousImports={...data.imports,courses:[...(data.imports.courses||[])],timetable:[...(data.imports.timetable||[])]},previousPage=currentPage,previousHash=location.hash,previousPending=pendingStudioImport,previousNotice=studioNotice;let count=0;if(kind==='courses'){for(const row of rows){let course=matchCourse(row.code)||matchCourse(row.name);if(course){if(row.name)course.name=row.name;if(row.code)course.code=row.code;if(row.topics?.length)course.topics=row.topics;if(row.credits)course.credits=Number(row.credits)||row.credits}else{data.courses.push({id:id(),name:row.name||`Course ${row.code}`,code:row.code||'',instructor:'',note:'',color:COLORS[data.courses.length%COLORS.length],credits:Number(row.credits)||0,topics:row.topics||[]})}count++}data.imports.courses.push({name:fileName,count,at:Date.now()});currentPage='courses'}else{data.events=data.events.filter(e=>!e.importedTimetable);for(const row of rows){const c=matchCourse(row.courseCode)||matchCourse(row.title);const existing=data.events.some(e=>e.type==='class'&&e.day===row.day&&e.start===row.start&&e.title.toLowerCase()===row.title.toLowerCase());if(existing)continue;data.events.push({id:id(),title:row.title,type:'class',courseId:c?.id||'',date:'',day:row.day,start:row.start,end:row.end,location:row.location||'',remind:true,duration:minutes(row.end)-minutes(row.start),importedTimetable:true});count++}data.imports.timetable.push({name:fileName,count,at:Date.now()});currentPage='timetable'}location.hash=currentPage;pendingStudioImport=null;studioNotice=kind==='courses'?`${count} courses added to My Learning.`:`${count} class times added to Timetable.`;if(!save()){data.courses=previousCourses;data.events=previousEvents;data.imports=previousImports;currentPage=previousPage;location.hash=previousHash;pendingStudioImport=previousPending;studioNotice=previousNotice;render();return false}toast(studioNotice);return true}
 
 async function previewMaterial(file,text,linkedCourseId=''){
  const courseOptionsHtml=courseOptions(linkedCourseId),materialId=id(),ext=fileExt(file),content=text.slice(0,1200000);
@@ -448,7 +462,7 @@ async function previewMaterial(file,text,linkedCourseId=''){
   if(!save()){
     data.materials=data.materials.filter(item=>item.id!==m.id);
     data.materialText=(data.materialText||[]).filter(item=>item.id!==m.id);
-    if(storedInIndexedDb)await removeStoredMaterial(m.id);
+    if(storedInIndexedDb&&!await removeStoredMaterial(m.id))toast('The material was not saved, but its extracted file could not be cleaned up. Export a backup and check device storage.');
     studioNotice='';
     render();return;
   }
@@ -461,19 +475,28 @@ function downloadCsv(content,name){const blob=new Blob([content],{type:'text/csv
 function courseTemplate(){downloadCsv('code,name,credits,topics\nSUBJ 101,Sample course,3,"Topic one; Topic two; Topic three"\n','eduvia-course-list-template.csv')}
 function timetableTemplate(){downloadCsv('day,start,end,title,courseCode,location\nMonday,09:00,10:00,Sample class,SUBJ 101,Room or online\nWednesday,14:00,15:30,Sample tutorial,SUBJ 102,Online\n','eduvia-school-timetable-template.csv')}
 
-function saveAvailability(form){const fd=new FormData(form);const days=fd.getAll('studyDay').map(Number);if(!days.length){toast('Choose at least one day for study.');return false}const start=fd.get('studyStart'),end=fd.get('studyEnd');if(minutes(end)<=minutes(start)){toast('Your study window must end after it starts.');return false}data.profile.studyDays=days;data.profile.studyStart=start;data.profile.studyEnd=end;data.profile.planSessionMinutes=Number(fd.get('planSessionMinutes'))||45;save();studioNotice='Study times saved. The next plan will fit inside this window.';toast('Study availability saved');return true}
+function saveAvailability(form){const fd=new FormData(form);const days=fd.getAll('studyDay').map(Number);if(!days.length){toast('Choose at least one day for study.');return false}const start=fd.get('studyStart'),end=fd.get('studyEnd');if(minutes(end)<=minutes(start)){toast('Your study window must end after it starts.');return false}const previous={studyDays:[...(data.profile.studyDays||[])],studyStart:data.profile.studyStart,studyEnd:data.profile.studyEnd,planSessionMinutes:data.profile.planSessionMinutes};data.profile.studyDays=days;data.profile.studyStart=start;data.profile.studyEnd=end;data.profile.planSessionMinutes=Number(fd.get('planSessionMinutes'))||45;if(!save()){Object.assign(data.profile,previous);render();return false}studioNotice='Study times saved. The next plan will fit inside this window.';toast('Study availability saved');return true}
+function planningEventIsActive(event,planningDate,nowMinutes){
+  if(!event?.date)return true;
+  if(event.date>planningDate)return true;
+  if(event.date<planningDate)return false;
+  return minutes(event.end)>nowMinutes;
+}
+
 function generatePlan(){
   if(!data.courses.length){studioNotice='Import your learning-area list or add your courses first. Then the planner can spread sessions across them.';render();toast('Add at least one course before generating a plan.');return}
   const days=(data.profile.studyDays||[]).map(Number),start=minutes(data.profile.studyStart||'17:00'),end=minutes(data.profile.studyEnd||'21:00'),session=Number(data.profile.planSessionMinutes)||45;
   if(!days.length||end<=start){toast('Set your available days and study window first.');return}
-  const manual=data.events.filter(e=>!e.generated),classes=manual.filter(e=>e.type==='class'),blocks=manual.filter(e=>e.type==='study');
+  const previousEvents=data.events,previousStudyPlan=data.studyPlan,previousNotice=studioNotice;
+  const planningDate=todayISO(),nowMinutes=new Date().getHours()*60+new Date().getMinutes();
+  const manual=data.events.filter(e=>!e.generated),blockers=manual.filter(e=>planningEventIsActive(e,planningDate,nowMinutes)),classes=blockers.filter(e=>e.type==='class'),blocks=blockers.filter(e=>e.type==='study');
   const candidates=[];for(const day of days){for(let t=start;t+session<=end;t+=30){const collision=[...classes,...blocks].some(e=>Number(e.day)===day&&minutes(e.start)<t+session+15&&minutes(e.end)+15>t);if(!collision)candidates.push({day,start:t,end:t+session})}}
   const count=Math.max(Number(data.profile.weeklyGoal)||5,data.courses.length);if(!candidates.length){studioNotice='No open study slots fit around your classes. Widen your study window, choose more days, or shorten each session.';render();toast('No available study slots found.');return}
   const deadlinePriority=course=>(data.deadlines||[]).filter(item=>item.courseId===course.id&&!item.completed&&item.dueDate).reduce((score,item)=>{const days=Math.ceil((new Date(item.dueDate+'T23:59:59').getTime()-Date.now())/86400000);return score+(days<0?180:days<=3?150:days<=7?110:days<=14?65:days<=30?25:5)},0);const ranked=[...data.courses].sort((a,b)=>(deadlinePriority(b)+(Number(b.credits)||3))-(deadlinePriority(a)+(Number(a.credits)||3)));const chosen=[];
   for(const slot of candidates){if(chosen.length>=count)break;if(chosen.some(x=>x.day===slot.day&&slot.start<x.end+30&&slot.end+30>x.start))continue;let course=ranked[chosen.length%ranked.length];if(ranked.length>1&&chosen.length&&course.id===chosen[chosen.length-1].course.id)course=ranked[(chosen.length+1)%ranked.length];const idx=chosen.filter(x=>x.course.id===course.id).length;const topics=course.topics||[];const weakTopics=topics.filter(topic=>(data.topicMastery?.[course.id+'::'+topic]?.status||'not-started')!=='confident');const priorityTopics=[...weakTopics,...topics.filter(topic=>!weakTopics.includes(topic))];const topic=priorityTopics.length?priorityTopics[idx%priorityTopics.length]:'next course topic';chosen.push({...slot,course,topic})}
   data.events=manual.concat(chosen.map(x=>({id:id(),title:`Study · ${x.course.code||x.course.name}${x.topic&&x.topic!=='next course topic'?` · ${x.topic}`:''}`,type:'study',createdAt:todayISO(),courseId:x.course.id,date:'',day:x.day,start:toTime(x.start),end:toTime(x.end),location:'',remind:true,duration:session,generated:true,topic:x.topic})));
   studioNotice=`Generated ${chosen.length} weekly learning sessions across ${new Set(chosen.map(x=>x.course.id)).size} of ${data.courses.length} courses. Review the schedule and adjust your availability if you want to fit in more.`;
-  data.studyPlan={generatedAt:Date.now(),count:chosen.length,courseCount:data.courses.length};save();toast(`${chosen.length} learning sessions added to your timetable`);
+  data.studyPlan={generatedAt:Date.now(),count:chosen.length,courseCount:data.courses.length};if(!save()){data.events=previousEvents;data.studyPlan=previousStudyPlan;studioNotice=previousNotice;render();return}toast(`${chosen.length} learning sessions added to your timetable`);
 }
 function toTime(n){return`${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`}
 
@@ -634,14 +657,15 @@ document.addEventListener('submit',e=>{
  if(!learnerType||!focus){toast('Choose your learning path and add what you are learning.');return}
  if(formal&&['institution','stage','programme','level','term'].some(key=>!String(fd.get(key)||'').trim())){toast('Formal education learners should complete their institution, learning stage, programme, level and academic period.');return}
  if(!days.length){toast('Choose at least one day you can learn.');return}
+ const previousProfile={...data.profile};
  for(const key of ['country','institution','stage','programme','level','term'])data.profile[key]=String(fd.get(key)||'').trim();
  data.profile.learnerType=learnerType;data.profile.learningFocus=focus;data.profile.goal=data.profile.goal||'Make steady progress with learning';
  data.profile.weeklyGoal=Math.min(30,Math.max(1,Number(fd.get('weeklyGoal'))||5));
  data.profile.studyStart=fd.get('studyStart');data.profile.studyEnd=fd.get('studyEnd');
  data.profile.planSessionMinutes=Number(fd.get('planSessionMinutes'))||25;data.profile.sessionMinutes=data.profile.planSessionMinutes;
- data.profile.studyDays=days;data.profile.setupComplete=true;save();setPage('my-study');toast('Your learning space is ready. Add a learning area to begin.');
+ data.profile.studyDays=days;data.profile.setupComplete=true;if(!save()){data.profile=previousProfile;return}setPage('my-study');toast('Your learning space is ready. Add a learning area to begin.');
 });
-document.addEventListener('click',e=>{
+document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-action]');if(!b)return;
   switch(b.dataset.action){
     case'generate-plan':generatePlan();break;
@@ -653,7 +677,7 @@ document.addEventListener('click',e=>{
     case'find-curriculum':findCurriculum();break;
     case'generate-practice':generatePractice();break;
     case'go-practice':window.practiceCourseId=data.courses.find(c=>c.name===studioLesson?.course)?.id||'';setPage('practice');break;
-    case'delete-material':removeStoredMaterial(b.dataset.id);data.materials=data.materials.filter(m=>m.id!==b.dataset.id);data.materialText=(data.materialText||[]).filter(m=>m.id!==b.dataset.id);save();toast('Material removed from this device');break;
+    case'delete-material':{const materialId=String(b.dataset.id||''),stored=await getStudioRecord(STUDIO_STORE,materialId),previousMaterials=data.materials,previousText=data.materialText;if(!await removeStoredMaterial(materialId)){toast('Eduvia could not remove the stored file. Nothing was removed.');break}data.materials=data.materials.filter(m=>String(m.id)!==materialId);data.materialText=(data.materialText||[]).filter(m=>String(m.id)!==materialId);if(!save()){data.materials=previousMaterials;data.materialText=previousText;if(stored)try{await putStudioRecord(STUDIO_STORE,stored)}catch{}render();break}toast('Material removed from this device');break}
   }
 });
 
@@ -801,6 +825,7 @@ function openCarryoverActivation(){
     if(years.some(year=>year===enteredKey)){
       toast('A carryover can only be activated in an academic year after its original year.');return;
     }
+    const previousCourses=(data.courses||[]).map(course=>({...course,topics:[...(course.topics||[])]})),previousCarryovers=(data.pendingCarryovers||[]).map(item=>({...item}));
     let added=0;
     for(const item of pending){
       const exists=data.courses.some(course=>(item.code&&String(course.code||'').toLowerCase()===item.code.toLowerCase())||String(course.name||'').trim().toLowerCase()===item.subject.trim().toLowerCase());
@@ -812,8 +837,8 @@ function openCarryoverActivation(){
       item.activatedAcademicYear=entered;
       item.activatedAt=Date.now();
     }
-    closeModal();save();
-    toast(added?added+' carryover course(s) added for '+entered+'.':'These carryovers are already in the active course list.');
+    if(!save()){data.courses=previousCourses;data.pendingCarryovers=previousCarryovers;render();return}
+    closeModal();toast(added?added+' carryover course(s) added for '+entered+'.':'These carryovers are already in the active course list.');
   });
 }
 
@@ -839,9 +864,10 @@ document.addEventListener('submit',event=>{
     toast('Complete your school, learning stage, programme, level and academic session for a formal education profile.');
     return;
   }
+  const previousProfile={...data.profile};
   for(const key of ['name','email','country','learnerType','learningFocus','institution','stage','department','matricNumber','faculty','specialization','studyMode','studentStatus','level','academicSession','semester','degreeProgramme'])data.profile[key]=String(fd.get(key)||'').trim();
   data.profile.programme=data.profile.degreeProgramme||data.profile.programme||data.profile.learningFocus||'';
-  save();
+  if(!save()){data.profile=previousProfile;render();return}
   toast('Your learning profile has been saved.');
 });
 
@@ -926,13 +952,14 @@ function openAcademicResultsForm(record=null,archiveMode=false){
       const label=[level,term,academicYear].filter(Boolean).join(' · ')||[stageLabel(stage),academicYear].filter(Boolean).join(' · ')||'Education results';
       updated={id:record?.id||id(),recordType:'results',label,institution,school:institution,stage,level,term,academicYear,programme,results,resultsNotes:String(fd.get('resultsNotes')||'').trim(),recordedAt:record?.recordedAt||now};
     }
+    const previousHistory=(data.academicHistory||[]).map(item=>({...item,results:Array.isArray(item.results)?item.results.map(result=>({...result})):item.results})),previousCarryovers=(data.pendingCarryovers||[]).map(item=>({...item})),previousRecord=record?{...record,results:Array.isArray(record.results)?record.results.map(result=>({...result})):record.results}:null;
     try{await putStudioRecord('academicRecords',updated)}catch(error){toast('Could not save these results: '+(error.message||'storage is unavailable'));return}
     syncPendingCarryovers(updated);
-    upsertEducationSummary(educationRecordSummary(updated));closeModal();save();toast(archiveMode?'Term results saved':'Education results saved');
+    upsertEducationSummary(educationRecordSummary(updated));if(!save()){data.academicHistory=previousHistory;data.pendingCarryovers=previousCarryovers;try{if(previousRecord)await putStudioRecord('academicRecords',previousRecord);else await deleteStudioRecord('academicRecords',updated.id)}catch(error){toast('The local planner could not save this change and could not restore the previous education record. Export a backup before making further edits.')}render();return}closeModal();toast(archiveMode?'Term results saved':'Education results saved');
   });
 }
 async function editAcademicResults(recordId){try{const record=await getStudioRecord('academicRecords',recordId);if(!record){toast('This education record is unavailable on this device. Import the backup that contains it.');return}openAcademicResultsForm(record,record.recordType!=='results')}catch(error){toast('Could not open this education record: '+(error.message||'storage is unavailable'))}}
-async function deleteAcademicRecord(recordId){if(!confirm('Remove this past education results record from your history?'))return;try{await deleteStudioRecord('academicRecords',recordId);data.academicHistory=(data.academicHistory||[]).filter(record=>record.id!==recordId);data.pendingCarryovers=(data.pendingCarryovers||[]).filter(item=>item.sourceRecordId!==recordId);closeModal();save();toast('Education record removed')}catch(error){toast('Could not remove this record: '+(error.message||'storage is unavailable'))}}
+async function deleteAcademicRecord(recordId){if(!confirm('Remove this past education results record from your history?'))return;try{const storedRecord=await getStudioRecord('academicRecords',recordId),previousHistory=(data.academicHistory||[]).map(item=>({...item,results:Array.isArray(item.results)?item.results.map(result=>({...result})):item.results})),previousCarryovers=(data.pendingCarryovers||[]).map(item=>({...item}));await deleteStudioRecord('academicRecords',recordId);data.academicHistory=(data.academicHistory||[]).filter(record=>record.id!==recordId);data.pendingCarryovers=(data.pendingCarryovers||[]).filter(item=>item.sourceRecordId!==recordId);if(!save()){data.academicHistory=previousHistory;data.pendingCarryovers=previousCarryovers;if(storedRecord)await putStudioRecord('academicRecords',storedRecord);render();return}closeModal();toast('Education record removed')}catch(error){toast('Could not remove this record: '+(error.message||'storage is unavailable'))}}
 function archiveCurrentTerm(){
   const profile=data.profile,defaultLabel=[stageLabel(profile.stage),profile.level,profile.term].filter(Boolean).join(' · ')||'Current study period';
   const stages=educationStages();
@@ -1019,7 +1046,7 @@ function addPersonalDocument(file,courseIdOverride=''){
     data.personalDocuments.unshift(metadata);
     if(!save()){
       data.personalDocuments=data.personalDocuments.filter(item=>item.id!==documentId);
-      try{await deleteStudioRecord('personalDocuments',documentId)}catch{}
+      try{await deleteStudioRecord('personalDocuments',documentId)}catch{toast('The document was not added to your cabinet, but its file could not be cleaned up. Export a backup and check device storage.')}
       render();return;
     }
     window.eduTargetDocumentCourseId='';closeModal();toast('Document saved on this device');
@@ -1035,11 +1062,19 @@ async function downloadPersonalDocument(documentId){
 }
 async function deletePersonalDocument(documentId){
   if(!confirm('Remove this document from your personal cabinet?'))return;
-  const previous=data.personalDocuments||[],remaining=previous.filter(docMeta=>docMeta.id!==documentId);
-  data.personalDocuments=remaining;
-  if(!save()){data.personalDocuments=previous;render();return}
-  try{await deleteStudioRecord('personalDocuments',documentId);toast('Document removed')}
-  catch(error){toast('The document was removed from your cabinet, but its stored file could not be cleaned up: '+(error.message||'storage is unavailable'))}
+  const previous=data.personalDocuments||[],index=previous.findIndex(docMeta=>String(docMeta.id)===String(documentId));
+  if(index<0)return;
+  let storedRecord;
+  try{storedRecord=await getStudioRecord('personalDocuments',documentId)}catch(error){toast('Could not read this document before removal: '+(error.message||'storage is unavailable'));return}
+  if(!storedRecord){toast('This document is not available in device storage. Restore a backup before removing its record.');return}
+  try{await deleteStudioRecord('personalDocuments',documentId)}catch(error){toast('Could not remove the stored file. Nothing was removed: '+(error.message||'storage is unavailable'));return}
+  data.personalDocuments=previous.filter(docMeta=>String(docMeta.id)!==String(documentId));
+  if(!save()){
+    data.personalDocuments=previous;
+    try{await putStudioRecord('personalDocuments',storedRecord)}catch{toast('The planner could not save the removal and the document file could not be restored. Export a backup and check device storage.')}
+    render();return
+  }
+  toast('Document removed');
 }
 async function listStudioRecords(storeName){const db=await studioDb();return await new Promise((resolve,reject)=>{const tx=db.transaction(storeName,'readonly'),req=tx.objectStore(storeName).getAll();req.onsuccess=()=>{db.close();resolve(req.result||[])};req.onerror=()=>{db.close();reject(req.error)}})}
 async function exportPortableBackup(){
@@ -1109,7 +1144,7 @@ async function importPlannerJsonBackup(file){
   if(!Array.isArray(restored.imports.timetable))restored.imports.timetable=[];
   if(!confirm('Restore this planner JSON on this PC? It replaces the current profile, courses, timetable, notes, progress, and study records. Existing files and full education records on this PC will be kept. This JSON does not include files or full archived education records from your phone; use the portable ZIP backup for those.'))return;
   try{localStorage.setItem(STORE_KEY,JSON.stringify(restored))}catch(error){toast('Could not save this backup in this browser. Try the portable ZIP backup or free some browser storage.');return}
-  data=restored;currentPage='today';location.hash='today';save();
+  data=restored;currentPage='today';location.hash='today';applyTheme();render();scheduleEventAlert();schedulePushSync();
   toast('Planner JSON restored. Use the portable ZIP to move phone documents and full education records.');
 }
 async function replaceStudioStoresAtomically(groups){
@@ -1438,16 +1473,17 @@ async function openSessionQuiz(recordId){
   const record=(data.studyRecords||[]).find(item=>item.id===recordId);if(!record||record.type!=='study')return;
   if(!Array.isArray(record.quizQuestions)||record.quizQuestions.length!==10){
     const sources=await sessionQuizSources(record.courseId);
+    const previousQuestions=record.quizQuestions;
     record.quizQuestions=buildSessionQuiz(record,sources);
     const fallbackPoints=[...splitSessionList(record.reflection?.keyPoints),...splitSessionList(record.reflection?.gained)],fallbackTopics=splitSessionList(record.reflection?.topics);while(record.quizQuestions.length<10){const number=record.quizQuestions.length+1,topic=fallbackTopics[(number-1)%Math.max(1,fallbackTopics.length)]||record.title||'your topic',answer=fallbackPoints[(number-1)%Math.max(1,fallbackPoints.length)]||record.reflection?.gained||topic;record.quizQuestions.push({prompt:'Recall check '+number+': Write one key idea you learned about '+topic+'.',answer,mode:'keywords',source:'Your study reflection'})}
-    save();
+    if(!save()){record.quizQuestions=previousQuestions;return}
   }
   const questions=record.quizQuestions;
   const keyPoints=record.reflection?.keyPoints||[];const content='<p class="session-modal-intro">10 questions · on-device grading checks key terms from your course notes or study reflection. Unlimited retakes are saved.</p>'+(keyPoints.length?'<section class="session-key-points"><h3>Key words from your session</h3><ol>'+keyPoints.map(point=>'<li>'+safe(point)+'</li>').join('')+'</ol></section>':'')+'<div class="quick-quiz-list">'+questions.map((question,index)=>'<div class="form-field full"><label for="f-quiz-'+index+'">'+String(index+1).padStart(2,'0')+'. '+safe(question.prompt)+'</label><input id="f-quiz-'+index+'" name="answer'+index+'" required autocomplete="off" placeholder="Your short answer"></div>').join('')+'</div>';
   openModal('10-question study quiz',record.title,content,'Grade my quiz',fd=>{
     const responses=questions.map((question,index)=>{const answer=String(fd.get('answer'+index)||'').trim();return {question:question.prompt,answer,key:question.answer,source:question.source,correct:gradeSessionAnswer(question,answer)}});
-    const score=responses.filter(item=>item.correct).length,attempts=record.quizAttempts=Array.isArray(record.quizAttempts)?record.quizAttempts:[];
-    const attempt={number:attempts.length+1,completedAt:Date.now(),score,total:questions.length,responses};attempts.unshift(attempt);completeSessionRecord(record);save();showSessionQuizResult(record.id,attempt);
+    const score=responses.filter(item=>item.correct).length,attempts=record.quizAttempts=Array.isArray(record.quizAttempts)?record.quizAttempts:[],previousAttempts=[...attempts],previousCompleted=[...(data.completed||[])],previousCompletedAt=record.completedAt;
+    const attempt={number:attempts.length+1,completedAt:Date.now(),score,total:questions.length,responses};attempts.unshift(attempt);completeSessionRecord(record);if(!save()){record.quizAttempts=previousAttempts;record.completedAt=previousCompletedAt;data.completed=previousCompleted;render();return}showSessionQuizResult(record.id,attempt);
   });
 }
 function showSessionQuizResult(recordId,attempt){
@@ -1534,6 +1570,7 @@ function editStudyProfile(){
       toast('Complete your learning provider, stage, programme, level and academic session for a formal education profile.');
       return;
     }
+    const previousProfile={...data.profile};
     for(const key of ['learnerType','learningFocus','country','studyMode','email'])data.profile[key]=String(fd.get(key)||'').trim();
     if(type==='formal'){
       for(const key of ['institution','stage','programme','level','term','department'])data.profile[key]=String(fd.get(key)||'').trim();
@@ -1541,6 +1578,6 @@ function editStudyProfile(){
     }else{
       data.profile.programme=data.profile.learningFocus;
     }
-    closeModal();save();toast('Learning profile updated');
+    if(!save()){data.profile=previousProfile;render();return}closeModal();toast('Learning profile updated');
   });
 }

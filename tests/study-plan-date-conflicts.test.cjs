@@ -47,7 +47,6 @@ test('study availability only confirms saved changes and restores prior values w
  const fn=studio.slice(start,end);
  assert.ok(fn.includes('if(!save())'),'availability updates must check the storage result');
  assert.ok(fn.includes('Object.assign(data.profile,previous)'),'failed writes must restore the prior in-memory preferences');
- assert.ok(fn.includes('form.elements.studyStart.value=previous.studyStart'),'failed writes must restore the visible start time');
- assert.ok(fn.includes('form.querySelectorAll'),'failed writes must restore visible selected days');
+ assert.ok(fn.includes('render()'),'failed writes must re-render from the restored profile so all visible settings match persisted values');
  assert.ok(fn.indexOf('if(!save())')<fn.indexOf("toast('Study availability saved')"),'success must only be shown after a successful save');
 });

@@ -15,6 +15,9 @@ test('first-run notification invitation appears after profile setup, not on exis
  assert.ok(startup.includes('if (profileComplete)'));
  assert.ok(startup.includes('dismissExistingUserSplash()'));
  assert.ok(!startup.includes('eduPromptFirstLaunchNotifications'));
+ const storageGuard=app.slice(app.indexOf('function storageRemove(key)'),app.indexOf('function chooseEntryMotivationQuote'));
+ assert.ok(storageGuard.includes('storageGet(STORE_KEY)!==null'));
+ assert.ok(storageGuard.includes("storageSet(FIRST_LAUNCH_ALERT_PROMPT_KEY,'1')"));
 });
 
 test('first-run invitation is shown once and has a user-controlled enable action',()=>{

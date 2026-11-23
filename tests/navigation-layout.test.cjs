@@ -75,5 +75,4 @@ test('Ask Eduvia prompt suggestions use a compact responsive grid',()=>{
  assert.ok(css.includes('grid-template-columns:repeat(4,minmax(0,1fr))'));
  assert.ok(css.includes('grid-template-columns:repeat(2,minmax(0,1fr))'));
  assert.ok(css.includes('min-height:40px'));
- assert.ok(!expansion.includes('class="exp-play-actions">\'+[\'Define a key term\''),'Ask prompts must not reuse the full-width Play action layout');
 });

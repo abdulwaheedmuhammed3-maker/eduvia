@@ -10,7 +10,7 @@ const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Satur
 const SHORT_DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const todayISO = () => new Date().toLocaleDateString('en-CA');
 const id = () => Math.random().toString(36).slice(2,10);
-const defaultData = () => ({profile:{name:'Learner',learnerType:'',learningFocus:'',goal:'Make steady progress with learning',weeklyGoal:5,sessionMinutes:25,studyReminder:true,theme:'system',themePreferenceVersion:1},courses:[],events:[],resources:[],completed:[],studyRecords:[],academicHistory:[],personalDocuments:[],exams:[],revisionTasks:[],mockExamAttempts:[],lastMockExam:null,roadmaps:[],createdAt:Date.now()});
+const defaultData = () => ({profile:{name:'Learner',learnerType:'',learningFocus:'',goal:'Make steady progress with learning',weeklyGoal:5,sessionMinutes:25,studyReminder:true,theme:'system',themePreferenceVersion:1},courses:[],events:[],resources:[],completed:[],studyRecords:[],academicHistory:[],personalDocuments:[],exams:[],revisionTasks:[],mockExamAttempts:[],lastMockExam:null,activeMockExam:null,deadlines:[],flashcards:[],topicMastery:{},materials:[],materialText:[],imports:{courses:[],timetable:[]},pendingCarryovers:[],studyPlan:null,askHistory:[],discoverSavedGuides:[],discoverReadHistory:[],playChallengeAttempts:[],wellnessCheckins:[],roadmaps:[],createdAt:Date.now()});
 const MOTIVATION_QUOTES = [
   'Every new idea you explore adds another layer to what you know.',
   'Small learning steps build lasting understanding.',

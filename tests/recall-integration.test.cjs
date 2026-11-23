@@ -70,6 +70,7 @@ test('class voice reflections record locally, attach transcripts and preserve au
   assert.ok(voice.includes('function cancel()'));
   assert.ok(voice.includes('recognition.onend ='));
   assert.ok(voice.includes('session.transcriptBeforeRecognition'));
+  assert.ok(voice.includes('session.currentRecognitionFinal || session.currentRecognitionInterim'));
   assert.ok(voice.includes('session.recognitionRestartTimer'));
   assert.ok(voice.includes('session.stopRecognition'));
   assert.ok(read('app.js').includes('EduviaVoiceReflection?.cancel?.()'));

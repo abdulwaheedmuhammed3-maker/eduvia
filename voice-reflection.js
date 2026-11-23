@@ -150,13 +150,14 @@
           }
         };
         recognition.onend = () => {
-          if (session.currentRecognitionFinal) {
-            session.transcriptBeforeRecognition = [session.transcriptBeforeRecognition, session.currentRecognitionFinal].filter(Boolean).join(' ');
-            session.currentRecognitionFinal = '';
-            session.currentRecognitionInterim = '';
+          const completedSpeech = session.currentRecognitionFinal || session.currentRecognitionInterim;
+          if (completedSpeech) {
+            session.transcriptBeforeRecognition = [session.transcriptBeforeRecognition, completedSpeech].filter(Boolean).join(' ');
             session.finalTranscript = session.transcriptBeforeRecognition;
             updateTranscriptField();
           }
+          session.currentRecognitionFinal = '';
+          session.currentRecognitionInterim = '';
           if (active !== session || session.stopRecognition || session.transcriptionDisabled || recorder.state !== 'recording') return;
           clearTimeout(session.recognitionRestartTimer);
           session.recognitionRestartTimer = setTimeout(() => {

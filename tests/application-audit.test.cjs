@@ -263,9 +263,11 @@ test('deleting a course keeps linked learner content and clears only timetable e
  const remove=app.slice(start,end);
  assert.ok(remove.includes("data.events=data.events.filter(event=>String(event.courseId||'')!==String(courseId))"));
  assert.ok(remove.includes('record.courseName=record.courseName||course.name'));
- for(const name of ['data.resources','data.deadlines','data.personalDocuments','data.materials','data.materialText','data.studyRecords','data.flashcards','data.exams','data.revisionTasks','data.roadmaps']){
-  assert.ok(remove.includes(name),'linked records must be preserved and unlinked: '+name);
+ for(const name of ['resources','deadlines','personalDocuments','materials','materialText','studyRecords','completed','flashcards','exams','revisionTasks','roadmaps']){
+  assert.ok(remove.includes("'"+name+"'"),'linked records must be preserved and unlinked: '+name);
  }
+ assert.ok(remove.includes('for(const name of collectionNames)'));
+ assert.ok(remove.includes('previousCollections'));
  assert.ok(remove.includes('data.courses=data.courses.filter'));
  assert.ok(remove.includes("data.courses=data.courses.filter")||remove.includes("data.courses = data.courses.filter"));
  assert.ok(remove.includes("location.hash='courses'"));
@@ -330,7 +332,7 @@ test('deleting a course unlinks completed-session history instead of leaving sta
  const start=app.indexOf('function deleteCourse(courseId)');
  const end=app.indexOf('function deleteEvent(eventId)',start);
  const remove=app.slice(start,end);
- assert.ok(remove.includes('data.completed'));
+ assert.ok(remove.includes("'completed'"));
  assert.ok(remove.includes('record.courseName=record.courseName||course.name'));
  assert.ok(remove.includes("record.courseId=''"));
 });

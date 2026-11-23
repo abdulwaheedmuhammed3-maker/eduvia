@@ -60,6 +60,23 @@
     }
     return copy;
   }
+  function chooseSpaced(candidates, limit, random) {
+    for (let count = Math.min(limit, candidates.length); count > 0; count--) {
+      const combinations = [];
+      function collect(start, selected) {
+        if (selected.length === count) { combinations.push(selected); return; }
+        const remaining = count - selected.length;
+        for (let index = start; index <= candidates.length - remaining; index++) {
+          const candidate = candidates[index];
+          if (selected.length && candidate.minute - selected[selected.length - 1].minute < 15) continue;
+          collect(index + 1, selected.concat(candidate));
+        }
+      }
+      collect(0, []);
+      if (combinations.length) return combinations[Math.floor(random() * combinations.length)];
+    }
+    return [];
+  }
   function createSchedule(options) {
     const settings = options || {};
     const now = settings.now instanceof Date ? new Date(settings.now.getTime()) : new Date(settings.now || Date.now());
@@ -98,12 +115,19 @@
         Number(b.incorrectCount || 0) - Number(a.incorrectCount || 0) ||
         String(a.id).localeCompare(String(b.id))
       );
-      const pickedTimes = [], hourCounts = new Map();
-      for (const candidate of shuffle(candidates, random)) {
+      const candidatesByHour = new Map();
+      for (const candidate of candidates) {
         const hour = Math.floor(candidate.minute / 60);
-        if ((hourCounts.get(hour) || 0) >= hourlyLimit) continue;
-        if (pickedTimes.some(item => Math.abs(item.minute - candidate.minute) < 15)) continue;
-        pickedTimes.push(candidate); hourCounts.set(hour, (hourCounts.get(hour) || 0) + 1);
+        const bucket = candidatesByHour.get(hour) || [];
+        bucket.push(candidate);
+        candidatesByHour.set(hour, bucket);
+      }
+      const pickedTimes = [];
+      for (const hour of [...candidatesByHour.keys()].sort((a, b) => a - b)) {
+        const available = candidatesByHour.get(hour).filter(candidate =>
+          pickedTimes.every(existing => Math.abs(existing.minute - candidate.minute) >= 15)
+        );
+        pickedTimes.push(...chooseSpaced(available, hourlyLimit, random));
       }
       pickedTimes.sort((a, b) => a.fireAt - b.fireAt);
       const ordered = shuffle(orderedQuestions, random);

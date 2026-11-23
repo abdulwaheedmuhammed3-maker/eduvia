@@ -25,7 +25,8 @@ test('Recall question bank is built from local course materials and flashcards',
 });
 test('Recall schedules the selected hourly rate and never includes the saved answer in a notification', () => {
   assert.ok(core.includes("const LIMITS = { light: 1, balanced: 2, intensive: 3 }"));
-  assert.ok(core.includes('(hourCounts.get(hour) || 0) >= hourlyLimit'));
+  assert.ok(core.includes('function chooseSpaced(candidates, limit, random)'));
+  assert.ok(core.includes('const hourlyLimit = LIMITS[frequency]'));
   assert.ok(recall.includes('Light · 1 per hour'));
   assert.ok(recall.includes('Balanced · 2 per hour'));
   assert.ok(recall.includes('Intensive · 3 per hour'));

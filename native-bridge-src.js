@@ -2,8 +2,10 @@ import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { SpeechRecognition } from '@capgo/capacitor-speech-recognition';
 
 const isNative = Capacitor.isNativePlatform();
+const isAndroid = Capacitor.getPlatform() === 'android';
 const CAMERA_TARGET_KEY = 'eduvia-camera-target-v1';
 const TEST_NOTIFICATION_ID = 2147480000;
 const MAX_LOCAL_REMINDERS = 300;
@@ -83,8 +85,11 @@ async function photoToFile(photo) {
   return new File([blob], `eduvia-photo-${Date.now()}.${ext}`, { type });
 }
 
+window.EduviaNativeSpeechRecognition = SpeechRecognition;
+
 const EduviaNative = {
   isNative,
+  isAndroid,
 
   async enableAlerts(reminders) {
     const access = await notificationAccess(true);

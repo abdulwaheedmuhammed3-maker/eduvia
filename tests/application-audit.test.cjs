@@ -98,7 +98,7 @@ test('changed assets are versioned identically in HTML and the new offline cache
  assert.ok(sw.includes('first-run-alerts-6'));
  assert.ok(sw.includes('first-run-alert-optin-2'));
  assert.ok(sw.includes('./styles.css?v=entry-flow-4&rev=application-audit-1'));
- assert.ok(workerCacheVersion(sw)==='eduvia-v105-voice-class-reflections');
+ assert.ok(workerCacheVersion(sw)==='eduvia-v106-native-speech-keywords');
 });
 function workerCacheVersion(source){return source.match(/const CACHE = '([^']+)'/)?.[1]||''}
 

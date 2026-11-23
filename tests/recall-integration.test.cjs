@@ -78,7 +78,7 @@ test('class voice reflections record locally, attach transcripts and preserve au
   assert.ok(voice.includes('session.stopRecognition'));
   assert.ok(read('app.js').includes('EduviaVoiceReflection?.cancel?.()'));
   assert.ok(voice.includes('attachSavedAudio'));
-  assert.ok(studio.includes("field('Five things you learned'"));
+  assert.ok(studio.includes("field('Key words from the lecture'"));
   assert.ok(studio.includes('if(!record)return;'));
 });
 test('voice reflection assets are built, cached and syntax-checked', () => {
@@ -87,7 +87,7 @@ test('voice reflection assets are built, cached and syntax-checked', () => {
     assert.ok(html.includes(asset)); assert.ok(sw.includes(asset)); assert.ok(build.includes(asset));
   }
   assert.ok(workflow.includes('node --check voice-reflection.js'));
-  assert.ok(workflow.includes("eduvia-v105-voice-class-reflections"));
+  assert.ok(workflow.includes("eduvia-v106-native-speech-keywords"));
 });
 test('Android build declares the native microphone capture permissions requested by Capacitor WebView', () => {
   assert.ok(androidPrep.includes('android.permission.RECORD_AUDIO'));

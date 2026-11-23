@@ -26,9 +26,9 @@ test('non-formal profile editor does not clear saved academic details', () => {
   assert.ok(!editor.includes("data.profile.institution=''"));
 });
 
-test('study completion requires five key points and starts an unlimited 10-question recall quiz',()=>{
-  assert.ok(source.includes("field('Five key points learned','keyPoints'"));
-  assert.ok(source.includes("if(keyPoints.length!==5)"));
+test('study completion accepts flexible key words and starts an unlimited 10-question recall quiz',()=>{
+  assert.ok(source.includes("field('Key words from your study','keyPoints'"));
+  assert.ok(!source.includes("if(keyPoints.length!==5)"));
   assert.ok(source.includes('openSessionQuiz(record.id)'));
   assert.ok(source.includes('10 questions'));
   assert.ok(source.includes('data-action="retake-session-quiz"'));

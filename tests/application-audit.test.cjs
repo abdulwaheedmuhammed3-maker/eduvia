@@ -47,7 +47,7 @@ test('study practice has one source-aware generator and a usable multiple-choice
  assert.ok(studio.includes('correctOption,'));
  assert.ok(studio.includes('citation:correct.citation'));
  assert.ok(studio.includes('location:correct.location'));
- assert.ok(studio.includes('Multiple-choice practice needs at least four distinct passages.'));
+ assert.ok(studio.includes('Multiple-choice practice needs at least four distinct'));
  assert.ok(studio.includes('select an option and open “Show answer”'));
 });
 

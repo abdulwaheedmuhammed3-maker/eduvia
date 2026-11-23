@@ -390,7 +390,7 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
       const reminders=base(now),until=now.getTime()+90*86400000;
       for(const d of data.deadlines||[]){if(d.completed||!d.dueDate)continue;const at=new Date(d.dueDate+'T09:00:00').getTime()-86400000;if(at>now.getTime()&&at<=until)reminders.push({id:'deadline:'+d.id,title:'Deadline tomorrow',body:String(d.title)+' is due tomorrow.',fireAt:at})}
       for(const d of data.personalDocuments||[]){if(!d.expiryDate)continue;const lead=Math.max(0,Number(d.remindDays)||14),at=new Date(d.expiryDate+'T09:00:00').getTime()-lead*86400000;if(at>now.getTime()&&at<=until)reminders.push({id:'document-expiry:'+d.id,title:'Document expiry coming up',body:String(d.title||d.name)+' expires on '+d.expiryDate+'.',fireAt:at})}
-      return reminders.sort((a,b)=>a.fireAt-b.fireAt);
+      const unique=new Map();for(const reminder of reminders)unique.set(String(reminder.id),reminder);return [...unique.values()].sort((a,b)=>a.fireAt-b.fireAt);
     };
   }
   function notifyExpiringDocuments(){

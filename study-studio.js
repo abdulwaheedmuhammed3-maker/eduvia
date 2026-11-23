@@ -381,11 +381,18 @@ async function previewMaterial(file,text,linkedCourseId=''){
   const pending=pendingStudioImport;if(!pending?.material)return;
   const m=pending.material,select=document.getElementById('materialCourseSelect');m.courseId=select?.value||'';
   const record={id:m.id,name:m.name,ext:m.ext,text:pending.text,index:pending.index,courseId:m.courseId,createdAt:Date.now(),status:m.status};
-  try{await storeMaterial(record)}
+  let storedInIndexedDb=false;
+  try{await storeMaterial(record);storedInIndexedDb=true}
   catch{data.materialText=data.materialText||[];data.materialText.push(record);m.warning='stored in browser backup instead'}
-  data.materials.push(m);pendingStudioImport=null;closeModal();
+  data.materials.push(m);pendingStudioImport=null;
   studioNotice='Learning material saved and indexed on this device. Ask, tutorials, practice and flashcards can retrieve passages with source references.';
-  save();toast('Course material saved and indexed');
+  if(!save()){
+    data.materials=data.materials.filter(item=>item.id!==m.id);
+    data.materialText=(data.materialText||[]).filter(item=>item.id!==m.id);
+    if(storedInIndexedDb)await removeStoredMaterial(m.id);
+    render();return;
+  }
+  closeModal();toast('Course material saved and indexed');
  });
 }
 
@@ -948,7 +955,13 @@ function addPersonalDocument(file,courseIdOverride=''){
   openModal('Save a personal document',file.name,body,'Save document',async fd=>{
     const documentId=id(),metadata={id:documentId,title:String(fd.get('documentTitle')||file.name).trim(),name:file.name,category:String(fd.get('documentCategory')||'Other'),courseId:String(fd.get('documentCourseId')||''),type:file.type||'application/octet-stream',size:file.size,addedAt:Date.now()};
     try{await putStudioRecord('personalDocuments',{id:documentId,blob:file,name:file.name,type:metadata.type})}catch(error){toast('Could not save this file: '+(error.message||'local storage is unavailable'));return}
-    data.personalDocuments.unshift(metadata);window.eduTargetDocumentCourseId='';closeModal();save();toast('Document saved on this device');
+    data.personalDocuments.unshift(metadata);
+    if(!save()){
+      data.personalDocuments=data.personalDocuments.filter(item=>item.id!==documentId);
+      try{await deleteStudioRecord('personalDocuments',documentId)}catch{}
+      render();return;
+    }
+    window.eduTargetDocumentCourseId='';closeModal();toast('Document saved on this device');
   });
 }
 async function openPersonalDocument(documentId){
@@ -961,7 +974,11 @@ async function downloadPersonalDocument(documentId){
 }
 async function deletePersonalDocument(documentId){
   if(!confirm('Remove this document from your personal cabinet?'))return;
-  try{await deleteStudioRecord('personalDocuments',documentId);data.personalDocuments=(data.personalDocuments||[]).filter(docMeta=>docMeta.id!==documentId);save();toast('Document removed')}catch(error){toast('Could not remove this document: '+(error.message||'storage is unavailable'))}
+  const previous=data.personalDocuments||[],remaining=previous.filter(docMeta=>docMeta.id!==documentId);
+  data.personalDocuments=remaining;
+  if(!save()){data.personalDocuments=previous;render();return}
+  try{await deleteStudioRecord('personalDocuments',documentId);toast('Document removed')}
+  catch(error){toast('The document was removed from your cabinet, but its stored file could not be cleaned up: '+(error.message||'storage is unavailable'))}
 }
 async function listStudioRecords(storeName){const db=await studioDb();return await new Promise((resolve,reject)=>{const tx=db.transaction(storeName,'readonly'),req=tx.objectStore(storeName).getAll();req.onsuccess=()=>{db.close();resolve(req.result||[])};req.onerror=()=>{db.close();reject(req.error)}})}
 async function exportPortableBackup(){

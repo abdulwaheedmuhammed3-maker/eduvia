@@ -66,6 +66,8 @@ test('existing style tokens used by practice and Discover are defined with fallb
  assert.ok(appStyles.includes('color:var(--ink)'));
  assert.ok(appStyles.includes('var(--surface-soft,var(--paper,#fff))'));
  assert.ok(appStyles.includes('var(--accent-purple,var(--green,#655ee0))'));
+ assert.ok(!/var\\(--accent\\)/.test(appStyles));
+ assert.ok(!appStyles.includes('var(--surface-2,var(--panel))'));
  assert.ok(experienceStyles.includes('--exp-card:var(--paper,#fff)'));
  assert.ok(experienceStyles.includes('--exp-soft:var(--surface-soft,#f7f8fd)'));
 });

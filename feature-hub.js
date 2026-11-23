@@ -348,9 +348,19 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
     if(!window.JSZip)await loadStudioScript('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js');
     const zip=new window.JSZip();zip.file('eduvia-data.json',JSON.stringify(data,null,2));
     for(const [folder,store,metas] of [['personal-documents','personalDocuments',data.personalDocuments||[]],['academic-records','academicRecords',data.academicHistory||[]],['course-materials','materials',data.materials||[]]]){
-      const target=zip.folder(folder);for(const meta of metas){const record=await getStudioRecord(store,meta.id);if(!record)continue;if(store==='personalDocuments'){const blob=record.blob||record.file;if(blob)target.file(meta.id,blob)}else target.file(meta.id+'.json',JSON.stringify(record))}
+      const target=zip.folder(folder);
+      for(const meta of metas){
+        const record=await getStudioRecord(store,meta.id);
+        if(!record)throw new Error('The safety copy is incomplete because a saved record is missing: '+String(meta.name||meta.label||meta.id));
+        if(store==='personalDocuments'){
+          const blob=record.blob||record.file;
+          if(!blob)throw new Error('The safety copy is missing the file contents for '+String(meta.name||meta.id));
+          target.file(String(meta.id),blob);
+        }else target.file(String(meta.id)+'.json',JSON.stringify(record));
+      }
     }
-    const blob=await zip.generateAsync({type:'blob',compression:'STORE'});download(blob,'eduvia-safety-copy-before-restore-'+today()+'.zip');
+    const blob=await zip.generateAsync({type:'blob',compression:'STORE'});
+    download(blob,'eduvia-safety-copy-before-restore-'+today()+'.zip');
   }
   function isValidPlannerBackup(value){
     return Boolean(value&&typeof value==='object'&&!Array.isArray(value)&&

@@ -172,3 +172,14 @@ test('portable ZIP restore validates attachments before a single atomic IndexedD
  assert.ok(restore.includes('const rollbackError='));
  assert.ok(studio.includes('tx.objectStore(storeName).clear()'));
 });
+
+test('multiple-choice questions are topic-specific and use distractors from other topic groups',()=>{
+ const studio=read('study-studio.js');
+ assert.ok(studio.includes('const groups=labels.map(topic=>'));
+ assert.ok(studio.includes('const other=groups[(targetIndex+step)%groups.length]'));
+ assert.ok(studio.includes("question:'Which passage best explains '+target.topic+' according to your course material?'"));
+ assert.ok(studio.includes("if(distractors.length<3)continue"));
+ assert.ok(studio.includes('Show correct choice / source passage'));
+ assert.ok(studio.includes("Multiple-choice questions need at least four distinct searchable topics or titled sections."));
+ assert.ok(studio.includes("if(generated.questions.length<count)toast('Created '"));
+});

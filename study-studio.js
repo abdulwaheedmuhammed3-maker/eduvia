@@ -259,7 +259,7 @@ async function extractDocument(file,kind=''){
     for(let pageNum=1;pageNum<=Math.min(doc.numPages,250);pageNum++){
       const page=await doc.getPage(pageNum),content=await page.getTextContent();
       const pageText=content.items.map(x=>x.str).join(' ').trim();
-      if(pageText)pages[pageNum-1]=(kind==='material'?'\\n\\n[PAGE '+pageNum+']\\n':'')+pageText;
+      if(pageText)pages[pageNum-1]=(kind==='material'?'\n\n[PAGE '+pageNum+']\n':'')+pageText;
       else missingPages.push(pageNum);
     }
     if(missingPages.length>20)throw new Error('This PDF has more than 20 scanned pages without embedded text. Split it into smaller sections and upload those.');
@@ -273,12 +273,12 @@ async function extractDocument(file,kind=''){
           await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
           const result=await worker.recognize(canvas);
           const pageText=String(result.data.text||'').trim();
-          if(pageText)pages[pageNum-1]=(kind==='material'?'\\n\\n[PAGE '+pageNum+']\\n':'')+pageText;
+          if(pageText)pages[pageNum-1]=(kind==='material'?'\n\n[PAGE '+pageNum+']\n':'')+pageText;
           canvas.width=0;canvas.height=0;
         }
       }finally{await worker.terminate()}
     }
-    const extracted=pages.join('\\n');
+    const extracted=pages.join('\n');
     if(extracted.trim())return extracted;
     throw new Error('I could not read text from this PDF. Try a clearer scan or upload an image of the page.');
   }

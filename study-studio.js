@@ -120,7 +120,17 @@ function renderGeneratedCard(result,type){return `<section class="panel generate
 
 function studioDb(){return new Promise((resolve,reject)=>{if(!('indexedDB'in window)){reject(new Error('This browser does not support local document storage.'));return}const request=indexedDB.open(STUDIO_DB,2);request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains(STUDIO_STORE))db.createObjectStore(STUDIO_STORE,{keyPath:'id'});if(!db.objectStoreNames.contains('academicRecords'))db.createObjectStore('academicRecords',{keyPath:'id'});if(!db.objectStoreNames.contains('personalDocuments'))db.createObjectStore('personalDocuments',{keyPath:'id'})};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)})}
 async function storeMaterial(record){const db=await studioDb();return new Promise((resolve,reject)=>{const tx=db.transaction(STUDIO_STORE,'readwrite');tx.objectStore(STUDIO_STORE).put(record);tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)}})}
-async function readMaterial(materialId){try{const db=await studioDb();return await new Promise((resolve,reject)=>{const tx=db.transaction(STUDIO_STORE,'readonly'),req=tx.objectStore(STUDIO_STORE).get(materialId);req.onsuccess=()=>{db.close();resolve(req.result||null)};req.onerror=()=>{db.close();reject(req.error)}})}catch{return (data.materialText||[]).find(m=>m.id===materialId)||null}}
+function fallbackMaterial(materialId){return (data.materialText||[]).find(item=>String(item?.id||'')===String(materialId))||null}
+async function readMaterial(materialId){
+  try{
+    const db=await studioDb();
+    return await new Promise((resolve,reject)=>{
+      const tx=db.transaction(STUDIO_STORE,'readonly'),req=tx.objectStore(STUDIO_STORE).get(materialId);
+      req.onsuccess=()=>{db.close();resolve(req.result||fallbackMaterial(materialId))};
+      req.onerror=()=>{db.close();const fallback=fallbackMaterial(materialId);if(fallback)resolve(fallback);else reject(req.error)};
+    });
+  }catch{return fallbackMaterial(materialId)}
+}
 window.eduOpenCourseMaterial=async function(materialId){
  try{
   const record=await readMaterial(materialId);
@@ -141,7 +151,17 @@ window.eduDownloadCourseMaterial=async function(materialId){
 };
 
 async function removeStoredMaterial(materialId){try{const db=await studioDb();await new Promise((resolve,reject)=>{const tx=db.transaction(STUDIO_STORE,'readwrite');tx.objectStore(STUDIO_STORE).delete(materialId);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});db.close()}catch{} }
-async function getStudioRecord(storeName,recordId){const db=await studioDb();return await new Promise((resolve,reject)=>{const tx=db.transaction(storeName,'readonly'),req=tx.objectStore(storeName).get(recordId);req.onsuccess=()=>{db.close();resolve(req.result||null)};req.onerror=()=>{db.close();reject(req.error)}})}
+async function getStudioRecord(storeName,recordId){
+  const fallback=()=>storeName===STUDIO_STORE?fallbackMaterial(recordId):null;
+  try{
+    const db=await studioDb();
+    return await new Promise((resolve,reject)=>{
+      const tx=db.transaction(storeName,'readonly'),req=tx.objectStore(storeName).get(recordId);
+      req.onsuccess=()=>{db.close();resolve(req.result||fallback())};
+      req.onerror=()=>{db.close();const cached=fallback();if(cached)resolve(cached);else reject(req.error)};
+    });
+  }catch(error){const cached=fallback();if(cached)return cached;throw error}
+}
 async function putStudioRecord(storeName,record){const db=await studioDb();return await new Promise((resolve,reject)=>{const tx=db.transaction(storeName,'readwrite');tx.objectStore(storeName).put(record);tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)};tx.onabort=()=>{db.close();reject(tx.error||new Error('Could not save this item.'))}})}
 async function deleteStudioRecord(storeName,recordId){const db=await studioDb();return await new Promise((resolve,reject)=>{const tx=db.transaction(storeName,'readwrite');tx.objectStore(storeName).delete(recordId);tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)}})}
 async function clearStudioStore(storeName){const db=await studioDb();return await new Promise((resolve,reject)=>{const tx=db.transaction(storeName,'readwrite');tx.objectStore(storeName).clear();tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)}})}
@@ -951,7 +971,21 @@ async function importPortableBackup(file){
     for(const metadata of imported.academicHistory){const entry=zip.file('academic-records/'+metadata.id+'.json');if(!entry)continue;const record=JSON.parse(await entry.async('string'));await putStudioRecord('academicRecords',record);importedArchives.push(metadata)}
     imported.academicHistory=importedArchives;
     const importedMaterials=[];
-    for(const metadata of imported.materials){const entry=zip.file('course-materials/'+metadata.id+'.json');if(!entry)continue;await putStudioRecord(STUDIO_STORE,JSON.parse(await entry.async('string')));importedMaterials.push(metadata)}
+    for(const metadata of imported.materials){
+      const entry=zip.file('course-materials/'+metadata.id+'.json');
+      if(!entry){
+        if((imported.materialText||[]).some(item=>String(item?.id||'')===String(metadata.id)))importedMaterials.push(metadata);
+        continue;
+      }
+      const record=JSON.parse(await entry.async('string'));
+      try{await putStudioRecord(STUDIO_STORE,record)}
+      catch{
+        imported.materialText=Array.isArray(imported.materialText)?imported.materialText:[];
+        imported.materialText=imported.materialText.filter(item=>String(item?.id||'')!==String(record.id));
+        imported.materialText.push(record);
+      }
+      importedMaterials.push(metadata);
+    }
     imported.materials=importedMaterials;
     data={...defaultData(),...imported,profile:{...defaultData().profile,...imported.profile}};
     data.imports=data.imports||{courses:[],timetable:[]};

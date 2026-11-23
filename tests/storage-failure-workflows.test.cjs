@@ -56,10 +56,12 @@ test('education results update local IndexedDB and planner summaries with rollba
 test('material deletion waits for IndexedDB removal and restores the file if planner persistence fails',()=>{
  assert.ok(studio.includes('async function removeStoredMaterial(materialId)'));
  assert.ok(studio.includes('return true}catch{return false}finally{db?.close()}'));
- const action=studio.slice(studio.indexOf("case'delete-material':{"),studio.indexOf("break}",studio.indexOf("case'delete-material':{"))+6);
- assert.ok(action.includes('stored=await getStudioRecord(STUDIO_STORE,materialId)'));
- assert.ok(action.includes('if(!await removeStoredMaterial(materialId))'));
- assert.ok(action.indexOf('await removeStoredMaterial(materialId)')<action.indexOf('data.materials=data.materials.filter'));
- assert.ok(action.includes('if(!save()){data.materials=previousMaterials;data.materialText=previousText'));
- assert.ok(action.includes('await putStudioRecord(STUDIO_STORE,stored)'));
+ const start=studio.indexOf("case'delete-material':{");
+ const saveGate=studio.indexOf('if(!await removeStoredMaterial(materialId))',start);
+ const metadataRemoval=studio.indexOf('data.materials=data.materials.filter(m=>String(m.id)!==materialId)',start);
+ const rollback=studio.indexOf('if(!save()){data.materials=previousMaterials;data.materialText=previousText',start);
+ assert.ok(start>=0&&saveGate>start&&metadataRemoval>saveGate,'the stored file must be removed before metadata changes');
+ assert.ok(studio.slice(start,metadataRemoval).includes('stored=await getStudioRecord(STUDIO_STORE,materialId)'));
+ assert.ok(rollback>metadataRemoval);
+ assert.ok(studio.slice(rollback,rollback+260).includes('await putStudioRecord(STUDIO_STORE,stored)'));
 });

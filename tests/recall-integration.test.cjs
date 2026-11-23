@@ -22,6 +22,7 @@ test('Recall question bank is built from local course materials and flashcards',
   assert.ok(recall.includes('data.resources'));
   assert.ok(recall.includes('window.eduRecallBuildReminders'));
   assert.ok(recall.includes('Array.isArray(data.studyRecords) ? data.studyRecords : []'));
+  assert.ok(recall.includes("question.kind === 'class-reflection'"));
   assert.ok(studio.includes('window.eduRecallRefreshQuestionBank?.()'));
   assert.ok(app.includes('window.eduRecallBuildReminders(now)'));
 });

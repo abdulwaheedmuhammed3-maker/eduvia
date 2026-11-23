@@ -118,7 +118,8 @@
       add(sourceQuestion('class-reflection', 'class-reflection:' + record.id, course, prompt, answer,
         'Saved class reflection', date || 'Class record', ''));
     });
-    state.questions = next.slice(0, 160);
+    const prioritisedQuestions = [...next.filter(question => question.kind === 'class-reflection'), ...next.filter(question => question.kind !== 'class-reflection')];
+    state.questions = prioritisedQuestions.slice(0, 160);
     const validMaterialIds = new Set((data.materials || []).map(item => String(item.id)));
     state.questions = state.questions.filter(item => !item.materialId || validMaterialIds.has(String(item.materialId)));
     if (!save()) {

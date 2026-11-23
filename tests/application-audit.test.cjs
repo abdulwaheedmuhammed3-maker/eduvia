@@ -137,3 +137,12 @@ test('material reads and portable backup exports use the saved extracted-text fa
  assert.ok(studio.includes('imported.materialText.push(record)'));
  assert.ok(studio.includes("if((imported.materialText||[]).some(item=>String(item?.id||'')===String(metadata.id)))importedMaterials.push(metadata)"));
 });
+
+test('course and timetable imports fall back from unmatched course codes to exact course names',()=>{
+ const studio=read('study-studio.js');
+ assert.ok(studio.includes("const raw=String(value||'').trim();if(!raw)return null"));
+ assert.ok(studio.includes('let course=matchCourse(row.code)||matchCourse(row.name)'));
+ assert.ok(studio.includes('const c=matchCourse(row.courseCode)||matchCourse(row.title)'));
+ assert.ok(studio.includes("replaces class entries previously imported through Learning Studio"));
+ assert.ok(studio.includes('Manually created classes and personal study sessions are kept'));
+});

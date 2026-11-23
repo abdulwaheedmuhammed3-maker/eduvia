@@ -334,3 +334,31 @@ test('deleting a course unlinks completed-session history instead of leaving sta
  assert.ok(remove.includes('record.courseName=record.courseName||course.name'));
  assert.ok(remove.includes("record.courseId=''"));
 });
+
+test('event and document reminders are marked delivered only after display succeeds',()=>{
+ const app=read('app.js');
+ const feature=read('feature-hub.js');
+ assert.ok(app.includes("if(storageGet(alertKey)==='1'||at.getTime()<=now.getTime()-10*60*1000)continue"));
+ assert.ok(app.includes('const shown=await showStudyNotification('));
+ assert.ok(app.includes("if(!shown){\n        eventAlertTimer=setTimeout(()=>scheduleEventAlert(),60_000);"));
+ assert.ok(app.includes("storageSet(key,'1');\n    }\n    scheduleEventAlert();"));
+ assert.ok(app.includes('return true}if(\'Notification\' in window'));
+ assert.ok(feature.includes('async function notifyExpiringDocuments()'));
+ assert.ok(feature.includes('if(shown)storageSet(key,\'1\')'));
+});
+
+test('mock examination answer and self-assessment autosaves report storage failures',()=>{
+ const feature=read('feature-hub.js');
+ const start=feature.indexOf('function persistMockExamDraft()');
+ const end=feature.indexOf("document.addEventListener('click',event=>{\n const button=event.target.closest('[data-mock-action]')",start);
+ const block=feature.slice(start,end);
+ assert.ok(block.includes('const error=storageSet(STORE_KEY,JSON.stringify(data))'));
+ assert.ok(block.includes('Your mock exam changes could not be saved.'));
+ assert.ok(block.includes('persistMockExamDraft();'));
+ assert.ok(!block.includes('localStorage.setItem(STORE_KEY'));
+});
+
+test('web push schedules stay within the notification Worker 600-reminder limit',()=>{
+ const feature=read('feature-hub.js');
+ assert.ok(feature.includes("return [...unique.values()].sort((a,b)=>a.fireAt-b.fireAt).slice(0,600)"));
+});

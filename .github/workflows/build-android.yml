@@ -60,8 +60,9 @@ jobs:
           make_latest: false
           overwrite_files: true
           body: >-
-            Direct-install Android beta build of Eduvia. In Settings, enable
-            phone alarms and notifications. Camera permission is requested only
+            Direct-install Android beta build of Eduvia. First-time setup offers a
+            one-time notification invitation; if dismissed, enable phone alarms
+            and notifications later in Settings. Camera permission is requested only
             when you choose Take a photo. This debug-signed APK is for direct
             installation and is not a Google Play release.
           files: android/app/build/outputs/apk/debug/app-debug.apk

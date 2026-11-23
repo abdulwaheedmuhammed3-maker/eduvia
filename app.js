@@ -173,7 +173,6 @@ function refreshTodayWhenVisible(){if(document.visibilityState==='hidden')return
 window.addEventListener('focus',refreshTodayWhenVisible);
 document.addEventListener('visibilitychange',refreshTodayWhenVisible);
 window.addEventListener('eduvia-native-resume',()=>{
- if(document.visibilityState==='hidden')return;
  if(currentPage==='today')render();
  scheduleReminder();scheduleEventAlert();schedulePushSync();
 });

@@ -381,13 +381,16 @@ test('material metadata is not kept when its planner save fails',()=>{
  assert.ok(save.indexOf('if(!save()){')<save.indexOf("toast('Course material saved and indexed')"));
 });
 
-test('personal documents are removed from metadata before deleting the IndexedDB blob',()=>{
+test('personal document deletion removes the blob first and restores it if metadata persistence fails',()=>{
  const studio=read('study-studio.js');
  const start=studio.indexOf('async function deletePersonalDocument(documentId)');
  const end=studio.indexOf('async function listStudioRecords',start);
  const remove=studio.slice(start,end);
- assert.ok(remove.indexOf('if(!save())')<remove.indexOf("deleteStudioRecord('personalDocuments',documentId)"));
- assert.ok(remove.includes('data.personalDocuments=previous'));
+ assert.ok(remove.includes("storedRecord=await getStudioRecord('personalDocuments',documentId)"));
+ assert.ok(remove.indexOf("await deleteStudioRecord('personalDocuments',documentId)")<remove.indexOf('data.personalDocuments=previous.filter'));
+ assert.ok(remove.indexOf("await deleteStudioRecord('personalDocuments',documentId)")<remove.indexOf('if(!save())'));
+ assert.ok(remove.includes('if(!save()){data.personalDocuments=previous;'));
+ assert.ok(remove.includes("await putStudioRecord('personalDocuments',storedRecord)"));
 });
 
 test('new personal documents roll back their stored blob when planner metadata cannot be saved',()=>{

@@ -226,7 +226,9 @@ function renderCourseDetail(){
  const resources=(data.resources||[]).filter(r=>sameCourse(r.courseId));
  const notes=resources.filter(r=>r.kind==='note');
  const links=resources.filter(r=>r.kind!=='note');
- const materials=(data.materials||[]).filter(m=>sameCourse(m.courseId));
+ const courseMaterials=(data.materials||[]).filter(m=>sameCourse(m.courseId));
+ const materials=courseMaterials.filter(m=>m.kind!=='recorded-lecture');
+ const recordedLectures=courseMaterials.filter(m=>m.kind==='recorded-lecture');
  const documents=(data.personalDocuments||[]).filter(d=>sameCourse(d.courseId));
  const deadlines=(data.deadlines||[]).filter(d=>sameCourse(d.courseId)).sort((a,b)=>String(a.dueDate||'').localeCompare(String(b.dueDate||'')));
  const records=(data.studyRecords||[]).filter(r=>sameCourse(r.courseId)).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
@@ -253,11 +255,12 @@ function renderCourseDetail(){
  const addDocument='<label class="secondary-btn course-file-button">＋ Upload document<input type="file" id="courseDocumentFile" data-course-id="'+safe(c.id)+'" accept="*/*"></label>';
  return pageHead('COURSE WORKSPACE',safe(c.name),safe(c.code||'Your course · everything in one place'),'<button class="secondary-btn" data-page="courses">← All courses</button>')+
  '<section class="panel course-detail-hero"><div class="course-card-head"><i class="course-swatch" style="background:'+safe(c.color)+'"></i><div><h2>'+safe(c.name)+'</h2><span class="course-code">'+safe(c.code||'COURSE')+'</span></div></div><p class="course-desc">'+safe(c.note||'Your notes, classes, files and coursework are organised here.')+'</p><div class="course-detail-actions"><button class="secondary-btn" data-action="edit-course" data-id="'+safe(c.id)+'">Edit learning area</button><button class="primary-btn" data-action="add-course-session" data-id="'+safe(c.id)+'">＋ Add class / study session</button><button class="secondary-btn" data-action="open-course-practice" data-id="'+safe(c.id)+'">Open practice →</button><button class="secondary-btn" data-action="open-course-mastery" data-id="'+safe(c.id)+'">Topic mastery →</button></div></section>'+
- '<div class="stats-row course-detail-stats"><div class="stat-card"><span class="stat-label">Topics</span><strong class="stat-value">'+topics.length+'</strong></div><div class="stat-card"><span class="stat-label">Tasks</span><strong class="stat-value">'+totalTasks+'</strong></div><div class="stat-card"><span class="stat-label">Notes</span><strong class="stat-value">'+notes.length+'</strong></div><div class="stat-card"><span class="stat-label">Files</span><strong class="stat-value">'+(materials.length+documents.length)+'</strong></div></div>'+
+ '<div class="stats-row course-detail-stats"><div class="stat-card"><span class="stat-label">Topics</span><strong class="stat-value">'+topics.length+'</strong></div><div class="stat-card"><span class="stat-label">Tasks</span><strong class="stat-value">'+totalTasks+'</strong></div><div class="stat-card"><span class="stat-label">Notes</span><strong class="stat-value">'+notes.length+'</strong></div><div class="stat-card"><span class="stat-label">Files</span><strong class="stat-value">'+(materials.length+documents.length+recordedLectures.length)+'</strong></div></div>'+
  section('Topics & units','The course outline and learning areas',topics.length,topics.length?'<div class="course-topic-list">'+topics.map(t=>'<span class="filter-chip">'+safe(t)+'</span>').join('')+'</div>':'<p class="privacy-note-inline">Add topics or units when editing this course.</p>','<button class="secondary-btn" data-action="open-course-mastery" data-id="'+safe(c.id)+'">Track topic mastery →</button>')+
  section('Notes','Your saved notes and study summaries',notes.length,noteRows,addNote)+
  section('Documents','Files you have attached to this course',documents.length,documentRows,addDocument)+
  section('Course materials','Textbooks, lecture slides, PDFs and uploaded resources',materials.length,materialRows,addMaterial)+
+ section('Recorded lectures','Turn transcripts, lecture slides and scanned images into source-linked key points',recordedLectures.length,window.eduLectureIntelligence?.renderCourseSection(c.id,recordedLectures)||'<p class="privacy-note-inline">Recorded lecture tools are loading.</p>')+
  section('Assignments & deadlines','Assignments, tests, exams and project due dates',deadlines.length,deadlineRows,addTask)+
  section('Classwork','Tasks recorded in class reflections',reflectionTasks.length,reflectionTaskRows)+
  section('Classes & lecture records','Attendance, lecture topics and class reflections',classRecords.length,classRows,'<button class="secondary-btn" data-action="add-course-session" data-id="'+safe(c.id)+'">＋ Add class</button>')+

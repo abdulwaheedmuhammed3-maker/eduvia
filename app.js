@@ -61,9 +61,26 @@ applyTheme();
 const systemThemeQuery=window.matchMedia?.('(prefers-color-scheme: dark)');
 systemThemeQuery?.addEventListener?.('change',()=>{if(data.profile.theme==='system')applyTheme()});
 if(systemThemeQuery&&!systemThemeQuery.addEventListener)systemThemeQuery.addListener(()=>{if(data.profile.theme==='system')applyTheme()});
-const initialRoute=location.hash.slice(1);
-let currentPage=initialRoute.startsWith('course/')?'course-detail':(initialRoute||'today');
-let selectedCourseId=initialRoute.startsWith('course/')?decodeURIComponent(initialRoute.slice(7)):'';
+const SUPPORTED_PAGE_ROUTES=new Set([
+  'today','my-study','courses','course-detail','timetable','habit','tutorials','study','practice','setup',
+  'progress','records','education','vault','settings','profile','more','planner','flashcards','mastery',
+  'mock-exam','mock-results','exams','play','ask','discover','wellness','insights','roadmaps'
+]);
+function resolveHashRoute(hash){
+  const route=String(hash||'').replace(/^#/,'');
+  if(route.startsWith('course/')){
+    try{
+      const courseId=decodeURIComponent(route.slice(7));
+      return courseId?{page:'course-detail',courseId}:{page:'courses',courseId:''};
+    }catch{
+      return {page:'courses',courseId:''};
+    }
+  }
+  return {page:SUPPORTED_PAGE_ROUTES.has(route)?route:'today',courseId:''};
+}
+const initialRoute=resolveHashRoute(location.hash);
+let currentPage=initialRoute.page;
+let selectedCourseId=initialRoute.courseId;
 let selectedDate = todayISO();
 
 let weekOffset = 0;
@@ -401,7 +418,14 @@ document.getElementById('profileButton').addEventListener('click',()=>setPage('p
 // Bind the mobile tab bar directly as well as through the global action router.
 document.querySelectorAll('.mobile-nav-item[data-page]').forEach(button=>{button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();const page=button.dataset.page;if(page)setPage(page);},{capture:true});});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();const row=e.target.closest?.('.agenda-item[role="button"]');if(row&&e.target===row&&(e.key==='Enter'||e.key===' ')){e.preventDefault();row.click()}});
-window.addEventListener('hashchange',()=>{const route=location.hash.slice(1);if(!route){currentPage='today';selectedCourseId='';render();return}if(route.startsWith('course/')){currentPage='course-detail';try{selectedCourseId=decodeURIComponent(route.slice(7))}catch{selectedCourseId=route.slice(7)}}else{currentPage=route}render()});
+window.addEventListener('hashchange',()=>{
+  const route=resolveHashRoute(location.hash);
+  currentPage=route.page;
+  selectedCourseId=route.courseId;
+  if(location.hash&&route.page==='today'&&location.hash!=='#today')history.replaceState(null,'',location.pathname+location.search+'#today');
+  if(location.hash.startsWith('#course/')&&route.page==='courses')history.replaceState(null,'',location.pathname+location.search+'#courses');
+  render();
+});
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;document.getElementById('installBtn').classList.remove('hidden')});
 function profilePhotoSettingsMarkup(){const remove=data.profile.avatarData?'<button type="button" class="text-btn" data-action="remove-profile-photo">Remove photo</button>':'';const preview=data.profile.avatarData?'<img class="profile-photo-preview" src="'+safe(data.profile.avatarData)+'" alt="Current profile photo">':'';return '<div class="setting-row"><div><strong>Profile photo</strong><p>Add a photo to the profile button at the top of Eduvia.</p></div><div class="profile-photo-controls">'+preview+'<label class="secondary-btn profile-photo-picker">Choose image<input id="profilePhotoFile" type="file" accept="image/*"></label><button type="button" class="secondary-btn native-only" data-action="capture-profile-photo">Take a photo</button>'+remove+'</div></div>'}
 function updateProfileAvatar(){const button=document.getElementById('profileButton');if(!button)return;if(data.profile.avatarData)button.innerHTML='<img src="'+safe(data.profile.avatarData)+'" alt="">';else{const name=String(data.profile.name||'Learner').trim();button.innerHTML='<span>'+safe(Array.from(name)[0]?.toUpperCase()||'S')+'</span>'}button.title='Open learning profile';button.setAttribute('aria-label','Open learning profile')}

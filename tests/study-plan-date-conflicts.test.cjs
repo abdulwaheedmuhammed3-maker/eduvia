@@ -6,7 +6,9 @@ const vm=require('node:vm');
 const studio=fs.readFileSync('study-studio.js','utf8');
 
 test('weekly study planning ignores expired one-off timetable entries but respects current and future conflicts',()=>{
- const helper=studio.match(/function planningEventIsActive\\(event,planningDate,nowMinutes\\)\\{[\\s\\S]*?\\n\\}/)?.[0];
+ const helperStart=studio.indexOf('function planningEventIsActive(');
+ const helperEnd=studio.indexOf('\n}',helperStart)+2;
+ const helper=helperStart>=0&&helperEnd>1?studio.slice(helperStart,helperEnd):'';
  assert.ok(helper,'the planner must centralise one-off date relevance');
  const context={minutes:value=>{const [hours,minutes]=String(value||'').split(':').map(Number);return hours*60+minutes}};
  vm.runInNewContext(helper+';globalThis.checkPlanningEvent=planningEventIsActive;',context);

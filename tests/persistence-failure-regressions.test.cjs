@@ -47,3 +47,21 @@ test('recall sprint, wellness, Ask Eduvia and Discover history do not claim fail
  assert.ok(expansions.includes('data.discoverSavedGuides=previousSaved;render()}'));
  assert.ok(expansions.includes("data.discoverReadHistory=previousHistory;render();return}toast('Guide marked as read.')"));
 });
+
+ 
+test('category backup restore does not claim success or keep imported items when local storage fails',()=>{
+ const start=feature.indexOf('async function importCategoryBackup(file,expectedKind)');
+ const end=feature.indexOf('\n  }',start)+4;
+ const importer=feature.slice(start,end);
+ assert.ok(importer.includes('const previousCourses=[...(data.courses||[])],previousEvents=[...(data.events||[])]'));
+ assert.ok(importer.includes('if(!save()){data.courses=previousCourses;data.events=previousEvents;render();return}'));
+ assert.ok(importer.indexOf('if(!save())')<importer.indexOf("toast('Restore complete:"));
+});
+
+test('invalid mock examination recovery retains the saved session if clearing it fails',()=>{
+ const start=feature.indexOf('function renderMockExam()');
+ const end=feature.indexOf('function mockClock(',start);
+ const renderer=feature.slice(start,end);
+ assert.ok(renderer.includes('data.activeMockExam=null;if(!save()){data.activeMockExam=active;'));
+ assert.ok(renderer.includes('Your existing saved data was retained.'));
+});

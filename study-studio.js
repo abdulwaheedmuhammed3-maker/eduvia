@@ -94,7 +94,7 @@ function renderStudyStudio(){
   <div class="studio-grid"><section class="panel upload-panel"><div class="upload-icon">▦</div><div class="panel-head"><div><h3>1. Add your learning areas</h3><p>Names, identifiers and topics help organise your learning plan.</p></div><span class="upload-count">${data.courses.length} saved</span></div><label class="upload-drop"><input id="courseImportFile" type="file" accept=".csv,.tsv,.xls,.xlsx,.json,.txt,.md,.pdf,.docx,.pptx,.png,.jpg,.jpeg,.webp,image/*"><span class="upload-symbol">↑</span><strong>Choose your learning-area list</strong><span>Images, PDFs, Word, PowerPoint, Excel, CSV, JSON, or text · up to 40 MB</span></label><div class="upload-tools"><button class="secondary-btn native-only" data-action="capture-course-photo">Take a photo</button>${coursesCsv}<button class="panel-link" data-page="courses">Add learning areas by hand →</button></div>${imports.courses?.length?`<div class="import-history">Last updated: ${safe(imports.courses[imports.courses.length-1].name)} · ${imports.courses[imports.courses.length-1].count} learning areas</div>`:''}</section>
   <section class="panel upload-panel"><div class="upload-icon purple">▤</div><div class="panel-head"><div><h3>2. Import your schedule</h3><p>Fixed commitments stay in place; personal learning sessions fit around them.</p></div><span class="upload-count">${data.events.filter(e=>e.type==='class').length} classes</span></div><label class="upload-drop"><input id="timetableImportFile" type="file" accept=".csv,.tsv,.xls,.xlsx,.json,.txt,.md,.pdf,.docx,.pptx,.png,.jpg,.jpeg,.webp,image/*"><span class="upload-symbol">↑</span><strong>Choose your schedule</strong><span>Images, PDFs, Word, PowerPoint, Excel, CSV, JSON, or text · up to 40 MB</span></label><div class="upload-tools"><button class="secondary-btn native-only" data-action="capture-timetable-photo">Take a photo</button>${timetableCsv}<button class="panel-link" data-page="timetable">Review timetable →</button></div>${imports.timetable?.length?`<div class="import-history">Last updated: ${safe(imports.timetable[imports.timetable.length-1].name)} · ${imports.timetable[imports.timetable.length-1].count} class blocks</div>`:''}</section></div>
   <section class="panel availability-panel"><div class="panel-head"><div><h3>3. Choose when you can learn</h3><p>The generator works around your existing commitments and spreads learning across your available days.</p></div><span class="habit-badge">◷</span></div><form id="availabilityForm"><div class="availability-days">${STUDIO_DAYS.map((day,i)=>`<label class="day-check"><input type="checkbox" name="studyDay" value="${i}" ${(data.profile.studyDays||[]).includes(i)?'checked':''}><span>${day.slice(0,3)}</span></label>`).join('')}</div><div class="availability-times"><label>Study window starts<input type="time" name="studyStart" value="${safe(data.profile.studyStart)}"></label><span>to</span><label>Study window ends<input type="time" name="studyEnd" value="${safe(data.profile.studyEnd)}"></label><label>Study session length<select name="planSessionMinutes">${[25,30,45,60,75,90].map(n=>`<option value="${n}" ${Number(data.profile.planSessionMinutes)===n?'selected':''}>${n} minutes</option>`).join('')}</select></label></div><div class="availability-footer"><span>Weekly target: <b>${data.profile.weeklyGoal} sessions</b> · you can change this in Settings.</span><button type="submit" class="secondary-btn">Save study times</button></div></form></section>
-  <section class="panel material-panel"><div class="panel-head"><div><h3>4. Add textbooks, slides, notes, or past papers</h3><p>Eduvia extracts and indexes text on this device. The same course index powers Ask, tutorials, practice and flashcards.</p></div><span class="upload-count">${data.materials.length} file${data.materials.length===1?'':'s'}</span></div><div class="material-upload-row"><label class="upload-drop compact"><input id="materialImportFile" type="file" multiple accept=".pdf,.docx,.pptx,.txt,.md,.csv,.png,.jpg,.jpeg,.webp,image/*"><span class="upload-symbol">↑</span><strong>Upload learning material</strong><span>PDF, Word, slides, or text</span></label><button class="secondary-btn native-only" data-action="capture-material-photo">Take a photo</button><div class="material-privacy"><b>Private by default</b><span>Files are read and indexed in this browser. Extracted text and passage references stay on this device; Ask, Study, Play and flashcards reuse the same index. Scanned PDFs may need OCR or a text copy.</span></div></div>${data.materials.length?`<div class="material-list">${data.materials.map(m=>`<div class="material-row"><span class="resource-icon">${m.ext==='pdf'?'PDF':m.ext==='pptx'?'PPT':m.ext==='docx'?'DOC':'TXT'}</span><div><strong>${safe(m.name)}</strong><span>${safe(courseName(m.courseId)||'Not linked to a course')} · ${Number(m.characters||0).toLocaleString()} characters · ${Number(m.chunkCount||0).toLocaleString()} searchable sections${m.pageCount?' · '+Number(m.pageCount)+' pages':''}${m.slideCount?' · '+Number(m.slideCount)+' slides':''}</span><small class="material-index-status">${m.status==='ready'?'Indexed on this device':'Text extracted · index will be built when opened'}</small></div><button class="icon-btn" data-action="delete-material" data-id="${m.id}" title="Remove material">×</button></div>`).join('')}</div>`:emptyState('▷','No learning materials uploaded yet','Add textbooks, class slides, notes, or past papers to align lessons and practice with your course material.','', '')}</section>
+  <section class="panel material-panel"><div class="panel-head"><div><h3>4. Add textbooks, slides, notes, or past papers</h3><p>Eduvia extracts and indexes text on this device. The same course index powers Ask, tutorials, practice and flashcards.</p></div><span class="upload-count">${data.materials.length} file${data.materials.length===1?'':'s'}</span></div><div class="material-upload-row"><label class="upload-drop compact"><input id="materialImportFile" type="file" multiple accept=".pdf,.docx,.pptx,.txt,.md,.csv,.png,.jpg,.jpeg,.webp,image/*"><span class="upload-symbol">↑</span><strong>Upload learning material</strong><span>PDF, Word, slides, or text</span></label><button class="secondary-btn native-only" data-action="capture-material-photo">Take a photo</button><div class="material-privacy"><b>Private by default</b><span>Files are read and indexed in this browser. Extracted text and passage references stay on this device; Ask, Study, Play and flashcards reuse the same index. Scanned PDFs may need OCR or a text copy.</span></div></div>${data.materials.length?`<div class="material-list">${data.materials.map(m=>`<div class="material-row"><span class="resource-icon">${m.ext==='pdf'?'PDF':m.ext==='pptx'?'PPT':m.ext==='docx'?'DOC':'TXT'}</span><div><strong>${safe(m.name)}</strong><span>${safe(courseName(m.courseId)||'Not linked to a course')} · ${Number(m.characters||0).toLocaleString()} characters · ${Number(m.chunkCount||0).toLocaleString()} searchable sections${m.pageCount?' · '+Number(m.pageCount)+' pages':''}${m.slideCount?' · '+Number(m.slideCount)+' slides':''}</span><small class="material-index-status">${m.status==='ready'?'Indexed on this device':'Text extracted · index will be built when opened'}</small></div><button class="icon-btn" data-action="delete-material" data-id="${safe(m.id)}" title="Remove material">×</button></div>`).join('')}</div>`:emptyState('▷','No learning materials uploaded yet','Add textbooks, class slides, notes, or past papers to align lessons and practice with your course material.','', '')}</section>
   <div class="studio-bottom-grid"><section class="panel"><div class="panel-head"><div><h3>Learning tutorial</h3><p>Get a focused lesson for one of your learning areas.</p></div><span class="habit-badge">✧</span></div><div class="studio-action-row"><select id="lessonCourse">${courseOptions()}</select><button class="primary-btn" data-action="generate-tutorial">Create tutorial</button></div><div class="source-hint">Uses your linked learning materials first. Without course materials, Eduvia creates a general study guide from your learning details. Use the link below to search the web for an outline.</div><button class="text-btn" data-action="find-curriculum">Find a course outline online ↗</button></section>
   <section class="panel"><div class="panel-head"><div><h3>Practice and tests</h3><p>Try questions from your notes or learning topics.</p></div><span class="habit-badge">✓</span></div><div class="studio-action-row"><select id="practiceCourse">${courseOptions()}</select><button class="secondary-btn" data-page="practice">Open practice →</button></div><div class="source-hint">Practice questions retrieve passages from the same indexed course materials and retain their source references.</div></section></div>
   ${studioLesson?renderGeneratedCard(studioLesson,'tutorial'):''}`;
@@ -103,8 +103,8 @@ function renderStudyStudio(){
 function renderPractice(){
   const course=data.courses.find(c=>c.id===(window.practiceCourseId||''))||data.courses[0];
   return `${pageHead('RECALL IT. APPLY IT.','Practice & tests','Generate questions from your saved learning materials, then check your answers against the source.','<button class="secondary-btn" data-page="study">← Study studio</button>')}
-  <section class="panel practice-setup"><details class="action-disclosure"><summary><div><h3>Build a practice set</h3><p>Choose a learning area, question style and number of questions</p></div><span class="disclosure-cta">＋ Build set</span></summary><div class="disclosure-body"><p>Use your saved learning materials first. Without notes, questions use your learning topics and may be broader.</p><div class="practice-controls"><label>Learning area<select id="practiceCourseSelect">${courseOptions(course?.id||'')}</select></label><label>Question style<select id="questionStyle"><option value="mixed">Mixed review</option><option value="short">Short answer</option><option value="essay">Exam-style essay</option><option value="mcq">Multiple choice</option></select></label><label>Number of questions<select id="questionCount"><option>5</option><option selected>10</option><option>15</option></select></label><button class="primary-btn" data-action="generate-practice">Generate practice set</button></div><p class="privacy-note-inline">Practice questions are created on this device from your uploaded materials and learning topics.</p></div></details></section>
-  ${studioPractice.length?`<section class="panel practice-results"><div class="panel-head"><div><h3>${safe(studioPractice.title||'Your practice set')}</h3><p>${safe(studioPractice.source||'Generated from your study materials')} · ${studioPractice.questions.length} questions</p></div><button class="panel-link" data-action="generate-practice">Make another set ↻</button></div><div class="question-list">${studioPractice.questions.map((q,i)=>`<article class="question-card"><div class="question-number">${String(i+1).padStart(2,'0')}</div><div class="question-content"><strong>${safe(q.question)}</strong>${q.options?`<div class="question-options">${q.options.map((opt,j)=>`<label><input type="radio" name="q${i}" value="${j}"> ${safe(opt)}</label>`).join('')}</div>`:`<textarea placeholder="Write your answer here…"></textarea>`}<details><summary>Show source passage / sample answer</summary><p>${safe(q.answer||'Review the linked course material and explain the key idea in your own words.')}</p>${q.source?`<small>From: ${safe(q.citation||([q.source,q.location].filter(Boolean).join(' · ')))}</small>`:''}</details></div></article>`).join('')}</div></section>`:emptyState('✓','Your practice space is ready','Choose a course and generate a short practice set from your course materials.','', '')}`;
+  <section class="panel practice-setup"><details class="action-disclosure"><summary><div><h3>Build a practice set</h3><p>Choose a learning area, question style and number of questions</p></div><span class="disclosure-cta">＋ Build set</span></summary><div class="disclosure-body"><p>Use your saved learning materials first. Without notes, questions use your learning topics and may be broader.</p><div class="practice-controls"><label>Learning area<select id="practiceCourseSelect">${courseOptions(course?.id||'')}</select></label><label>Question style<select id="questionStyle"><option value="mixed">Mixed review</option><option value="short">Short answer</option><option value="essay">Exam-style essay</option><option value="mcq">Multiple choice</option></select></label><label>Number of questions<select id="questionCount"><option>5</option><option selected>10</option><option>15</option></select></label><button class="primary-btn" data-action="generate-practice">Generate practice set</button></div><p class="privacy-note-inline">Practice questions are created on this device from your uploaded materials and learning topics.</p><p class="privacy-note-inline">For multiple-choice questions, select an option and open “Show answer” to check your choice. Written answers are reviewed against the source; Eduvia does not automatically grade this practice set.</p></div></details></section>
+  ${studioPractice.length?`<section class="panel practice-results"><div class="panel-head"><div><h3>${safe(studioPractice.title||'Your practice set')}</h3><p>${safe(studioPractice.source||'Generated from your study materials')} · ${studioPractice.questions.length} questions</p></div><button class="panel-link" data-action="generate-practice">Make another set ↻</button></div><div class="question-list">${studioPractice.questions.map((q,i)=>`<article class="question-card"><div class="question-number">${String(i+1).padStart(2,'0')}</div><div class="question-content"><strong>${safe(q.question)}</strong>${q.options?`<div class="question-options">${q.options.map((opt,j)=>`<label><input type="radio" name="q${i}" value="${j}"> ${safe(opt)}</label>`).join('')}</div>`:`<textarea placeholder="Write your answer here…"></textarea>`}<details><summary>${q.options?'Show correct choice / source passage':'Show source passage / sample answer'}</summary><p>${q.options?'Correct choice: '+safe(q.options[q.correctOption]||q.answer):safe(q.answer||'Review the linked course material and explain the key idea in your own words.')}</p>${q.source?'<small>From: '+safe(q.citation||([q.source,q.location].filter(Boolean).join(' · ')))+'</small>':''}</details></div></article>`).join('')}</div></section>`:emptyState('✓','Your practice space is ready','Choose a course and generate a short practice set from your course materials.','', '')}`;
 }
 
 function renderSetup(){
@@ -120,7 +120,17 @@ function renderGeneratedCard(result,type){return `<section class="panel generate
 
 function studioDb(){return new Promise((resolve,reject)=>{if(!('indexedDB'in window)){reject(new Error('This browser does not support local document storage.'));return}const request=indexedDB.open(STUDIO_DB,2);request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains(STUDIO_STORE))db.createObjectStore(STUDIO_STORE,{keyPath:'id'});if(!db.objectStoreNames.contains('academicRecords'))db.createObjectStore('academicRecords',{keyPath:'id'});if(!db.objectStoreNames.contains('personalDocuments'))db.createObjectStore('personalDocuments',{keyPath:'id'})};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)})}
 async function storeMaterial(record){const db=await studioDb();return new Promise((resolve,reject)=>{const tx=db.transaction(STUDIO_STORE,'readwrite');tx.objectStore(STUDIO_STORE).put(record);tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)}})}
-async function readMaterial(materialId){try{const db=await studioDb();return await new Promise((resolve,reject)=>{const tx=db.transaction(STUDIO_STORE,'readonly'),req=tx.objectStore(STUDIO_STORE).get(materialId);req.onsuccess=()=>{db.close();resolve(req.result||null)};req.onerror=()=>{db.close();reject(req.error)}})}catch{return (data.materialText||[]).find(m=>m.id===materialId)||null}}
+function fallbackMaterial(materialId){return (data.materialText||[]).find(item=>String(item?.id||'')===String(materialId))||null}
+async function readMaterial(materialId){
+  try{
+    const db=await studioDb();
+    return await new Promise((resolve,reject)=>{
+      const tx=db.transaction(STUDIO_STORE,'readonly'),req=tx.objectStore(STUDIO_STORE).get(materialId);
+      req.onsuccess=()=>{db.close();resolve(req.result||fallbackMaterial(materialId))};
+      req.onerror=()=>{db.close();const fallback=fallbackMaterial(materialId);if(fallback)resolve(fallback);else reject(req.error)};
+    });
+  }catch{return fallbackMaterial(materialId)}
+}
 window.eduOpenCourseMaterial=async function(materialId){
  try{
   const record=await readMaterial(materialId);
@@ -141,7 +151,17 @@ window.eduDownloadCourseMaterial=async function(materialId){
 };
 
 async function removeStoredMaterial(materialId){try{const db=await studioDb();await new Promise((resolve,reject)=>{const tx=db.transaction(STUDIO_STORE,'readwrite');tx.objectStore(STUDIO_STORE).delete(materialId);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});db.close()}catch{} }
-async function getStudioRecord(storeName,recordId){const db=await studioDb();return await new Promise((resolve,reject)=>{const tx=db.transaction(storeName,'readonly'),req=tx.objectStore(storeName).get(recordId);req.onsuccess=()=>{db.close();resolve(req.result||null)};req.onerror=()=>{db.close();reject(req.error)}})}
+async function getStudioRecord(storeName,recordId){
+  const fallback=()=>storeName===STUDIO_STORE?fallbackMaterial(recordId):null;
+  try{
+    const db=await studioDb();
+    return await new Promise((resolve,reject)=>{
+      const tx=db.transaction(storeName,'readonly'),req=tx.objectStore(storeName).get(recordId);
+      req.onsuccess=()=>{db.close();resolve(req.result||fallback())};
+      req.onerror=()=>{db.close();const cached=fallback();if(cached)resolve(cached);else reject(req.error)};
+    });
+  }catch(error){const cached=fallback();if(cached)return cached;throw error}
+}
 async function putStudioRecord(storeName,record){const db=await studioDb();return await new Promise((resolve,reject)=>{const tx=db.transaction(storeName,'readwrite');tx.objectStore(storeName).put(record);tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)};tx.onabort=()=>{db.close();reject(tx.error||new Error('Could not save this item.'))}})}
 async function deleteStudioRecord(storeName,recordId){const db=await studioDb();return await new Promise((resolve,reject)=>{const tx=db.transaction(storeName,'readwrite');tx.objectStore(storeName).delete(recordId);tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)}})}
 async function clearStudioStore(storeName){const db=await studioDb();return await new Promise((resolve,reject)=>{const tx=db.transaction(storeName,'readwrite');tx.objectStore(storeName).clear();tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)}})}
@@ -341,9 +361,15 @@ async function handleStudioFile(kind,file,courseId=''){
   try{const ext=fileExt(file),text=await extractDocument(file,kind);if(kind==='material'){await previewMaterial(file,text,linkedCourseId);return}const parseExt=['tsv','xls','xlsx'].includes(ext)?'csv':ext;const rows=kind==='courses'?parseCourseImport(text,parseExt):parseTimetableImport(text,parseExt);if(!rows.length)throw new Error(kind==='courses'?'No course rows found. Try a clearer image showing the course codes and names, or use the course CSV template.':'No timetable rows found. Try a clearer image showing the days and times, or use the timetable CSV template.');pendingStudioImport={kind,fileName:file.name,rows};showImportPreview(kind,file.name,rows)}catch(error){studioNotice=error.message||'Could not read that file.';render();toast(studioNotice)}
 }
 function importField(label,name,value,type='text',placeholder=''){const escaped=typeof value==='string'?value:String(value??'');return `<label class="form-field"><span>${label}</span><input name="${name}" type="${type}" value="${safe(escaped)}" placeholder="${safe(placeholder)}" ${type==='time'?'required':''}></label>`}
-function showImportPreview(kind,fileName,rows){const isCourses=kind==='courses';const cards=rows.map((r,i)=>isCourses?`<article class="import-review-row"><strong>Course ${i+1}</strong><div class="import-review-grid">${importField('Course code',`code_${i}`,r.code||'','text','e.g. CSC 301')}${importField('Learning area name',`name_${i}`,r.name||'','text','Full course title')}${importField('Credits',`credits_${i}`,r.credits||'','text','')}${importField('Topics',`topics_${i}`,(r.topics||[]).join('; '),'text','Separate topics with semicolons')}</div></article>`:`<article class="import-review-row"><strong>Class ${i+1}</strong><div class="import-review-grid timetable-review-grid"><label class="form-field"><span>Day</span><select name="day_${i}" required><option value="">Choose a day</option>${STUDIO_DAYS.map((day,index)=>`<option value="${index}" ${Number(r.day)===index?'selected':''}>${day}</option>`).join('')}</select></label>${importField('Course code',`courseCode_${i}`,r.courseCode||'','text','e.g. CSC 301')}${importField('Course name / class',`title_${i}`,r.title||'','text','Class or course name')}${importField('Start time',`start_${i}`,r.start||'','time')}${importField('End time',`end_${i}`,r.end||'','time')}${importField('Room / location',`location_${i}`,r.location||'','text','Optional')}</div></article>`).join('');const note=isCourses?'These learning areas will be added to My Learning. Scheduled sessions can be imported separately.':'These class times will be added to Timetable. Your learning areas stay in My Learning.';openModal(isCourses?'Review learning-area list':'Review schedule',`${fileName} · ${rows.length} item${rows.length===1?'':'s'} detected`,`<div class="import-review-list">${cards}</div><p class="preview-note">${note}</p>`,'Import',formData=>{const updated=rows.map((row,i)=>isCourses?({...row,code:String(formData.get(`code_${i}`)||'').trim(),name:String(formData.get(`name_${i}`)||'').trim(),credits:String(formData.get(`credits_${i}`)||'').trim(),topics:String(formData.get(`topics_${i}`)||'').split(/[;|\n]+/).map(x=>x.trim()).filter(Boolean)}):({...row,day:Number(formData.get(`day_${i}`)),courseCode:String(formData.get(`courseCode_${i}`)||'').trim(),title:String(formData.get(`title_${i}`)||'').trim(),start:normalizeTime(formData.get(`start_${i}`)),end:normalizeTime(formData.get(`end_${i}`)),location:String(formData.get(`location_${i}`)||'').trim()}));const invalid=updated.some(row=>isCourses?(!row.code&&!row.name):(!row.title||!row.start||!row.end||minutes(row.end)<=minutes(row.start)));if(invalid){toast(isCourses?'Each course needs a course code or course name. Check the highlighted details.':'Check each class name, day, and start/end time before importing.');return}pendingStudioImport.rows=updated;commitStudioImport();closeModal()})}
-function matchCourse(value){const v=String(value||'').toLowerCase().replace(/\s+/g,'');return data.courses.find(c=>String(c.code||'').toLowerCase().replace(/\s+/g,'')===v||String(c.name||'').toLowerCase()===String(value||'').toLowerCase())}
-function commitStudioImport(){if(!pendingStudioImport)return;const {kind,rows,fileName}=pendingStudioImport;let count=0;if(kind==='courses'){for(const row of rows){let course=matchCourse(row.code||row.name);if(course){if(row.name)course.name=row.name;if(row.code)course.code=row.code;if(row.topics?.length)course.topics=row.topics;if(row.credits)course.credits=Number(row.credits)||row.credits}else{data.courses.push({id:id(),name:row.name||`Course ${row.code}`,code:row.code||'',instructor:'',note:'',color:COLORS[data.courses.length%COLORS.length],credits:Number(row.credits)||0,topics:row.topics||[]})}count++}data.imports.courses.push({name:fileName,count,at:Date.now()});currentPage='courses'}else{data.events=data.events.filter(e=>!e.importedTimetable);for(const row of rows){const c=matchCourse(row.courseCode||row.title);const existing=data.events.some(e=>e.type==='class'&&e.day===row.day&&e.start===row.start&&e.title.toLowerCase()===row.title.toLowerCase());if(existing)continue;data.events.push({id:id(),title:row.title,type:'class',courseId:c?.id||'',date:'',day:row.day,start:row.start,end:row.end,location:row.location||'',remind:true,duration:minutes(row.end)-minutes(row.start),importedTimetable:true});count++}data.imports.timetable.push({name:fileName,count,at:Date.now()});currentPage='timetable'}location.hash=currentPage;pendingStudioImport=null;studioNotice=kind==='courses'?`${count} courses added to My Courses.`:`${count} class times added to Timetable.`;save();toast(studioNotice)}
+function showImportPreview(kind,fileName,rows){const isCourses=kind==='courses';const cards=rows.map((r,i)=>isCourses?`<article class="import-review-row"><strong>Course ${i+1}</strong><div class="import-review-grid">${importField('Course code',`code_${i}`,r.code||'','text','e.g. CSC 301')}${importField('Learning area name',`name_${i}`,r.name||'','text','Full course title')}${importField('Credits',`credits_${i}`,r.credits||'','text','')}${importField('Topics',`topics_${i}`,(r.topics||[]).join('; '),'text','Separate topics with semicolons')}</div></article>`:`<article class="import-review-row"><strong>Class ${i+1}</strong><div class="import-review-grid timetable-review-grid"><label class="form-field"><span>Day</span><select name="day_${i}" required><option value="">Choose a day</option>${STUDIO_DAYS.map((day,index)=>`<option value="${index}" ${Number(r.day)===index?'selected':''}>${day}</option>`).join('')}</select></label>${importField('Course code',`courseCode_${i}`,r.courseCode||'','text','e.g. CSC 301')}${importField('Course name / class',`title_${i}`,r.title||'','text','Class or course name')}${importField('Start time',`start_${i}`,r.start||'','time')}${importField('End time',`end_${i}`,r.end||'','time')}${importField('Room / location',`location_${i}`,r.location||'','text','Optional')}</div></article>`).join('');const note=isCourses?'These learning areas will be added to My Learning. A matching course code or name updates the existing learning area rather than creating a duplicate. Scheduled sessions can be imported separately.':'Importing replaces class entries previously imported through Learning Studio. Manually created classes and personal study sessions are kept; the new rows become the imported timetable.';openModal(isCourses?'Review learning-area list':'Review schedule',`${fileName} · ${rows.length} item${rows.length===1?'':'s'} detected`,`<div class="import-review-list">${cards}</div><p class="preview-note">${note}</p>`,'Import',formData=>{const updated=rows.map((row,i)=>isCourses?({...row,code:String(formData.get(`code_${i}`)||'').trim(),name:String(formData.get(`name_${i}`)||'').trim(),credits:String(formData.get(`credits_${i}`)||'').trim(),topics:String(formData.get(`topics_${i}`)||'').split(/[;|\n]+/).map(x=>x.trim()).filter(Boolean)}):({...row,day:Number(formData.get(`day_${i}`)),courseCode:String(formData.get(`courseCode_${i}`)||'').trim(),title:String(formData.get(`title_${i}`)||'').trim(),start:normalizeTime(formData.get(`start_${i}`)),end:normalizeTime(formData.get(`end_${i}`)),location:String(formData.get(`location_${i}`)||'').trim()}));const invalid=updated.some(row=>isCourses?(!row.code&&!row.name):(!row.title||!row.start||!row.end||minutes(row.end)<=minutes(row.start)));if(invalid){toast(isCourses?'Each course needs a course code or course name. Check the highlighted details.':'Check each class name, day, and start/end time before importing.');return}pendingStudioImport.rows=updated;commitStudioImport();closeModal()})}
+function matchCourse(value){
+  const raw=String(value||'').trim();if(!raw)return null;
+  const codeKey=raw.toLocaleLowerCase().replace(/\s+/g,'');
+  const nameKey=raw.toLocaleLowerCase().replace(/\s+/g,' ');
+  return data.courses.find(course=>String(course.code||'').toLocaleLowerCase().replace(/\s+/g,'')===codeKey)||
+    data.courses.find(course=>String(course.name||'').trim().toLocaleLowerCase().replace(/\s+/g,' ')===nameKey)||null;
+}
+function commitStudioImport(){if(!pendingStudioImport)return;const {kind,rows,fileName}=pendingStudioImport;let count=0;if(kind==='courses'){for(const row of rows){let course=matchCourse(row.code)||matchCourse(row.name);if(course){if(row.name)course.name=row.name;if(row.code)course.code=row.code;if(row.topics?.length)course.topics=row.topics;if(row.credits)course.credits=Number(row.credits)||row.credits}else{data.courses.push({id:id(),name:row.name||`Course ${row.code}`,code:row.code||'',instructor:'',note:'',color:COLORS[data.courses.length%COLORS.length],credits:Number(row.credits)||0,topics:row.topics||[]})}count++}data.imports.courses.push({name:fileName,count,at:Date.now()});currentPage='courses'}else{data.events=data.events.filter(e=>!e.importedTimetable);for(const row of rows){const c=matchCourse(row.courseCode)||matchCourse(row.title);const existing=data.events.some(e=>e.type==='class'&&e.day===row.day&&e.start===row.start&&e.title.toLowerCase()===row.title.toLowerCase());if(existing)continue;data.events.push({id:id(),title:row.title,type:'class',courseId:c?.id||'',date:'',day:row.day,start:row.start,end:row.end,location:row.location||'',remind:true,duration:minutes(row.end)-minutes(row.start),importedTimetable:true});count++}data.imports.timetable.push({name:fileName,count,at:Date.now()});currentPage='timetable'}location.hash=currentPage;pendingStudioImport=null;studioNotice=kind==='courses'?`${count} courses added to My Courses.`:`${count} class times added to Timetable.`;save();toast(studioNotice)}
 
 async function previewMaterial(file,text,linkedCourseId=''){
  const courseOptionsHtml=courseOptions(linkedCourseId),materialId=id(),ext=fileExt(file),content=text.slice(0,1200000);
@@ -355,11 +381,20 @@ async function previewMaterial(file,text,linkedCourseId=''){
   const pending=pendingStudioImport;if(!pending?.material)return;
   const m=pending.material,select=document.getElementById('materialCourseSelect');m.courseId=select?.value||'';
   const record={id:m.id,name:m.name,ext:m.ext,text:pending.text,index:pending.index,courseId:m.courseId,createdAt:Date.now(),status:m.status};
-  try{await storeMaterial(record)}
+  let storedInIndexedDb=false;
+  try{await storeMaterial(record);storedInIndexedDb=true}
   catch{data.materialText=data.materialText||[];data.materialText.push(record);m.warning='stored in browser backup instead'}
-  data.materials.push(m);pendingStudioImport=null;closeModal();
+  data.materials.push(m);
   studioNotice='Learning material saved and indexed on this device. Ask, tutorials, practice and flashcards can retrieve passages with source references.';
-  save();toast('Course material saved and indexed');
+  if(!save()){
+    data.materials=data.materials.filter(item=>item.id!==m.id);
+    data.materialText=(data.materialText||[]).filter(item=>item.id!==m.id);
+    if(storedInIndexedDb)await removeStoredMaterial(m.id);
+    studioNotice='';
+    render();return;
+  }
+  pendingStudioImport=null;
+  closeModal();toast('Course material saved and indexed');
  });
 }
 
@@ -425,30 +460,108 @@ async function generateTutorial(){
 }function searchUrl(course){const q=[data.profile.institution,data.profile.country,data.profile.stage,data.profile.programme,data.profile.level,course?.code,course?.name,'official syllabus course outline curriculum'].filter(Boolean).join(' ');return`https://www.google.com/search?q=${encodeURIComponent(q)}`}
 
 function localPractice(course,sources,count,style){
- const topics=Array.isArray(course.topics)?course.topics:[];
- const query=topics.slice(0,5).join(' ')||course.name||course.code||'';
- const passages=window.eduCourseIntelligence?.search(sources,query,Math.max(count,8))||[];
- const questions=passages.slice(0,count).map((item,index)=>({
-  question:style==='essay'?'Using the cited passage, explain the idea in your own words, give an example from your course and state why it matters.':'Explain this idea from your course material in your own words: “'+item.text.slice(0,260)+'”',
-  answer:item.text,
-  source:item.name,
-  location:item.location,
-  citation:item.citation,
-  materialId:item.materialId
- }));
- for(let i=0;questions.length<count&&topics.length;i++){
-  const topic=topics[i%topics.length];
-  questions.push({question:style==='essay'?'Write an exam-style response about '+topic+'. Support your explanation with a definition and a course example.':'Explain '+topic+' using your learning notes and give one example.',answer:'Use the terminology and examples from your instructor’s material for '+topic+'. No matching passage was retrieved for this topic, so check your notes before treating this prompt as course-specific.',source:'Course topic list',location:'No matching passage'});
+ const topicList=Array.isArray(course.topics)?course.topics:[];
+ const query=topicList.slice(0,5).join(' ')||course.name||course.code||'';
+ const requested=style==='mcq'?Math.max(count*4,16):Math.max(count,8);
+ const passages=window.eduCourseIntelligence?.search(sources,query,requested)||[];
+ if(style==='mcq'){
+  const engine=window.eduCourseIntelligence;
+  if(!engine)return {title:(course.code||course.name)+' · multiple-choice practice',source:'Course retrieval is unavailable',questions:[],requestedCount:count};
+  // Use explicit course topics first. Clearly labelled document sections fill gaps,
+  // allowing each correct passage to be contrasted with passages about other topics.
+  const labels=[];
+  const addLabel=value=>{
+   const label=String(value||'').trim();
+   if(label&&!labels.some(item=>item.toLocaleLowerCase()===label.toLocaleLowerCase()))labels.push(label);
+  };
+  topicList.forEach(addLabel);
+  for(const source of sources){
+   const index=source.index?.version===engine.version?source.index:engine.buildIndex(source.text);
+   for(const chunk of index.chunks||[]){addLabel(chunk.section);if(labels.length>=12)break}
+   if(labels.length>=12)break;
+  }
+  const groups=labels.map(topic=>{
+   const passages=engine.search(sources,topic,20).map(item=>({...item,text:String(item.text||'').replace(/\s+/g,' ').trim().slice(0,220)})).filter(item=>item.text.length>=45);
+   const seen=new Set();
+   return {topic,passages:passages.filter(item=>{
+    const key=item.text.toLocaleLowerCase();if(seen.has(key))return false;seen.add(key);return true;
+   })};
+  }).filter(group=>group.passages.length);
+  if(groups.length<4)return {
+   title:(course.code||course.name)+' · multiple-choice practice',
+   source:'At least four distinct searchable topics or titled sections are needed for unambiguous choices',
+   questions:[],requestedCount:count
+  };
+  const questions=[],usedAnswers=new Set(),answerOffsets=new Map(groups.map(group=>[group.topic,0]));
+  let advanced=true;
+  while(questions.length<count&&advanced){
+   advanced=false;
+   for(let targetIndex=0;targetIndex<groups.length&&questions.length<count;targetIndex++){
+    const target=groups[targetIndex],offset=answerOffsets.get(target.topic)||0;
+    const remaining=target.passages.slice(offset);
+    const correct=remaining.find(item=>!usedAnswers.has(item.text.toLocaleLowerCase()));
+    if(!correct)continue;
+    const distractors=[];
+    for(let step=1;step<groups.length&&distractors.length<3;step++){
+     const other=groups[(targetIndex+step)%groups.length];
+     const candidate=other.passages.find(item=>{
+      const key=item.text.toLocaleLowerCase();
+      return key!==correct.text.toLocaleLowerCase()&&!distractors.some(existing=>existing.text.toLocaleLowerCase()===key);
+     });
+     if(candidate)distractors.push(candidate);
+    }
+    if(distractors.length<3)continue;
+    usedAnswers.add(correct.text.toLocaleLowerCase());
+    answerOffsets.set(target.topic,offset+remaining.indexOf(correct)+1);
+    const options=[correct,...distractors].map(item=>item.text),correctOption=questions.length%options.length;
+    [options[0],options[correctOption]]=[options[correctOption],options[0]];
+    questions.push({
+     question:'Which passage best explains '+target.topic+' according to your course material?',
+     answer:correct.text,options,correctOption,topic:target.topic,
+     source:correct.name,location:correct.location,citation:correct.citation,materialId:correct.materialId
+    });
+    advanced=true;
+   }
+  }
+  return {
+   title:(course.code||course.name)+' · multiple-choice practice',
+   source:questions.length?'Topic-based choices retrieved from your course materials':'Not enough distinct source passages to form single-answer questions',
+   questions,requestedCount:count
+  };
  }
- if(!questions.length)questions.push({question:'Upload course notes to generate source-based practice questions for '+course.name+'.',answer:'No course material has been indexed for this course yet.',source:'No source material'});
- return {title:(course.code||course.name)+' · practice',source:questions.some(question=>question.materialId)?'Retrieved passages from course materials':sources.length?'Course topic prompts · no matching source passages':'Course topic list',questions:questions.slice(0,count)};
+ const questions=passages.slice(0,count).map((item,index)=>{
+  const essay=style==='essay'||(style==='mixed'&&index%2===1);
+  return {
+   question:essay?'Using the cited passage, explain the idea in your own words, give an example from your course and state why it matters.':'Explain this idea from your course material in your own words: “'+item.text.slice(0,260)+'”',
+   answer:item.text,
+   source:item.name,
+   location:item.location,
+   citation:item.citation,
+   materialId:item.materialId
+  };
+ });
+ for(let i=0;questions.length<count&&topicList.length;i++){
+  const topic=topicList[i%topicList.length],essay=style==='essay'||(style==='mixed'&&questions.length%2===1);
+  questions.push({
+   question:essay?'Write an exam-style response about '+topic+'. Support your explanation with a definition and a course example.':'Explain '+topic+' using your learning notes and give one example.',
+   answer:'Use the terminology and examples from your instructor’s material for '+topic+'. No matching passage was retrieved for this topic, so check your notes before treating this prompt as course-specific.',
+   source:'Course topic list',location:'No matching passage'
+  });
+ }
+ return {
+  title:(course.code||course.name)+' · practice',
+  source:questions.some(question=>question.materialId)?'Retrieved passages from course materials':passages.length?'Course topic prompts · no matching source passages':'Course topic list',
+  questions:questions.slice(0,count)
+ };
 }
 async function generatePractice(){
   const course=selectedCourse('practiceCourseSelect')||selectedCourse('practiceCourse')||data.courses[0];
   if(!course){toast('Import or add your learning-area list first.');return}
   const count=Number(document.getElementById('questionCount')?.value)||10,style=document.getElementById('questionStyle')?.value||'mixed';
   const sources=await loadCourseText(course.id);
-  studioPractice=localPractice(course,sources,count,style);window.practiceCourseId=course.id;currentPage='practice';render();document.querySelector('.practice-results')?.scrollIntoView({behavior:'smooth',block:'start'});
+  const generated=localPractice(course,sources,count,style);
+  if(!generated.questions.length){toast(style==='mcq'?'Multiple-choice questions need at least four distinct searchable topics or titled sections. Add clear course topics/headings or choose another question style.':'Add course topics or searchable learning materials before generating a practice set.');return}
+  studioPractice=generated;if(generated.questions.length<count)toast('Created '+generated.questions.length+' of '+count+' requested questions. The available topics or sections limit the source material for this set.');window.practiceCourseId=course.id;currentPage='practice';render();document.querySelector('.practice-results')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 document.addEventListener('change',e=>{if(e.target.id==='materialImportFile'&&e.target.files?.length>1){e.stopImmediatePropagation();toast('Add materials one file at a time so you can link each one to the right course.');handleStudioFile('material',e.target.files[0])}},true);
@@ -485,15 +598,6 @@ document.addEventListener('click',e=>{
   }
 });
 
-function localPractice(course,sources,count,style){
-  const topicList=course.topics||[];
-  const sentences=sources.flatMap(s=>s.text.replace(/\s+/g,' ').split(/(?<=[.!?])\s+/).filter(x=>x.length>55&&x.length<420).map(sentence=>({sentence,source:s.name}))).slice(0,count);
-  const sourceName=sources[0]?.name||'course topics';
-  const prompts=sentences.map((x,i)=>{const essay=style==='essay'||(style==='mixed'&&i%2===1);return {question:essay?`Discuss the following point from your course material. Explain it, give an example, and state one implication: “${x.sentence}”`:`In your own words, explain this idea from your notes and give one example: “${x.sentence}”`,answer:x.sentence,source:x.source}});
-  for(let i=0;prompts.length<count&&topicList.length;i++){const topic=topicList[i%topicList.length],essay=style==='essay'||(style==='mixed'&&prompts.length%2===1);prompts.push({question:essay?`Write an exam-style answer on ${topic}. Define it, explain its main parts, and use an example.`:`What is ${topic}, what problem does it address, and how would you explain it to a classmate?`,answer:`Use your course material’s definitions and examples for ${topic}. Include key terms, steps or properties, and an example.`,source:sourceName})}
-  if(!prompts.length)prompts.push({question:`Using your course material for ${course.name}, explain one important idea and apply it to an example.`,answer:'Refer to your course material and include a definition, explanation, and example.',source:sourceName});
-  return {title:`${course.code||course.name} · practice`,source:sources[0]?.name||'Course topics',questions:prompts.slice(0,count)};
-}
 function findCurriculum(){
   const course=selectedCourse('lessonCourse')||data.courses[0],url=searchUrl(course),searchTab=window.open(url,'_blank');
   if(searchTab){searchTab.opener=null;studioNotice='Opened a web search for a course outline. Check that the result matches your school, level, and current curriculum.'}
@@ -779,7 +883,7 @@ function archiveCurrentTerm(){
     field('Next academic year/session','nextAcademicSession','<input id="f-nextAcademicSession" name="nextAcademicSession" required maxlength="24" value="'+safe(profile.academicSession||academicYearKey(profile.term))+'" placeholder="e.g. 2027/2028">')+'</div>'+
     '<div class="form-grid">'+field('Next term or semester','nextTerm','<input id="f-nextTerm" name="nextTerm" maxlength="60" placeholder="e.g. Semester 2">')+
     field('Next education stage','nextStage','<select id="f-nextStage" name="nextStage">'+stageOptions+'</select>')+'</div>'+
-    '<p class="preview-note">Your current courses, timetable, notes, results, and progress will be saved. Courses marked as carryover will remain pending throughout this academic year, including the second semester. They can only be activated when you begin a different academic year.</p>'+academicResultFields([],data.courses)+field('Overall result note (optional)','resultsNotes','<textarea id="f-resultsNotes" name="resultsNotes" maxlength="1000" placeholder="Honours, teacher comments, or other details"></textarea>',true);
+    '<p class="preview-note">Your courses, timetable, reflections, deadlines, exams, revision plans, mock papers and topic mastery will be saved in this term’s archive. Period-specific records will reset for the new term. Your personal documents, uploaded materials, flashcards and roadmaps will remain available.</p>'+academicResultFields([],data.courses)+field('Overall result note (optional)','resultsNotes','<textarea id="f-resultsNotes" name="resultsNotes" maxlength="1000" placeholder="Honours, teacher comments, or other details"></textarea>',true);
   openModal('Finish and archive this term','Save this period before moving to the next term. Carryover courses stay pending until a new academic year.',body,'Archive and start next term',async fd=>{
     const courses=JSON.parse(JSON.stringify(data.courses||[])),events=JSON.parse(JSON.stringify(data.events||[])),completed=JSON.parse(JSON.stringify(data.completed||[])),resources=JSON.parse(JSON.stringify(data.resources||[])),materials=JSON.parse(JSON.stringify(data.materials||[]));
     const archiveId=id(),label=String(fd.get('archiveLabel')||defaultLabel).trim(),studyItems=completed.filter(item=>item.type==='study'||(!item.type&&String(item.eventId||'').startsWith('focus-')));
@@ -788,13 +892,25 @@ function archiveCurrentTerm(){
     const nextAcademicYear=String(fd.get('nextAcademicSession')||'').trim();
     if(!academicYearKey(nextAcademicYear)){toast('Enter the next academic year in a valid format, such as 2027/2028.');return}
     const results=collectAcademicResults(fd,true);if(!results)return;
-    const archive={id:archiveId,label,recordType:'term-archive',stage:data.profile.stage||'',level:data.profile.level||'',term:data.profile.term||'',institution:data.profile.institution||'',programme:data.profile.programme||'',archivedAt:Date.now(),profile:JSON.parse(JSON.stringify(data.profile)),courses,events,completed,resources,materials,materialText:JSON.parse(JSON.stringify(data.materialText||[])),materialRecords,studyPlan:data.studyPlan||null,results,resultsNotes:String(fd.get('resultsNotes')||'').trim()};
+    const archive={id:archiveId,label,recordType:'term-archive',stage:data.profile.stage||'',level:data.profile.level||'',term:data.profile.term||'',institution:data.profile.institution||'',programme:data.profile.programme||'',archivedAt:Date.now(),profile:JSON.parse(JSON.stringify(data.profile)),courses,events,completed,resources,materials,materialText:JSON.parse(JSON.stringify(data.materialText||[])),materialRecords,studyRecords:JSON.parse(JSON.stringify(data.studyRecords||[])),deadlines:JSON.parse(JSON.stringify(data.deadlines||[])),exams:JSON.parse(JSON.stringify(data.exams||[])),revisionTasks:JSON.parse(JSON.stringify(data.revisionTasks||[])),mockExamAttempts:JSON.parse(JSON.stringify(data.mockExamAttempts||[])),activeMockExam:JSON.parse(JSON.stringify(data.activeMockExam||null)),lastMockExam:JSON.parse(JSON.stringify(data.lastMockExam||null)),flashcards:JSON.parse(JSON.stringify(data.flashcards||[])),topicMastery:JSON.parse(JSON.stringify(data.topicMastery||{})),imports:JSON.parse(JSON.stringify(data.imports||{courses:[],timetable:[]})),studyPlan:data.studyPlan||null,results,resultsNotes:String(fd.get('resultsNotes')||'').trim()};
     const summary={...educationRecordSummary(archive),studyMinutes};
     try{await putStudioRecord('academicRecords',archive)}catch(error){toast('Could not save this term to local storage: '+(error.message||'storage is unavailable'));return}
+    const previousData=JSON.parse(JSON.stringify(data));
     syncPendingCarryovers(archive);
-    data.academicHistory.unshift(summary);data.courses=[];data.events=[];data.completed=[];data.resources=[];data.studyPlan=null;
+    data.academicHistory.unshift(summary);
+    data.courses=[];data.events=[];data.completed=[];data.studyRecords=[];data.deadlines=[];data.exams=[];data.revisionTasks=[];data.mockExamAttempts=[];data.activeMockExam=null;data.lastMockExam=null;data.topicMastery={};data.studyPlan=null;data.imports={courses:[],timetable:[]};
+    // Keep reusable assets available in the new period, but unlink them from archived courses.
+    const archivedCourseNames=new Map(courses.map(course=>[String(course.id),course.name||'']));
+    for(const collection of [data.resources,data.materials,data.materialText,data.personalDocuments,data.flashcards,data.roadmaps])for(const item of collection||[]){
+      if(item&&item.courseId){item.courseName=item.courseName||archivedCourseNames.get(String(item.courseId))||'';item.courseId=''}
+    }
     data.profile.stage=String(fd.get('nextStage')||data.profile.stage||'');data.profile.level=String(fd.get('nextLevel')||'').trim();data.profile.academicSession=nextAcademicYear;data.profile.term=String(fd.get('nextTerm')||'').trim();data.profile.setupAt=todayISO();
-    closeModal();save();toast('Term archived. Your next study period is ready.');
+    if(!save()){
+      data=previousData;
+      try{await deleteStudioRecord('academicRecords',archiveId)}catch{}
+      render();toast('The archive was saved, but Eduvia could not save the new-term state. No term rollover was applied.');return;
+    }
+    closeModal();toast('Term archived. Your next study period is ready.');
   });
 }
 async function viewAcademicRecord(recordId){
@@ -806,12 +922,18 @@ async function viewAcademicRecord(recordId){
     const plannedStudy=(record.events||[]).filter(event=>event.type==='study').map(event=>'<li>'+safe(event.title)+' · '+safe(STUDIO_DAYS[event.day]||'')+' '+safe(timeLabel(event.start))+'–'+safe(timeLabel(event.end))+'</li>').join('')||'<li>No planned study sessions were saved.</li>';
     const completed=(record.completed||[]).filter(item=>item.type==='study'||(!item.type&&String(item.eventId||'').startsWith('focus-'))).slice(-12).reverse().map(item=>'<li>'+safe(item.date||'')+' · '+Number(item.minutes||0)+' minutes'+(item.courseId?' · '+safe((record.courses||[]).find(course=>course.id===item.courseId)?.name||'Course'):'')+'</li>').join('')||'<li>No completed study sessions were saved.</li>';
     const resources=(record.resources||[]).map(resource=>'<li>'+safe(resource.title||'Saved note')+(resource.kind?' · '+safe(resource.kind):'')+'</li>').join('')||'<li>No tutorials or notes were saved.</li>';
+    const sessionRecords=(record.studyRecords||[]).map(item=>'<li>'+safe(item.date||'')+' · '+safe(item.type==='class'?'Class':'Study')+' · '+safe(item.title||'Learning session')+' · '+(item.quizAttempts||[]).length+' quiz attempts</li>').join('')||'<li>No detailed class reflections or study quiz records were saved.</li>';
     const materials=(record.materials||[]).map(material=>'<li>'+safe(material.name||'Course material')+' · '+Number(material.characters||0).toLocaleString()+' characters</li>').join('')||'<li>No course materials were saved.</li>';
+    const archivedDeadlines=(record.deadlines||[]).map(item=>'<li>'+safe(item.dueDate||'No date')+' · '+safe(item.title||'Deadline')+' · '+safe(item.kind||'Task')+(item.completed?' · Completed':'')+'</li>').join('')||'<li>No deadlines were saved.</li>';
+    const archivedExams=(record.exams||[]).map(item=>'<li>'+safe(item.date||'No date')+' · '+safe(item.title||'Examination')+'</li>').join('')||'<li>No examination dates were saved.</li>';
+    const archivedRevision=(record.revisionTasks||[]).map(item=>'<li>'+safe(item.date||'')+' · '+safe(item.title||'Revision task')+(item.completed?' · Completed':'')+'</li>').join('')||'<li>No revision tasks were saved.</li>';
+    const archivedMocks=(record.mockExamAttempts||[]).map(item=>'<li>'+safe(item.courseName||'Mock examination')+' · '+(item.questions||[]).length+' questions · '+Number(item.answeredCount||0)+' answered · '+recordDate(item.submittedAt)+'</li>').join('')||'<li>No completed mock examinations were saved.</li>';
+    const archivedMastery=Object.entries(record.topicMastery||{}).map(([key,item])=>'<li>'+safe(key)+' · '+safe(item.status||'Not started')+(item.score!==undefined&&item.score!==null?' · '+Number(item.score)+'%':'')+'</li>').join('')||'<li>No topic mastery records were saved.</li>';
     const resultRows=(record.results||[]).map(item=>'<div class="academic-result-view-row"><strong>'+safe(item.subject)+'</strong><span>'+safe(item.code||'')+'</span><b>'+safe(item.grade)+'</b>'+(item.carryover?'<small class="carryover-result-flag">Carryover · retake next academic year</small>':'')+'</div>').join('')||'<p class="preview-note">No results saved for this period yet.</p>';
     const isResultEntry=record.recordType==='results',recordProfile=record.profile||{},recordDetails=[record.institution||record.school||recordProfile.institution,(record.stage||recordProfile.stage)?stageLabel(record.stage||recordProfile.stage):'',record.programme||recordProfile.programme,record.level||recordProfile.level,record.term||recordProfile.term,record.academicYear].filter(Boolean).join(' · ');
     const actions='<div class="academic-record-actions"><button type="button" class="secondary-btn" data-action="edit-academic-results" data-id="'+safe(record.id)+'">Edit results</button>'+(isResultEntry?'<button type="button" class="danger-btn" data-action="delete-academic-record" data-id="'+safe(record.id)+'">Remove record</button>':'')+'</div>';
     const resultSection='<section class="academic-result-section"><div class="panel-head"><div><h3>Results</h3><p>'+Number((record.results||[]).length)+' subject or course results</p></div></div><div class="academic-result-view-list">'+resultRows+'</div>'+(record.resultsNotes?'<p class="academic-record-note">'+safe(record.resultsNotes)+'</p>':'')+actions+'</section>';
-    const archivedContent=isResultEntry?'':('<div class="form-grid"><section><h3>Courses</h3><ul>'+courseList+'</ul></section><section><h3>Classes</h3><ul>'+classes+'</ul></section></div><section><h3>Planned study sessions</h3><ul>'+plannedStudy+'</ul></section><section><h3>Recent completed study sessions</h3><ul>'+completed+'</ul></section><div class="form-grid"><section><h3>Tutorials and notes</h3><ul>'+resources+'</ul></section><section><h3>Course materials</h3><ul>'+materials+'</ul></section></div>');
+    const archivedContent=isResultEntry?'':('<div class="form-grid"><section><h3>Courses</h3><ul>'+courseList+'</ul></section><section><h3>Classes</h3><ul>'+classes+'</ul></section></div><section><h3>Planned study sessions</h3><ul>'+plannedStudy+'</ul></section><section><h3>Recent completed study sessions</h3><ul>'+completed+'</ul></section><section><h3>Class reflections and study quiz records</h3><ul>'+sessionRecords+'</ul></section><div class="form-grid"><section><h3>Tutorials and notes</h3><ul>'+resources+'</ul></section><section><h3>Course materials</h3><ul>'+materials+'</ul></section></div><div class="form-grid"><section><h3>Deadlines and assignments</h3><ul>'+archivedDeadlines+'</ul></section><section><h3>Examinations</h3><ul>'+archivedExams+'</ul></section></div><div class="form-grid"><section><h3>Revision plans</h3><ul>'+archivedRevision+'</ul></section><section><h3>Mock examinations</h3><ul>'+archivedMocks+'</ul></section></div><section><h3>Topic mastery</h3><ul>'+archivedMastery+'</ul><p>'+((record.flashcards||[]).length)+' flashcards were saved in this archive. Active review cards remain available in the current learning space.</p></section>');
     openModal(record.label||'Education record',recordDetails||'Saved '+recordDate(record.archivedAt||record.recordedAt),'<p class="preview-note">'+(isResultEntry?'Past education results saved on this device.':'This term’s results and study record are saved on this device.')+'</p>'+resultSection+archivedContent,'Done',()=>closeModal());
   }catch(error){toast('Could not open this saved term: '+(error.message||'storage is unavailable'))}
 }
@@ -835,7 +957,13 @@ function addPersonalDocument(file,courseIdOverride=''){
   openModal('Save a personal document',file.name,body,'Save document',async fd=>{
     const documentId=id(),metadata={id:documentId,title:String(fd.get('documentTitle')||file.name).trim(),name:file.name,category:String(fd.get('documentCategory')||'Other'),courseId:String(fd.get('documentCourseId')||''),type:file.type||'application/octet-stream',size:file.size,addedAt:Date.now()};
     try{await putStudioRecord('personalDocuments',{id:documentId,blob:file,name:file.name,type:metadata.type})}catch(error){toast('Could not save this file: '+(error.message||'local storage is unavailable'));return}
-    data.personalDocuments.unshift(metadata);window.eduTargetDocumentCourseId='';closeModal();save();toast('Document saved on this device');
+    data.personalDocuments.unshift(metadata);
+    if(!save()){
+      data.personalDocuments=data.personalDocuments.filter(item=>item.id!==documentId);
+      try{await deleteStudioRecord('personalDocuments',documentId)}catch{}
+      render();return;
+    }
+    window.eduTargetDocumentCourseId='';closeModal();toast('Document saved on this device');
   });
 }
 async function openPersonalDocument(documentId){
@@ -848,7 +976,11 @@ async function downloadPersonalDocument(documentId){
 }
 async function deletePersonalDocument(documentId){
   if(!confirm('Remove this document from your personal cabinet?'))return;
-  try{await deleteStudioRecord('personalDocuments',documentId);data.personalDocuments=(data.personalDocuments||[]).filter(docMeta=>docMeta.id!==documentId);save();toast('Document removed')}catch(error){toast('Could not remove this document: '+(error.message||'storage is unavailable'))}
+  const previous=data.personalDocuments||[],remaining=previous.filter(docMeta=>docMeta.id!==documentId);
+  data.personalDocuments=remaining;
+  if(!save()){data.personalDocuments=previous;render();return}
+  try{await deleteStudioRecord('personalDocuments',documentId);toast('Document removed')}
+  catch(error){toast('The document was removed from your cabinet, but its stored file could not be cleaned up: '+(error.message||'storage is unavailable'))}
 }
 async function listStudioRecords(storeName){const db=await studioDb();return await new Promise((resolve,reject)=>{const tx=db.transaction(storeName,'readonly'),req=tx.objectStore(storeName).getAll();req.onsuccess=()=>{db.close();resolve(req.result||[])};req.onerror=()=>{db.close();reject(req.error)}})}
 async function exportPortableBackup(){
@@ -856,12 +988,26 @@ async function exportPortableBackup(){
     if(!window.JSZip)await loadStudioScript('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js');
     const zip=new window.JSZip();zip.file('eduvia-data.json',JSON.stringify(data,null,2));
     const documents=zip.folder('personal-documents');
-    for(const metadata of data.personalDocuments||[]){const record=await getStudioRecord('personalDocuments',metadata.id);const blob=record?.blob||record?.file;if(blob)documents.file(metadata.id,blob)}
+    for(const metadata of data.personalDocuments||[]){
+      const record=await getStudioRecord('personalDocuments',metadata.id),blob=record?.blob||record?.file;
+      if(!blob)throw new Error('A saved personal document is missing from device storage: '+String(metadata.name||metadata.id)+'. Restore it before exporting.');
+      documents.file(String(metadata.id),blob);
+    }
     const archives=zip.folder('academic-records');
-    for(const metadata of data.academicHistory||[]){const record=await getStudioRecord('academicRecords',metadata.id);if(record)archives.file(metadata.id+'.json',JSON.stringify(record))}
+    for(const metadata of data.academicHistory||[]){
+      const record=await getStudioRecord('academicRecords',metadata.id);
+      if(!record)throw new Error('An archived academic record is missing from device storage: '+String(metadata.label||metadata.id)+'. Restore it before exporting.');
+      archives.file(String(metadata.id)+'.json',JSON.stringify(record));
+    }
     const materials=zip.folder('course-materials');
-    for(const metadata of data.materials||[]){const record=await getStudioRecord(STUDIO_STORE,metadata.id);if(record)materials.file(metadata.id+'.json',JSON.stringify(record))}
-    const bundle=await zip.generateAsync({type:'blob',compression:'STORE'});download(bundle,'eduvia-portable-backup-'+todayISO()+'.zip');toast('Portable backup ready. Keep the file private.');
+    for(const metadata of data.materials||[]){
+      const record=await getStudioRecord(STUDIO_STORE,metadata.id);
+      if(!record)throw new Error('Extracted course material is missing from device storage: '+String(metadata.name||metadata.id)+'. Restore it before exporting.');
+      materials.file(String(metadata.id)+'.json',JSON.stringify(record));
+    }
+    const bundle=await zip.generateAsync({type:'blob',compression:'STORE'});
+    download(bundle,'eduvia-portable-backup-'+todayISO()+'.zip');
+    toast('Portable backup ready. Keep the file private.');
   }catch(error){toast('Could not create the backup: '+(error.message||'storage is unavailable'))}
 }
 async function importPlannerJsonBackup(file){
@@ -899,6 +1045,24 @@ async function importPlannerJsonBackup(file){
   data=restored;currentPage='today';location.hash='today';save();
   toast('Planner JSON restored. Use the portable ZIP to move phone documents and full education records.');
 }
+async function replaceStudioStoresAtomically(groups){
+  const storeNames=Object.keys(groups);
+  const db=await studioDb();
+  return await new Promise((resolve,reject)=>{
+    let tx;
+    try{
+      tx=db.transaction(storeNames,'readwrite');
+      for(const storeName of storeNames){
+        const store=tx.objectStore(storeName);
+        store.clear();
+        for(const record of groups[storeName]||[])store.put(record);
+      }
+    }catch(error){db.close();reject(error);return}
+    tx.oncomplete=()=>{db.close();resolve()};
+    tx.onerror=()=>{db.close();reject(tx.error||new Error('The device could not save the restored files.'))};
+    tx.onabort=()=>{db.close();reject(tx.error||new Error('The file restore was cancelled by device storage.'))};
+  });
+}
 async function importPortableBackup(file){
   if(!file)return;
   if(file.size>500*1024*1024){toast('That backup is over 500 MB.');return}
@@ -907,32 +1071,117 @@ async function importPortableBackup(file){
     const zip=await window.JSZip.loadAsync(file),dataFile=zip.file('eduvia-data.json')||zip.file('daymark-data.json');
     if(!dataFile)throw new Error('This ZIP does not contain an Eduvia backup.');
     const imported=JSON.parse(await dataFile.async('string'));
-    if(!imported.profile)throw new Error('The backup does not contain a student profile.');
+    if(!imported||typeof imported!=='object'||Array.isArray(imported)||!imported.profile||typeof imported.profile!=='object'||Array.isArray(imported.profile)||!Array.isArray(imported.courses)||!Array.isArray(imported.events))throw new Error('The ZIP does not contain a complete Eduvia planner backup.');
+
+    const uniqueRecords=(items,label)=>{
+      if(!Array.isArray(items))throw new Error('The backup contains an invalid '+label+' list.');
+      const seen=new Set();
+      return items.map((item,index)=>{
+        if(!item||typeof item!=='object'||Array.isArray(item)||item.id===undefined||item.id===null||String(item.id).trim()==='')throw new Error('Backup '+label+' item '+(index+1)+' has no valid ID.');
+        const idValue=String(item.id);
+        if(seen.has(idValue))throw new Error('The backup contains duplicate '+label+' IDs: '+idValue+'.');
+        seen.add(idValue);
+        return {...item,id:idValue};
+      });
+    };
+    imported.academicHistory=uniqueRecords(imported.academicHistory||[],'academic record');
+    imported.personalDocuments=uniqueRecords(imported.personalDocuments||[],'personal document');
+    imported.materials=uniqueRecords(imported.materials||[],'course material');
+    imported.materialText=Array.isArray(imported.materialText)?imported.materialText:[];
+    const fallbackMaterials=new Map(imported.materialText.filter(item=>item&&item.id!==undefined).map(item=>[String(item.id),item]));
+
+    // Read and validate every attachment before writing to IndexedDB or replacing planner data.
+    const documentRecords=[];
+    for(const metadata of imported.personalDocuments){
+      const entry=zip.file('personal-documents/'+metadata.id);
+      if(!entry)throw new Error('The backup is missing the file for personal document "'+String(metadata.name||metadata.title||metadata.id)+'". Nothing was restored.');
+      const blob=await entry.async('blob');
+      documentRecords.push({id:metadata.id,blob:new Blob([blob],{type:metadata.type||''}),name:metadata.name||metadata.title||''});
+    }
+    const academicRecords=[];
+    for(const metadata of imported.academicHistory){
+      const entry=zip.file('academic-records/'+metadata.id+'.json');
+      if(!entry)throw new Error('The backup is missing archived academic record "'+String(metadata.label||metadata.id)+'". Nothing was restored.');
+      const record=JSON.parse(await entry.async('string'));
+      if(!record||typeof record!=='object'||Array.isArray(record)||String(record.id)!==metadata.id)throw new Error('An archived academic record in the backup is invalid. Nothing was restored.');
+      academicRecords.push(record);
+    }
+    const materialRecords=[];
+    const fallbackIds=new Set();
+    for(const metadata of imported.materials){
+      const entry=zip.file('course-materials/'+metadata.id+'.json');
+      let record;
+      if(entry){
+        record=JSON.parse(await entry.async('string'));
+      }else{
+        record=fallbackMaterials.get(metadata.id);
+        if(!record)throw new Error('The backup is missing extracted course material "'+String(metadata.name||metadata.id)+'". Nothing was restored.');
+        fallbackIds.add(metadata.id);
+      }
+      if(!record||typeof record!=='object'||Array.isArray(record)||String(record.id)!==metadata.id||typeof record.text!=='string')throw new Error('Extracted course material "'+String(metadata.name||metadata.id)+'" is invalid. Nothing was restored.');
+      materialRecords.push(record);
+    }
+
     if(!confirm('Replace the planner data on this device with the selected backup? This changes the current courses, history, and document list.'))return;
-    imported.academicHistory=Array.isArray(imported.academicHistory)?imported.academicHistory:[];
-    imported.personalDocuments=Array.isArray(imported.personalDocuments)?imported.personalDocuments:[];
-    imported.materials=Array.isArray(imported.materials)?imported.materials:[];
-    const importedDocs=[];
-    for(const metadata of imported.personalDocuments){const entry=zip.file('personal-documents/'+metadata.id);if(!entry)continue;const blob=await entry.async('blob');await putStudioRecord('personalDocuments',{id:metadata.id,blob:new Blob([blob],{type:metadata.type||''}),name:metadata.name});importedDocs.push(metadata)}
-    imported.personalDocuments=importedDocs;
-    const importedArchives=[];
-    for(const metadata of imported.academicHistory){const entry=zip.file('academic-records/'+metadata.id+'.json');if(!entry)continue;const record=JSON.parse(await entry.async('string'));await putStudioRecord('academicRecords',record);importedArchives.push(metadata)}
-    imported.academicHistory=importedArchives;
-    const importedMaterials=[];
-    for(const metadata of imported.materials){const entry=zip.file('course-materials/'+metadata.id+'.json');if(!entry)continue;await putStudioRecord(STUDIO_STORE,JSON.parse(await entry.async('string')));importedMaterials.push(metadata)}
-    imported.materials=importedMaterials;
-    data={...defaultData(),...imported,profile:{...defaultData().profile,...imported.profile}};
-    data.imports=data.imports||{courses:[],timetable:[]};
-    const keepDocs=new Set(data.personalDocuments.map(item=>item.id)),keepArchives=new Set(data.academicHistory.map(item=>item.id)),keepMaterials=new Set(data.materials.map(item=>item.id));
-    for(const [storeName,keep] of [['personalDocuments',keepDocs],['academicRecords',keepArchives],[STUDIO_STORE,keepMaterials]])for(const oldRecord of await listStudioRecords(storeName))if(!keep.has(oldRecord.id))await deleteStudioRecord(storeName,oldRecord.id);
-    currentPage='vault';location.hash='vault';save();toast('Portable backup restored on this device.');
+    const previousRaw=storageGet(STORE_KEY);
+    const restored={...defaultData(),...imported,profile:{...defaultData().profile,...imported.profile}};
+    restored.imports=restored.imports&&typeof restored.imports==='object'&&!Array.isArray(restored.imports)?restored.imports:{courses:[],timetable:[]};
+    restored.imports.courses=Array.isArray(restored.imports.courses)?restored.imports.courses:[];
+    restored.imports.timetable=Array.isArray(restored.imports.timetable)?restored.imports.timetable:[];
+    // Keep only a localStorage fallback for materials whose archive entry is absent.
+    // Every material, including localStorage-only fallback records, is restored into IndexedDB.
+    restored.materialText=[];
+
+    const storageError=storageSet(STORE_KEY,JSON.stringify(restored));
+    if(storageError)throw new Error('Could not save the restored planner data: '+(storageError.message||'device storage is unavailable')+'. No existing files were changed.');
+    try{
+      await replaceStudioStoresAtomically({
+        personalDocuments:documentRecords,
+        academicRecords,
+        [STUDIO_STORE]:materialRecords
+      });
+    }catch(error){
+      const rollbackError=previousRaw===null?storageRemove(STORE_KEY):storageSet(STORE_KEY,previousRaw);
+      if(rollbackError)throw new Error('File restore failed and the previous planner data could not be fully rolled back. Keep the safety copy: '+(error.message||'storage error'));
+      throw error;
+    }
+    data=restored;
+    currentPage='vault';location.hash='vault';
+    applyTheme();render();scheduleEventAlert();schedulePushSync();
+    toast('Portable backup restored on this device.');
   }catch(error){toast('Could not import this backup: '+(error.message||'file is invalid'))}
 }
-function clearData(){
+async function clearAllStudioRecords(){
+  if(!('indexedDB' in window))return;
+  const db=await studioDb(),stores=[STUDIO_STORE,'academicRecords','personalDocuments'];
+  await new Promise((resolve,reject)=>{
+    let settled=false;
+    const finish=(error)=>{
+      if(settled)return;settled=true;db.close();
+      if(error)reject(error);else resolve();
+    };
+    let tx;
+    try{
+      tx=db.transaction(stores,'readwrite');
+      for(const storeName of stores)tx.objectStore(storeName).clear();
+    }catch(error){finish(error);return}
+    tx.oncomplete=()=>finish();
+    tx.onerror=()=>finish(tx.error||new Error('The device could not clear uploaded files.'));
+    tx.onabort=()=>finish(tx.error||new Error('The device cancelled the file-storage clear operation.'));
+  });
+}
+async function clearData(){
   if(!confirm('This will remove your courses, class and study schedule, notes, education history, personal documents, progress, profile, and uploaded material from this device. Continue?'))return;
+  const previousData=data;
   data=defaultData();data.imports={courses:[],timetable:[]};data.materials=[];
-  try{indexedDB.deleteDatabase(STUDIO_DB)}catch{}
-  studioLesson=null;studioPractice=[];studioNotice='';currentPage='setup';save();toast('Planner data and uploaded material cleared');
+  studioLesson=null;studioPractice=[];studioNotice='';currentPage='setup';
+  if(!save()){data=previousData;render();return}
+  try{
+    await clearAllStudioRecords();
+    toast('Planner data and uploaded material cleared');
+  }catch(error){
+    toast('Planner data was cleared, but Eduvia could not clear uploaded file storage: '+(error.message||'storage is unavailable')+'. Try again or clear this site’s storage.');
+  }
 }
 document.addEventListener('change',e=>{
   if(e.target.id==='setupBackupFile'){const file=e.target.files?.[0];e.target.value='';if(file){if(file.type==='application/zip'||file.name.toLowerCase().endsWith('.zip'))importPortableBackup(file);else importPlannerJsonBackup(file)}}

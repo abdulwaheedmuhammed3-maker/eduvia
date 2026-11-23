@@ -16,7 +16,8 @@
     return new Intl.DateTimeFormat('en-NG',{day:'numeric',month:'short',year:'numeric'}).format(new Date(value+'T00:00:00'));
   }
   function categoryOptions(selected='Personal skill'){
-    return categories.map(category=>'<option value="'+safeText(category)+'" '+(category===selected?'selected':'')+'>'+safeText(category)+'</option>').join('');
+    const options=selected&&!categories.includes(selected)?[selected,...categories]:categories;
+    return options.map(category=>'<option value="'+safeText(category)+'" '+(category===selected?'selected':'')+'>'+safeText(category)+'</option>').join('');
   }
   function openRoadmapEditor(roadmap=null){
     const editing=Boolean(roadmap);

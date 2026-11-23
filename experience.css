@@ -2,6 +2,7 @@
 :root{
   --exp-bg:#f7f8fd;--exp-ink:#20243a;--exp-muted:#737c95;--exp-line:#e8eaf3;
   --exp-purple:#655ee0;--exp-purple-dark:#4f49c5;--exp-pink:#f9dce9;
+  --exp-card:var(--paper,#fff);--exp-soft:var(--surface-soft,#f7f8fd);
   --exp-blue:#d8edff;--exp-lime:#e5f4b8;--exp-orange:#ffe3c7;
   --exp-coral:#f9d8d3;--exp-shadow:0 12px 34px rgba(49,48,106,.065);
 }

@@ -57,3 +57,11 @@ test('keeps passage offsets aligned with the original extracted text', () => {
   const chunk = index.chunks[0];
   assert.equal(text.slice(chunk.start, chunk.end).trim(), 'Queues follow first in first out order.');
 });
+
+test('supports bounded retrieval batches above twenty passages for larger MCQ sets',()=>{
+  const text=Array.from({length:32},(_,index)=>'[SECTION Binary processing '+index+']\nBinary processing passage '+index+' explains how computer systems process structured data and verify each operation.').join('\n\n');
+  const index=engine.buildIndex(text);
+  const results=engine.search([{name:'Large course notes.txt',text,index}],'binary processing',32);
+  assert.equal(results.length,32);
+  assert.equal(engine.search([{name:'Large course notes.txt',text,index}],'binary processing',250).length,32);
+});

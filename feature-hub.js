@@ -191,6 +191,17 @@ data.mockExamAttempts=Array.isArray(data.mockExamAttempts)?data.mockExamAttempts
 data.activeMockExam=data.activeMockExam||null;
 data.lastMockExam=data.lastMockExam||null;
 let mockExamTicker=null;
+let mockAutosaveWarningShown=false;
+function persistMockExamDraft(){
+  const error=storageSet(STORE_KEY,JSON.stringify(data));
+  if(error){
+    if(!mockAutosaveWarningShown)toast('Your mock exam changes could not be saved. Export a backup or free some device storage before continuing.');
+    mockAutosaveWarningShown=true;
+    return false;
+  }
+  mockAutosaveWarningShown=false;
+  return true;
+}
 function renderMockExamHub(){
  const recent=data.mockExamAttempts.slice(0,5).map(attempt=>'<div class="schedule-row"><div class="schedule-time">'+esc(new Date(attempt.submittedAt).toLocaleDateString())+'</div><div class="schedule-row-main"><div><strong>'+esc(attempt.courseName||'Mock examination')+'</strong><span>'+attempt.questions.length+' questions · '+attempt.durationMinutes+' minutes · '+attempt.answeredCount+' answered</span></div></div><button class="text-btn" data-mock-action="open-result" data-id="'+esc(attempt.id)+'">Review →</button></div>').join('');
  const form='<details class="action-disclosure"><summary><div><strong>Start a timed mock examination</strong><p>Generate a paper from your course notes and topics</p></div><span class="disclosure-cta">＋ Start mock</span></summary><div class="disclosure-body"><form id="mockExamSetup" class="form-grid">'+
@@ -286,14 +297,14 @@ document.addEventListener('input',event=>{
  if(event.target.matches('[data-mock-answer]')&&data.activeMockExam){
   data.activeMockExam.answers=data.activeMockExam.answers||[];
   data.activeMockExam.answers[Number(event.target.dataset.mockAnswer)]=event.target.value;
-  try{localStorage.setItem(STORE_KEY,JSON.stringify(data))}catch{}
+  persistMockExamDraft();
  }
 });
 document.addEventListener('change',event=>{
  if(event.target.matches('[data-mock-rating]')&&data.lastMockExam){
   data.lastMockExam.review=data.lastMockExam.review||[];
   data.lastMockExam.review[Number(event.target.dataset.mockRating)]=event.target.value;
-  try{localStorage.setItem(STORE_KEY,JSON.stringify(data))}catch{}
+  persistMockExamDraft();
  }
 });
 document.addEventListener('click',event=>{
@@ -311,7 +322,7 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
   if(typeof originalCourses==='function'&&!window.eduCoursesFeatureWrapped){
     window.eduCoursesFeatureWrapped=true;
     window.renderCourses=function(){
-      const base=originalCourses().replace(/(<button class="icon-btn" title="Edit course" data-action="edit-course" data-id="([^"]+)">)/g,'<button class="text-btn" data-feature="open-mastery" data-course="$2">Topic mastery →</button>$1');
+      const base=originalCourses().replace(/(<button class="icon-btn" title="Edit (?:course|learning area)" data-action="edit-course" data-id="([^"]+)">)/g,'<button class="text-btn" data-feature="open-mastery" data-course="$2">Topic mastery →</button>$1');
       const tools='<section class="courses-integrated-tools"><div class="section-title-row"><h3>Learning and revision tools</h3><span>Organised with your courses</span></div>'+
         integratedSection('Tutorials and notes','Saved resources and study notes',renderTutorials())+
         integratedSection('Practice and tests','Generate and review questions',renderPractice())+
@@ -348,15 +359,30 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
     if(!window.JSZip)await loadStudioScript('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js');
     const zip=new window.JSZip();zip.file('eduvia-data.json',JSON.stringify(data,null,2));
     for(const [folder,store,metas] of [['personal-documents','personalDocuments',data.personalDocuments||[]],['academic-records','academicRecords',data.academicHistory||[]],['course-materials','materials',data.materials||[]]]){
-      const target=zip.folder(folder);for(const meta of metas){const record=await getStudioRecord(store,meta.id);if(!record)continue;if(store==='personalDocuments'){const blob=record.blob||record.file;if(blob)target.file(meta.id,blob)}else target.file(meta.id+'.json',JSON.stringify(record))}
+      const target=zip.folder(folder);
+      for(const meta of metas){
+        const record=await getStudioRecord(store,meta.id);
+        if(!record)throw new Error('The safety copy is incomplete because a saved record is missing: '+String(meta.name||meta.label||meta.id));
+        if(store==='personalDocuments'){
+          const blob=record.blob||record.file;
+          if(!blob)throw new Error('The safety copy is missing the file contents for '+String(meta.name||meta.id));
+          target.file(String(meta.id),blob);
+        }else target.file(String(meta.id)+'.json',JSON.stringify(record));
+      }
     }
-    const blob=await zip.generateAsync({type:'blob',compression:'STORE'});download(blob,'eduvia-safety-copy-before-restore-'+today()+'.zip');
+    const blob=await zip.generateAsync({type:'blob',compression:'STORE'});
+    download(blob,'eduvia-safety-copy-before-restore-'+today()+'.zip');
+  }
+  function isValidPlannerBackup(value){
+    return Boolean(value&&typeof value==='object'&&!Array.isArray(value)&&
+      value.profile&&typeof value.profile==='object'&&!Array.isArray(value.profile)&&
+      Array.isArray(value.courses)&&Array.isArray(value.events));
   }
   async function previewAndRestore(file,isZip){
     if(!file)return;let incoming,summary='';
     try{
-      if(isZip){if(!window.JSZip)await loadStudioScript('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js');const zip=await window.JSZip.loadAsync(file),entry=zip.file('eduvia-data.json')||zip.file('daymark-data.json');if(!entry)throw new Error('No Eduvia data file was found in this ZIP.');incoming=JSON.parse(await entry.async('string'));summary='Courses '+(incoming.courses||[]).length+' · documents '+(incoming.personalDocuments||[]).length+' · education records '+(incoming.academicHistory||[]).length+' · study materials '+(incoming.materials||[]).length;
-      }else{incoming=JSON.parse(await file.text());if(!incoming?.profile||!Array.isArray(incoming.courses)||!Array.isArray(incoming.events))throw new Error('This is not a valid Eduvia JSON backup.');summary='Courses '+incoming.courses.length+' · timetable items '+incoming.events.length+' · study records '+(incoming.studyRecords||[]).length;}
+      if(isZip){if(!window.JSZip)await loadStudioScript('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js');const zip=await window.JSZip.loadAsync(file),entry=zip.file('eduvia-data.json')||zip.file('daymark-data.json');if(!entry)throw new Error('No Eduvia data file was found in this ZIP.');incoming=JSON.parse(await entry.async('string'));if(!isValidPlannerBackup(incoming))throw new Error('The ZIP does not contain a complete Eduvia planner backup.');summary='Courses '+incoming.courses.length+' · documents '+(incoming.personalDocuments||[]).length+' · education records '+(incoming.academicHistory||[]).length+' · study materials '+(incoming.materials||[]).length;
+      }else{incoming=JSON.parse(await file.text());if(!isValidPlannerBackup(incoming))throw new Error('This is not a valid Eduvia JSON backup.');summary='Courses '+incoming.courses.length+' · timetable items '+incoming.events.length+' · study records '+(incoming.studyRecords||[]).length;}
     }catch(error){toast('Backup preview failed: '+error.message+'. Nothing was changed.');return}
     openModal('Preview backup','Selected file: '+file.name+' · '+summary,'<p>Eduvia will first download a portable safety copy of the data currently on this device.</p><p>The selected backup will only be restored after you confirm the next step. Keep both files private because they may contain personal documents.</p>','Continue to restore',async()=>{
       try{await safetyPortableZip();closeModal();if(isZip&&typeof originalImportZip==='function')await originalImportZip(file);else if(!isZip&&typeof originalImportJson==='function')await originalImportJson(file);else throw new Error('The existing restore handler is unavailable.');data.deadlines=Array.isArray(data.deadlines)?data.deadlines:[];data.flashcards=Array.isArray(data.flashcards)?data.flashcards:[];data.topicMastery=data.topicMastery&&typeof data.topicMastery==='object'?data.topicMastery:{};save();}
@@ -375,12 +401,21 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
       const reminders=base(now),until=now.getTime()+90*86400000;
       for(const d of data.deadlines||[]){if(d.completed||!d.dueDate)continue;const at=new Date(d.dueDate+'T09:00:00').getTime()-86400000;if(at>now.getTime()&&at<=until)reminders.push({id:'deadline:'+d.id,title:'Deadline tomorrow',body:String(d.title)+' is due tomorrow.',fireAt:at})}
       for(const d of data.personalDocuments||[]){if(!d.expiryDate)continue;const lead=Math.max(0,Number(d.remindDays)||14),at=new Date(d.expiryDate+'T09:00:00').getTime()-lead*86400000;if(at>now.getTime()&&at<=until)reminders.push({id:'document-expiry:'+d.id,title:'Document expiry coming up',body:String(d.title||d.name)+' expires on '+d.expiryDate+'.',fireAt:at})}
-      return reminders.sort((a,b)=>a.fireAt-b.fireAt);
+      const unique=new Map();for(const reminder of reminders)unique.set(String(reminder.id),reminder);return [...unique.values()].sort((a,b)=>a.fireAt-b.fireAt).slice(0,600);
     };
   }
-  function notifyExpiringDocuments(){
+  async function notifyExpiringDocuments(){
     if(!('Notification' in window)||Notification.permission!=='granted')return;
-    const now=new Date();for(const d of data.personalDocuments||[]){if(!d.expiryDate)continue;const days=Math.ceil((new Date(d.expiryDate+'T23:59:59').getTime()-now.getTime())/86400000),lead=Math.max(0,Number(d.remindDays)||14);if(days>lead)continue;const key='eduvia-doc-expiry:'+d.id+':'+d.expiryDate;if(localStorage.getItem(key)==='1')continue;localStorage.setItem(key,'1');showStudyNotification(days<0?'Document has expired':'Document expiry reminder',String(d.title||d.name)+' '+(days<0?'expired':'expires')+(days===0?' today':days===1?' tomorrow':' in '+days+' days')+'.');}
+    const now=new Date();
+    for(const d of data.personalDocuments||[]){
+      if(!d.expiryDate)continue;
+      const days=Math.ceil((new Date(d.expiryDate+'T23:59:59').getTime()-now.getTime())/86400000),lead=Math.max(0,Number(d.remindDays)||14);
+      if(days>lead)continue;
+      const key='eduvia-doc-expiry:'+d.id+':'+d.expiryDate;
+      if(storageGet(key)==='1')continue;
+      const shown=await showStudyNotification(days<0?'Document has expired':'Document expiry reminder',String(d.title||d.name)+' '+(days<0?'expired':'expires')+(days===0?' today':days===1?' tomorrow':' in '+days+' days')+'.');
+      if(shown)storageSet(key,'1');
+    }
   }
   window.addEventListener('focus',notifyExpiringDocuments);setTimeout(notifyExpiringDocuments,1500);
   document.addEventListener('click',async event=>{
@@ -394,7 +429,7 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
     if(action==='rate-card'){const card=data.flashcards.find(x=>x.id===idValue);if(card){const next=reviewInterval(card,b.dataset.known==='1');Object.assign(card,next);card.lastReviewed=Date.now();save();}return}
     if(action==='delete-card'){data.flashcards=data.flashcards.filter(x=>x.id!==idValue);save();return}
     if(action==='open-mastery'){window.eduMasteryCourse=b.dataset.course;setPage('mastery');return}
-    if(action==='edit-document-meta'){const doc=data.personalDocuments.find(x=>x.id===idValue);if(!doc)return;openModal('Document tags and expiry reminder','Add search tags and an optional expiry date.','<label class="form-field">Tags<input name="tags" value="'+esc((doc.tags||[]).join(', '))+'" placeholder="ID, registration, results"></label><label class="form-field">Link to course'+selectCourse('courseId',doc.courseId||'')+'</label><label class="form-field">Expiry date<input name="expiryDate" type="date" value="'+esc(doc.expiryDate||'')+'"></label><label class="form-field">Reminder lead time<select name="remindDays"><option value="30">30 days before</option><option value="14">14 days before</option><option value="7">7 days before</option><option value="1">1 day before</option></select></label>','Save',fd=>{doc.tags=fd.get('tags').split(',').map(x=>x.trim()).filter(Boolean);doc.courseId=String(fd.get('courseId')||'');doc.expiryDate=fd.get('expiryDate');doc.remindDays=Number(fd.get('remindDays')||14);save()});return}
+    if(action==='edit-document-meta'){const doc=data.personalDocuments.find(x=>x.id===idValue);if(!doc)return;const remindDays=[30,14,7,1].includes(Number(doc.remindDays))?Number(doc.remindDays):14;const remindOptions=[30,14,7,1].map(days=>'<option value="'+days+'" '+(remindDays===days?'selected':'')+'>'+days+' days before</option>').join('');openModal('Document tags and expiry reminder','Add search tags and an optional expiry date.','<label class="form-field">Tags<input name="tags" value="'+esc((doc.tags||[]).join(', '))+'" placeholder="ID, registration, results"></label><label class="form-field">Link to course'+selectCourse('courseId',doc.courseId||'')+'</label><label class="form-field">Expiry date<input name="expiryDate" type="date" value="'+esc(doc.expiryDate||'')+'"></label><label class="form-field">Reminder lead time<select name="remindDays">'+remindOptions+'</select></label>','Save',fd=>{doc.tags=fd.get('tags').split(',').map(x=>x.trim()).filter(Boolean);doc.courseId=String(fd.get('courseId')||'');doc.expiryDate=fd.get('expiryDate');doc.remindDays=Number(fd.get('remindDays')||14);save()});return}
     if(action==='export-backup'){try{const snap=await portableSnapshot();await downloadBackup(snap);toast('Portable backup downloaded.')}catch(e){toast('Backup failed: '+e.message)}return}
   });
   document.addEventListener('submit',async e=>{
@@ -438,8 +473,7 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
     }
   });
   document.addEventListener('input',e=>{if(e.target.id==='documentSearch'){const q=e.target.value.toLowerCase();document.querySelectorAll('[data-doc-search]').forEach(el=>el.hidden=!el.dataset.docSearch.includes(q));}});
-  document.addEventListener('change',e=>{
-  function categoryKey(value){return String(value??'').trim().toLocaleLowerCase().replace(/\\s+/g,' ')}
+  function categoryKey(value){return String(value??'').trim().toLocaleLowerCase().replace(/\s+/g,' ')}
   function courseMatchKeys(course){return [categoryKey(course?.code),categoryKey(course?.name)].filter(Boolean)}
   function eventMatchKey(event,courseId=event?.courseId){return [event?.type,event?.date||'weekly',event?.day??'',event?.start,event?.end,categoryKey(event?.title),categoryKey(event?.location),courseId||''].join('|')}
   function exportCategoryBackup(kind){
@@ -459,7 +493,7 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
           for(const course of source.items){const match=byId.get(String(course.id))||courseMatchKeys(course).map(key=>byKey.get(key)).find(Boolean);if(match){duplicates++;continue}const copy={...course,id:String(course.id)};data.courses.push(copy);byId.set(String(copy.id),copy);for(const key of courseMatchKeys(copy))if(!byKey.has(key))byKey.set(key,copy);added++}
         }else{
           const refs=new Map((Array.isArray(source.courseReferences)?source.courseReferences:[]).map(c=>[String(c.id),c])),courses=data.courses||[];
-          const resolveCourse=oldId=>{if(!oldId)return '';const exact=courses.find(c=>String(c.id)===String(oldId));if(exact)return exact.id;const ref=refs.get(String(oldId)),key=courseMatchKey(ref);return courses.find(c=>key&&courseMatchKey(c)===key)?.id||''};
+          const resolveCourse=oldId=>{if(!oldId)return '';const exact=courses.find(c=>String(c.id)===String(oldId));if(exact)return exact.id;const ref=refs.get(String(oldId)),keys=courseMatchKeys(ref);return courses.find(c=>courseMatchKeys(c).some(key=>keys.includes(key)))?.id||''};
           const ids=new Set((data.events||[]).map(e=>String(e.id))),signatures=new Set((data.events||[]).map(e=>eventMatchKey(e,e.courseId)));
           for(const event of source.items){const mappedCourse=resolveCourse(event.courseId),copy={...event,id:String(event.id),courseId:mappedCourse};if(event.courseId&&!mappedCourse)unlinked++;const signature=eventMatchKey(copy,mappedCourse);if(ids.has(String(copy.id))||signatures.has(signature)){duplicates++;continue}data.events.push(copy);ids.add(String(copy.id));signatures.add(signature);added++}
         }
@@ -467,6 +501,8 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
       }catch(error){toast('Restore failed: '+(error.message||'unknown error'))}
     });
   }
+
+  document.addEventListener('change',e=>{
     if(e.target.id==='coursesCategoryBackupFile'||e.target.id==='timetableCategoryBackupFile'){const file=e.target.files?.[0],kind=e.target.id==='coursesCategoryBackupFile'?'courses':'timetable';e.target.value='';if(file)importCategoryBackup(file,kind);return}
     if(e.target.id==='masteryCourseSelect'){window.eduMasteryCourse=e.target.value;render();return}
     if(e.target.matches('[data-feature="mastery-status"]')){const key=masteryKey(e.target.dataset.course,e.target.dataset.topic);data.topicMastery[key]=data.topicMastery[key]||{};data.topicMastery[key].status=e.target.value;save();return}

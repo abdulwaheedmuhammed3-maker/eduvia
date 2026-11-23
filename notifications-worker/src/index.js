@@ -150,6 +150,11 @@ async function handleFetch(request, env) {
     const now = Date.now();
     const reminders = body.reminders.map(item => normalizeReminder(item, now));
     if (reminders.some(item => !item)) return json({ error: 'One or more reminder times or labels are invalid.' }, 400, headers);
+    const reminderIds = new Set();
+    for (const reminder of reminders) {
+      if (reminderIds.has(reminder.id)) return json({ error: 'The schedule contains duplicate reminder IDs.' }, 400, headers);
+      reminderIds.add(reminder.id);
+    }
     reminders.sort((a, b) => a.id.localeCompare(b.id));
     const hash = await digestSchedule(reminders);
     const subscriptionJson = JSON.stringify(body.subscription);
@@ -157,15 +162,19 @@ async function handleFetch(request, env) {
     if (current?.schedule_hash === hash && current.subscription_json === subscriptionJson) {
       return json({ ok: true, synced: reminders.length, unchanged: true }, 200, headers);
     }
-    await env.DB.prepare('INSERT INTO devices (device_id, subscription_json, schedule_hash, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(device_id) DO UPDATE SET subscription_json = excluded.subscription_json, schedule_hash = excluded.schedule_hash, updated_at = excluded.updated_at')
-      .bind(id, subscriptionJson, hash, now).run();
+    // Keep the old hash until every replacement reminder is written. If a delete
+    // or batch insert fails, the next sync must retry instead of treating a partial
+    // schedule as complete. New devices start with an empty hash for the same reason.
+    await env.DB.prepare('INSERT INTO devices (device_id, subscription_json, schedule_hash, updated_at) VALUES (?, ?, \'\', ?) ON CONFLICT(device_id) DO UPDATE SET subscription_json = excluded.subscription_json, updated_at = excluded.updated_at')
+      .bind(id, subscriptionJson, now).run();
     if (current?.schedule_hash !== hash) {
-      await env.DB.prepare("DELETE FROM reminders WHERE device_id = ? AND status IN ('pending', 'sending')").bind(id).run();
+      await env.DB.prepare('DELETE FROM reminders WHERE device_id = ?').bind(id).run();
       for (let offset = 0; offset < reminders.length; offset += 40) {
         const statements = reminders.slice(offset, offset + 40).map(item => env.DB.prepare('INSERT INTO reminders (device_id, reminder_id, title, body, fire_at, status, attempt_count, delivered_at) VALUES (?, ?, ?, ?, ?, \'pending\', 0, NULL)')
           .bind(id, item.id, item.title, item.body, item.fireAt));
         if (statements.length) await env.DB.batch(statements);
       }
+      await env.DB.prepare('UPDATE devices SET schedule_hash = ? WHERE device_id = ?').bind(hash, id).run();
     }
     return json({ ok: true, synced: reminders.length }, 200, headers);
   }
@@ -233,7 +242,14 @@ async function sendDueReminders(env) {
 export default {
   async fetch(request, env) {
     try { return await handleFetch(request, env); }
-    catch (error) { return json({ error: error?.message || 'The notification service could not complete that request.' }, error?.status || 500, corsHeaders(request, env) || {}); }
+    catch (error) {
+      const expected = error instanceof RequestError;
+      return json(
+        { error: expected ? error.message : 'The notification service could not complete that request.' },
+        expected ? error.status : 500,
+        corsHeaders(request, env) || {}
+      );
+    }
   },
   async scheduled(_event, env, ctx) {
     ctx.waitUntil(sendDueReminders(env));

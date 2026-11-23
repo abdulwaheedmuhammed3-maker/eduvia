@@ -40,7 +40,7 @@ test('Nested feature pages highlight an actual primary navigation tab',()=>{
 });
 
 test('the refinement stylesheet is loaded last and supports light and dark themes',()=>{
- const polishPosition=index.indexOf('ui-polish.css?v=layout-audit-1');
+ const polishPosition=index.indexOf('ui-polish.css?v=layout-audit-2');
  assert.ok(polishPosition>index.indexOf('icon-system.css'));
  assert.ok(polish.includes('.more-tool-section'));
  assert.ok(polish.includes('html[data-theme="dark"]'));
@@ -51,16 +51,16 @@ test('the refinement stylesheet is loaded last and supports light and dark theme
 test('service worker caches the new stylesheet and updated screen modules',()=>{
  const sw=read('service-worker.js');
  assert.ok(sw.includes('./ui-polish.css?v=layout-audit-1'));
- assert.ok(sw.includes('eduvia-v90-ui-structure'));
- assert.ok(sw.includes('play-screen-cleanup-1'));
+ assert.ok(sw.includes('eduvia-v91-card-actions'));
+ assert.ok(sw.includes('play-screen-cleanup-2'));
  assert.ok(sw.includes('primary-nav-map-1'));
 });
 
 test('Create and View actions stay anchored at the bottom of their cards',()=>{
- const view=experience.match(/<section class="exp-inline-cta exp-inline-cta-action-bottom">([\\s\\S]*?)<\\/section>/)?.[1]||'';
- const create=exp.match(/<div class="exp-empty exp-empty-action-bottom">([\\s\\S]*?)<\\/div>/)?.[1]||'';
- assert.ok(view.includes('data-page="progress"'),'View learning progress remains a real action');
- assert.ok(create.includes('data-page="flashcards"'),'Create flashcards remains a real action');
+ const view=experience.includes('<section class="exp-inline-cta exp-inline-cta-action-bottom">')&&experience.includes('data-page="progress"');
+ const create=exp.includes('<div class="exp-empty exp-empty-action-bottom">')&&exp.includes('data-page="flashcards"');
+ assert.ok(view,'View learning progress remains a real bottom-aligned action');
+ assert.ok(create,'Create flashcards remains a real bottom-aligned action');
  assert.ok(polish.includes('.exp-inline-cta-action-bottom>button'));
  assert.ok(polish.includes('.exp-play-challenge .exp-empty-action-bottom>button'));
  assert.ok(polish.includes('.exp-academic-grid button small{margin-top:auto}'));

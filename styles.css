@@ -839,7 +839,7 @@ html[data-theme="dark"] .integrated-section-toggle{background:#27352c;color:#9ec
 .action-disclosure>summary::-webkit-details-marker{display:none}
 .action-disclosure>summary h3,.action-disclosure>summary strong{margin:0}
 .action-disclosure>summary p{margin:5px 0 0;color:var(--muted);font-size:.9rem}
-.disclosure-cta{flex:0 0 auto;border-radius:12px;background:var(--surface-2,var(--panel));padding:10px 14px;font-weight:700;color:var(--accent)}
+.disclosure-cta{flex:0 0 auto;border-radius:12px;background:var(--surface-soft,var(--paper,#fff));padding:10px 14px;font-weight:700;color:var(--accent-purple,var(--green,#655ee0))}
 .disclosure-body{padding:0 16px 16px}
 .action-disclosure[open]>summary{border-bottom:1px solid var(--line)}
 @media(max-width:600px){.action-disclosure>summary{padding:14px}.disclosure-cta{padding:9px 11px}}

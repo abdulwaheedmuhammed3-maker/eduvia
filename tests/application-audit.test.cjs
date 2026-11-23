@@ -202,3 +202,13 @@ test('Android APK is built for pull requests but the beta release is published o
  assert.ok(workflow.includes('./gradlew assembleDebug'));
  assert.ok(workflow.includes('actions/upload-artifact@v7'));
 });
+
+test('a changed notification schedule removes sent and failed rows before inserting replacement IDs',()=>{
+ const worker=read('notifications-worker/src/index.js');
+ const start=worker.indexOf("if (request.method === 'POST' && url.pathname === '/v1/schedule')");
+ const end=worker.indexOf("if (request.method === 'POST' && url.pathname === '/v1/test')",start);
+ const schedule=worker.slice(start,end);
+ assert.ok(schedule.includes("DELETE FROM reminders WHERE device_id = ?"));
+ assert.ok(!schedule.includes("status IN ('pending', 'sending')"));
+ assert.ok(schedule.indexOf('DELETE FROM reminders')<schedule.indexOf('await env.DB.batch(statements)'));
+});

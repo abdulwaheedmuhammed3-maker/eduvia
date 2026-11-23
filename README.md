@@ -53,7 +53,7 @@ The same HTML/CSS/JavaScript entry flow is included in the website and the Capac
 
 ## Android APK
 
-GitHub Actions builds an installable Android beta APK from the main branch and publishes it on the Eduvia Android beta release page. It is debug-signed for direct installation and is not a Google Play release. On the first run, open **Settings → Eduvia phone notifications** and allow notification and exact-alarm access. To take a document photo, use a **Take a photo** button in the study studio or document cabinet.
+GitHub Actions builds an installable Android beta APK from the main branch and publishes it on the Eduvia Android beta release page. It is debug-signed for direct installation and is not a Google Play release. On first-time profile setup, choose **Enable alerts** on the one-time notification invitation. The operating system then asks for notification and exact-alarm access. If you dismiss the invitation or want to change this later, use **Settings → Eduvia phone notifications**. To take a document photo, use a **Take a photo** button in the study studio or document cabinet.
 
 ## Install the web app on iPhone
 

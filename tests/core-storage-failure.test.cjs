@@ -12,8 +12,8 @@ test('course notes, course tasks and learning resources are not reported saved a
 });
 
 test('course and timetable create/edit flows restore prior state on a failed save',()=>{
- assert.ok(app.includes("const previousCourses=data.courses;if(course)data.courses=data.courses.map(x=>x.id===course.id?obj:x);else data.courses.push(obj);if(!save()){data.courses=previousCourses;return}"));
- assert.ok(app.includes("const previousEvents=data.events,previousSelectedDate=selectedDate;"));
+ assert.ok(app.includes("const previousCourses=[...data.courses];if(course)data.courses=data.courses.map(x=>x.id===course.id?obj:x);else data.courses.push(obj);if(!save()){data.courses=previousCourses;return}"));
+ assert.ok(app.includes("const previousEvents=[...data.events],previousSelectedDate=selectedDate;"));
  assert.ok(app.includes("if(!save()){data.events=previousEvents;selectedDate=previousSelectedDate;return}closeModal();toast(event?'Timetable updated':'Added to your timetable')"));
 });
 

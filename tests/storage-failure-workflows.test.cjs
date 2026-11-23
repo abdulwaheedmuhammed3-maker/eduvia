@@ -65,3 +65,27 @@ test('material deletion waits for IndexedDB removal and restores the file if pla
  assert.ok(rollback>metadataRemoval);
  assert.ok(studio.slice(rollback,rollback+260).includes('await putStudioRecord(STUDIO_STORE,stored)'));
 });
+
+ 
+test('recorded lecture deletion confirms file deletion before metadata removal and restores the file on save failure',()=>{
+ const start=studio.indexOf('async remove(lectureId)');
+ const end=studio.indexOf('\n  }\n};',start)+4;
+ const remove=studio.slice(start,end);
+ assert.ok(remove.includes('const storedRecord=storedInIndexedDb?await readMaterial(String(lectureId)):null'));
+ assert.ok(remove.indexOf('await removeStoredMaterial(String(lectureId))')<remove.indexOf('data.materials.splice(index,1)'));
+ assert.ok(remove.includes('if(!save()){'));
+ assert.ok(remove.includes('await putStudioRecord(STUDIO_STORE,storedRecord)'));
+ assert.ok(remove.includes('data.materials.splice(index,0,removed)'));
+ assert.ok(remove.includes('data.materialText.splice(Math.max(0,fallbackIndex),0,fallback)'));
+});
+
+test('restored Google source references are revalidated before becoming clickable links',()=>{
+ const lecture=fs.readFileSync('lecture-intelligence.js','utf8');
+ const start=lecture.indexOf('function sourceLinkMarkup(value)');
+ const end=lecture.indexOf('\n  }',start)+4;
+ const helper=lecture.slice(start,end);
+ assert.ok(helper.includes('validateGoogleSource(value)'));
+ assert.ok(helper.includes('catch{return \'\'}'));
+ assert.ok(helper.includes('escapeHtml(trusted)'));
+ assert.ok(!helper.includes('escapeHtml(value)'));
+});

@@ -63,3 +63,17 @@ test('Create and View actions stay anchored at the bottom of their cards',()=>{
  assert.ok(polish.includes('.exp-play-challenge .exp-empty-action-bottom>button'));
  assert.ok(polish.includes('.exp-academic-grid button small{margin-top:auto}'));
 });
+
+
+test('Ask Eduvia prompt suggestions use a compact responsive grid',()=>{
+ const expansion=read('learning-expansions.js');
+ const css=read('experience.css');
+ assert.ok(expansion.includes('class="exp-ask-prompt-panel"'));
+ assert.ok(expansion.includes('class="exp-ask-prompt-grid"'));
+ assert.ok(expansion.includes('data-ask-prompt='));
+ assert.ok(css.includes('.exp-ask-prompt-grid{'));
+ assert.ok(css.includes('grid-template-columns:repeat(4,minmax(0,1fr))'));
+ assert.ok(css.includes('grid-template-columns:repeat(2,minmax(0,1fr))'));
+ assert.ok(css.includes('min-height:40px'));
+ assert.ok(!expansion.includes('class="exp-play-actions">\'+[\'Define a key term\''),'Ask prompts must not reuse the full-width Play action layout');
+});

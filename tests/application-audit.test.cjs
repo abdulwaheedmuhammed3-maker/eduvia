@@ -92,9 +92,9 @@ test('changed assets are versioned identically in HTML and the new offline cache
   if(asset!=='styles.css'&&asset!=='experience.css')assert.ok(sw.includes('./'+url));
  }
  assert.ok(html.includes('styles.css?v=entry-flow-4&rev=application-audit-1'));
- assert.ok(html.includes('first-run-alerts-2'));
+ assert.ok(html.includes('first-run-alerts-3'));
  assert.ok(html.includes('first-run-alert-optin-2'));
- assert.ok(sw.includes('first-run-alerts-2'));
+ assert.ok(sw.includes('first-run-alerts-3'));
  assert.ok(sw.includes('first-run-alert-optin-2'));
  assert.ok(sw.includes('./styles.css?v=entry-flow-4&rev=application-audit-1'));
  assert.ok(workerCacheVersion(sw)==='eduvia-v96-full-application-audit');
@@ -248,7 +248,7 @@ test('Clear planner data waits for all IndexedDB file stores to clear before rep
 
 test('canonical default data initializes every feature store used after a clear/reset',()=>{
  const app=read('app.js');
- const match=app.match(/const defaultData = \(\) => \(\{([\\s\\S]*?)\}\);/);
+ const match=app.match(/const defaultData = \(\) => \(\{([\s\S]*?)\}\);/);
  assert.ok(match,'defaultData factory must remain directly inspectable');
  for(const field of ['activeMockExam','deadlines','flashcards','topicMastery','materials','materialText','imports','pendingCarryovers','studyPlan','askHistory','discoverSavedGuides','discoverReadHistory','playChallengeAttempts','wellnessCheckins']){
   assert.ok(new RegExp('(?:^|,)'+field+':').test(match[1]),'defaultData is missing '+field);

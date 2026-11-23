@@ -33,7 +33,7 @@ test('first-run invitation is shown once and has a user-controlled enable action
 test('browser and Android permission requests remain behind an explicit user action',()=>{
  const enable=app.slice(app.indexOf('async function enableNotifications()'),app.indexOf('function disableNotifications()'));
  assert.ok(enable.includes('Notification.requestPermission()'));
- assert.ok(enable.includes('window.EduviaNative.enableAlerts'));
+ assert.ok(enable.includes('window.EduviaNative?.enableAlerts'));
  assert.ok(native.includes('async enableAlerts(reminders)'));
  assert.ok(native.includes('notificationAccess(true)'));
  const resume=native.slice(native.indexOf("App.addListener('appStateChange'"),native.indexOf("App.addListener('appRestoredResult'"));

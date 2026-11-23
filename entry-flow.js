@@ -388,6 +388,9 @@
       if (error) error.textContent = 'Eduvia could not save your learning profile. Check your device storage and try again.';
       return;
     }
+    if (typeof window.eduMarkFirstLaunchNotificationsPending === 'function') {
+      window.eduMarkFirstLaunchNotificationsPending();
+    }
     if (typeof applyTheme === 'function') applyTheme();
     if (typeof setPage === 'function') setPage('today');
     else if (typeof render === 'function') render();
@@ -403,7 +406,14 @@
 
   function dismissExistingUserSplash() {
     root.classList.add('is-leaving');
-    window.setTimeout(() => root.remove(), 430);
+    window.setTimeout(() => {
+      root.remove();
+      // A learner who completed setup just before closing Eduvia may still have
+      // a pending invitation; legacy installs are already marked as seen.
+      if (typeof window.eduPromptFirstLaunchNotifications === 'function') {
+        window.eduPromptFirstLaunchNotifications();
+      }
+    }, 430);
   }
 
   root.addEventListener('click', event => {

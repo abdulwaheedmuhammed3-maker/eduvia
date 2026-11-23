@@ -397,7 +397,23 @@ window.eduPromptFirstLaunchNotifications=promptFirstLaunchNotifications;
 window.eduMarkFirstLaunchNotificationsPending=markFirstLaunchNotificationsPending;
 
 async function disableNotifications(){if(window.EduviaNative?.isNative){try{await window.EduviaNative.disableAlerts();storageRemove(NATIVE_ALERTS_ENABLED_KEY);updatePhoneNotificationButton(false);clearTimeout(eventAlertTimer);clearTimeout(window.daymarkReminder);render();toast('Eduvia alarms and notifications are off on this phone.')}catch(error){toast(error.message||'Eduvia could not turn off phone alerts.')}return}const token=storageGet(PUSH_TOKEN_KEY);try{if(token)await pushApi('/v1/unsubscribe',{method:'POST'},token);if('serviceWorker'in navigator){const registration=await navigator.serviceWorker.ready,subscription=await registration.pushManager.getSubscription();if(subscription)await subscription.unsubscribe()}storageRemove(PUSH_TOKEN_KEY);storageRemove(PUSH_ENABLED_KEY);storageSet(PUSH_DISABLED_KEY,'1');updatePhoneNotificationButton(false);clearTimeout(eventAlertTimer);clearTimeout(window.daymarkReminder);render();toast('Eduvia phone notifications are off.')}catch(error){toast(error.message||'Could not turn off phone notifications. Try again when online.')}}
-function deleteCourse(courseId){if(!confirm('Remove this course and its linked timetable items?'))return;data.courses=data.courses.filter(c=>c.id!==courseId);data.events=data.events.filter(e=>e.courseId!==courseId);data.resources=data.resources.filter(r=>r.courseId!==courseId);save();toast('Course removed')}
+function deleteCourse(courseId){
+ const course=data.courses.find(item=>String(item.id)===String(courseId));
+ if(!course)return;
+ if(!confirm('Remove '+course.name+' and its timetable entries? Your notes, uploaded files, documents, deadlines, flashcards, study records, exams and roadmaps will be kept as unlinked personal records.'))return;
+ const unlink=record=>{
+  if(!record||String(record.courseId||'')!==String(courseId))return;
+  record.courseName=record.courseName||course.name;
+  record.courseId='';
+ };
+ data.events=data.events.filter(event=>String(event.courseId||'')!==String(courseId));
+ for(const collection of [data.resources,data.deadlines,data.personalDocuments,data.materials,data.materialText,data.studyRecords,data.flashcards,data.exams,data.revisionTasks,data.roadmaps]){
+  if(Array.isArray(collection))collection.forEach(unlink);
+ }
+ data.courses=data.courses.filter(item=>String(item.id)!==String(courseId));
+ if(String(selectedCourseId)===String(courseId)){selectedCourseId='';currentPage='courses';location.hash='courses'}
+ save();toast('Course removed. Its learning records were kept and unlinked.');
+}
 function deleteEvent(eventId){data.events=data.events.filter(e=>e.id!==eventId);save();toast('Timetable item removed')}
 function clearData(){if(!confirm('This will permanently remove your learning areas, schedule, resources, and progress from this device. Download a backup first if you want to keep them.'))return;data=defaultData();if(!save())return;toast('Learning data cleared')}
 

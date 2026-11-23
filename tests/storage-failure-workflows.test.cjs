@@ -30,12 +30,23 @@ test('carryover activation and formal learner profile updates are rolled back on
  assert.ok(studio.includes("if(!save()){data.profile=previousProfile;render();return}\n  toast('Your learning profile has been saved.')"));
 });
 
-test('class and study reflections are only marked complete after successful persistence',()=>{
- assert.ok(studio.includes('const previousRecords=[...(data.studyRecords||[])],previousCompleted=[...(data.completed||[])]'));
- assert.ok(studio.includes('if(!save()){data.studyRecords=previousRecords;data.completed=previousCompleted;return null}closeModal();return record'));
- assert.ok(studio.includes('const record=saveCompletedSession(event,date,{attendance'));
- assert.ok(studio.includes('if(!record)return;\n      toast(attended?'));
- assert.ok(studio.includes('if(!record)return;\n    toast(\'Study reflection saved\')'));
+test('class and study reflections persist voice clips before completing sessions and retain rollback on failure',()=>{
+ const start=studio.indexOf('async function saveCompletedSession(event,date,reflection,complete=true,voiceRecordings=[])');
+ const end=studio.indexOf('function beginSessionCompletion',start);
+ const saveBlock=studio.slice(start,end);
+ assert.ok(saveBlock.includes('previousRecords=[...(data.studyRecords||[])],previousCompleted=[...(data.completed||[])]'));
+ assert.ok(saveBlock.includes("await putStudioRecord('classAudio'"));
+ assert.ok(saveBlock.includes('if(!save())'));
+ assert.ok(saveBlock.includes('data.studyRecords=previousRecords'));
+ assert.ok(saveBlock.includes('data.completed=previousCompleted'));
+ assert.ok(saveBlock.includes("await deleteStudioRecord('classAudio',audioId)"));
+ assert.ok(saveBlock.indexOf('if(!save())')<saveBlock.indexOf('closeModal()'));
+ assert.ok(saveBlock.includes('return record'));
+ const completion=studio.slice(studio.indexOf('function beginSessionCompletion(event,date)'),studio.indexOf('function sessionQuizSources',studio.indexOf('function beginSessionCompletion(event,date)')));
+ assert.ok(completion.includes('const record=await saveCompletedSession(event,date,{attendance'));
+ assert.ok(completion.includes('if(!record){if(submitButton)submitButton.disabled=false;return}'));
+ assert.ok(completion.includes('const record=await saveCompletedSession(event,date,{topics:'));
+ assert.ok(completion.includes('if(!record){if(submitButton)submitButton.disabled=false;return}'));
 });
 
 test('study-session quiz generation and attempts restore prior records after storage failure',()=>{

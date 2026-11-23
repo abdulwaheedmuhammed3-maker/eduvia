@@ -118,7 +118,7 @@ function renderSetup(){
 function renderMore(){return `${pageHead('MORE TOOLS','More','Additional tools and app controls for your learning space.','')}<div class="course-grid"><button class="course-card" style="text-align:left;border:1px solid var(--line)" data-page="study"><div class="course-card-head"><span class="habit-badge">✧</span><h3>Learning studio</h3></div><p class="course-desc">Import your learning-area list and timetable, add learning materials, set availability, and generate a learning plan.</p></button><button class="course-card" style="text-align:left;border:1px solid var(--line)" data-page="settings"><div class="course-card-head"><span class="habit-badge">⚙</span><h3>Settings</h3></div><p class="course-desc">Appearance, reminders, notification permissions, and backup controls.</p></button></div>`}
 function renderGeneratedCard(result,type){return `<section class="panel generated-card"><div class="panel-head"><div><h3>${safe(result.title||'Study session')}</h3><p>${safe(result.course||'Your learning area')} · ${safe(result.source||'Study guide')}</p></div><button class="panel-link" data-action="go-practice">Practice this →</button></div><div class="generated-content">${resultHtml(result.text||'')}</div><div class="ai-caption">Local learning guide built from passages retrieved from your own material. This is not an AI-generated explanation; check the cited locations in the original document.</div></section>`}function resultHtml(text){const escaped=safe(text);return escaped.split(/\n{2,}/).map(block=>{if(/^#{1,3} /.test(block))return `<h4>${block.replace(/^#{1,3} /,'')}</h4>`;if(/^[-*] /m.test(block))return `<ul>${block.split('\n').map(line=>`<li>${line.replace(/^[-*] /,'')}</li>`).join('')}</ul>`;return `<p>${block.replace(/\n/g,'<br>')}</p>`}).join('')}
 
-function studioDb(){return new Promise((resolve,reject)=>{if(!('indexedDB'in window)){reject(new Error('This browser does not support local document storage.'));return}const request=indexedDB.open(STUDIO_DB,2);request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains(STUDIO_STORE))db.createObjectStore(STUDIO_STORE,{keyPath:'id'});if(!db.objectStoreNames.contains('academicRecords'))db.createObjectStore('academicRecords',{keyPath:'id'});if(!db.objectStoreNames.contains('personalDocuments'))db.createObjectStore('personalDocuments',{keyPath:'id'})};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)})}
+function studioDb(){return new Promise((resolve,reject)=>{if(!('indexedDB'in window)){reject(new Error('This browser does not support local document storage.'));return}const request=indexedDB.open(STUDIO_DB,3);request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains(STUDIO_STORE))db.createObjectStore(STUDIO_STORE,{keyPath:'id'});if(!db.objectStoreNames.contains('academicRecords'))db.createObjectStore('academicRecords',{keyPath:'id'});if(!db.objectStoreNames.contains('personalDocuments'))db.createObjectStore('personalDocuments',{keyPath:'id'});if(!db.objectStoreNames.contains('classAudio'))db.createObjectStore('classAudio',{keyPath:'id'})};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)})}
 async function storeMaterial(record){const db=await studioDb();return new Promise((resolve,reject)=>{const tx=db.transaction(STUDIO_STORE,'readwrite');tx.objectStore(STUDIO_STORE).put(record);tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)}})}
 function fallbackMaterial(materialId){return (data.materialText||[]).find(item=>String(item?.id||'')===String(materialId))||null}
 async function readMaterial(materialId){
@@ -1058,6 +1058,14 @@ async function exportPortableBackup(){
       if(!record)throw new Error('An archived academic record is missing from device storage: '+String(metadata.label||metadata.id)+'. Restore it before exporting.');
       archives.file(String(metadata.id)+'.json',JSON.stringify(record));
     }
+    const classAudio=zip.folder('class-audio');
+    for(const session of data.studyRecords||[]){
+      for(const clip of session.reflection?.voiceRecordings||[]){
+        const audio=await getStudioRecord('classAudio',clip.id);
+        if(!audio?.blob)throw new Error('A saved class voice recording is missing from device storage: '+String(clip.id)+'. Restore it before exporting.');
+        classAudio.file(String(clip.id),audio.blob);
+      }
+    }
     const materials=zip.folder('course-materials');
     for(const metadata of data.materials||[]){
       const record=await getStudioRecord(STUDIO_STORE,metadata.id);
@@ -1165,6 +1173,16 @@ async function importPortableBackup(file){
       if(!record||typeof record!=='object'||Array.isArray(record)||String(record.id)!==metadata.id)throw new Error('An archived academic record in the backup is invalid. Nothing was restored.');
       academicRecords.push(record);
     }
+    const classAudioRecords=[];
+    for(const session of Array.isArray(imported.studyRecords)?imported.studyRecords:[]){
+      for(const clip of session.reflection?.voiceRecordings||[]){
+        if(!clip?.id)throw new Error('A saved class voice recording has invalid metadata. Nothing was restored.');
+        const entry=zip.file('class-audio/'+clip.id);
+        if(!entry)throw new Error('The backup is missing a class voice recording. Nothing was restored.');
+        const blob=await entry.async('blob');
+        classAudioRecords.push({id:String(clip.id),blob:new Blob([blob],{type:clip.mimeType||blob.type||'audio/webm'}),mimeType:clip.mimeType||blob.type||'audio/webm',durationMs:Number(clip.durationMs)||0,size:blob.size,createdAt:Number(clip.createdAt)||Date.now()});
+      }
+    }
     const materialRecords=[];
     const fallbackIds=new Set();
     for(const metadata of imported.materials){
@@ -1197,7 +1215,8 @@ async function importPortableBackup(file){
       await replaceStudioStoresAtomically({
         personalDocuments:documentRecords,
         academicRecords,
-        [STUDIO_STORE]:materialRecords
+        [STUDIO_STORE]:materialRecords,
+        classAudio:classAudioRecords
       });
     }catch(error){
       const rollbackError=previousRaw===null?storageRemove(STORE_KEY):storageSet(STORE_KEY,previousRaw);
@@ -1212,7 +1231,7 @@ async function importPortableBackup(file){
 }
 async function clearAllStudioRecords(){
   if(!('indexedDB' in window))return;
-  const db=await studioDb(),stores=[STUDIO_STORE,'academicRecords','personalDocuments'];
+  const db=await studioDb(),stores=[STUDIO_STORE,'academicRecords','personalDocuments','classAudio'];
   await new Promise((resolve,reject)=>{
     let settled=false;
     const finish=(error)=>{
@@ -1284,12 +1303,40 @@ function completeSessionRecord(record){
   const countsAsSession=record.type!=='class'||(record.reflection?.attendance||'attended')==='attended';
   if(countsAsSession&&!data.completed.some(item=>item.eventId===record.eventId&&item.date===record.date))data.completed.push({id:id(),eventId:record.eventId,date:record.date,courseId:record.courseId,type:record.type,minutes:record.minutes,recordId:record.id});
 }
-function saveCompletedSession(event,date,reflection,complete=true){
-  const record={id:id(),eventId:event.id,date,type:event.type,courseId:event.courseId||'',courseName:data.courses.find(item=>item.id===event.courseId)?.name||'',title:event.title||'Study session',minutes:event.duration||data.profile.sessionMinutes,createdAt:Date.now(),reflection,quizQuestions:[],quizAttempts:[]};
-  data.studyRecords=Array.isArray(data.studyRecords)?data.studyRecords:[];
-  data.studyRecords.unshift(record);
-  if(complete)completeSessionRecord(record);
-  closeModal();save();return record;
+async function saveCompletedSession(event,date,reflection,complete=true,voiceRecordings=[]){
+  const previousRecords=[...(data.studyRecords||[])],previousCompleted=[...(data.completed||[])],storedAudio=[];
+  try{
+    const voiceMetadata=[];
+    for(const clip of Array.isArray(voiceRecordings)?voiceRecordings:[]){
+      if(!clip?.blob||!clip.id)continue;
+      const metadata={id:String(clip.id),target:String(clip.target||'topics'),durationMs:Number(clip.durationMs)||0,mimeType:String(clip.mimeType||clip.blob.type||'audio/webm'),size:Number(clip.blob.size)||0,createdAt:Number(clip.createdAt)||Date.now()};
+      await putStudioRecord('classAudio',{...metadata,blob:clip.blob});
+      storedAudio.push(metadata.id);
+      voiceMetadata.push(metadata);
+    }
+    if(voiceMetadata.length)reflection={...reflection,voiceRecordings:voiceMetadata};
+    const record={id:id(),eventId:event.id,date,type:event.type,courseId:event.courseId||'',courseName:data.courses.find(item=>item.id===event.courseId)?.name||'',title:event.title||'Study session',minutes:event.duration||data.profile.sessionMinutes,createdAt:Date.now(),reflection,quizQuestions:[],quizAttempts:[]};
+    data.studyRecords=Array.isArray(data.studyRecords)?data.studyRecords:[];
+    data.completed=Array.isArray(data.completed)?data.completed:[];
+    data.studyRecords.unshift(record);
+    if(complete)completeSessionRecord(record);
+    if(!save()){
+      data.studyRecords=previousRecords;
+      data.completed=previousCompleted;
+      for(const audioId of storedAudio)try{await deleteStudioRecord('classAudio',audioId)}catch{}
+      render();
+      return null;
+    }
+    closeModal();
+    window.EduviaVoiceReflection?.clearPending?.();
+    return record;
+  }catch(error){
+    data.studyRecords=previousRecords;
+    data.completed=previousCompleted;
+    for(const audioId of storedAudio)try{await deleteStudioRecord('classAudio',audioId)}catch{}
+    toast('Eduvia could not save the class recording: '+(error.message||'device storage is unavailable')+'. Your reflection is still open.');
+    return null;
+  }
 }
 function beginSessionCompletion(event,date){
   const unfinished=(data.studyRecords||[]).find(record=>record.eventId===event.id&&record.date===date&&record.type==='study'&&!record.completedAt);
@@ -1302,15 +1349,18 @@ function beginSessionCompletion(event,date){
       field('Topics covered','topics','<textarea id="f-topics" name="topics" required placeholder="List the lecture topics"></textarea>',true)+
       field('Five things you learned','learned','<textarea id="f-learned" name="learned" required placeholder="Write exactly five items, one per line"></textarea>',true)+
       field('Study areas to review','studyAreas','<textarea id="f-studyAreas" name="studyAreas" placeholder="Topics or skills you want to revisit"></textarea>',true)+
+      "<section class=\"voice-reflection-panel\" id=\"voiceReflectionPanel\">\n  <div class=\"voice-reflection-heading\"><span class=\"voice-reflection-icon\">◉</span><div><strong>Explain it out loud</strong><p>Record what the lecturer covered or what you learned. Eduvia adds the live transcript to the selected field.</p></div></div>\n  <label class=\"voice-reflection-target\">Add your recording to\n    <select id=\"voiceReflectionTarget\"><option value=\"topics\">Topics covered</option><option value=\"learned\">Five things I learned</option><option value=\"studyAreas\">Study areas to review</option></select>\n  </label>\n  <div class=\"voice-reflection-controls\"><button type=\"button\" class=\"secondary-btn\" data-voice-action=\"start\">● Start recording</button><button type=\"button\" class=\"primary-btn\" data-voice-action=\"stop\" disabled>Stop recording</button><button type=\"button\" class=\"text-btn\" data-voice-action=\"discard\" hidden>Discard latest clip</button></div>\n  <p class=\"voice-reflection-status\" id=\"voiceReflectionStatus\" role=\"status\" aria-live=\"polite\">Microphone access is requested only when you start recording. Edit the transcript before saving.</p>\n  <div class=\"voice-reflection-clips\" id=\"voiceReflectionClips\" aria-live=\"polite\"></div>\n  <p class=\"voice-reflection-privacy\">Audio clips are saved on this device with the class record. Live speech-to-text depends on browser support and an internet connection; some browsers send speech audio to their recognition service. Where transcription is unavailable, the recording is still kept and you can use your phone keyboard's microphone.</p>\n</section>"+
       '<div class="form-grid">'+field('Assignment (optional)','assignment','<input id="f-assignment" name="assignment" maxlength="180" placeholder="Assignment or task">')+field('Assignment deadline','assignmentDue','<input id="f-assignmentDue" name="assignmentDue" type="date">')+'</div>'+
       '<div class="form-grid">'+field('Classwork (optional)','classwork','<input id="f-classwork" name="classwork" maxlength="180" placeholder="Classwork or in-class task">')+field('Classwork deadline','classworkDue','<input id="f-classworkDue" name="classworkDue" type="date">')+'</div></div>';
-    openModal('Class reflection',subtitle,body,'Save and complete class',fd=>{
+    openModal('Class reflection',subtitle,body,'Save and complete class',async fd=>{
       const attendance=String(fd.get('attendance')||'attended'),attended=attendance==='attended',learned=String(fd.get('learned')||'').split(/\\r?\\n+/).map(item=>item.replace(/^\\s*\\d+[.)-]\\s*/,'').trim()).filter(Boolean),assignment=String(fd.get('assignment')||'').trim(),assignmentDue=String(fd.get('assignmentDue')||''),classwork=String(fd.get('classwork')||'').trim(),classworkDue=String(fd.get('classworkDue')||'');
       if(attended&&learned.length!==5){toast('Please enter exactly five learning points, one per line.');return}
       if(attended&&assignment&&!assignmentDue){toast('Add a deadline for the assignment.');return}
       if(attended&&classwork&&!classworkDue){toast('Add a deadline for the classwork.');return}
       const tasks=[];if(attended&&assignment)tasks.push({type:'Assignment',title:assignment,dueDate:assignmentDue});if(attended&&classwork)tasks.push({type:'Classwork',title:classwork,dueDate:classworkDue});
-      saveCompletedSession(event,date,{attendance,topics:attended?String(fd.get('topics')||'').trim():'',learned:attended?learned:[],studyAreas:attended?String(fd.get('studyAreas')||'').trim():'',tasks});
+      const recordings=attended?(window.EduviaVoiceReflection?.getPending?.()||[]):[];
+      const record=await saveCompletedSession(event,date,{attendance,topics:attended?String(fd.get('topics')||'').trim():'',learned:attended?learned:[],studyAreas:attended?String(fd.get('studyAreas')||'').trim():'',tasks},true,recordings);
+      if(!record)return;
       toast(attended?'Class reflection saved and class completed':attendance==='postponed'?'Class marked as postponed. It was not counted as attended.':'Class attendance record saved');
     });
     const attendanceSelect=document.getElementById('f-attendance'),reflectionFields=document.getElementById('classReflectionFields');
@@ -1325,7 +1375,8 @@ function beginSessionCompletion(event,date){
   openModal('Study reflection',subtitle,body,'Save and start 10-question quiz',fd=>{
     const keyPoints=splitSessionList(String(fd.get('keyPoints')||''));
     if(keyPoints.length!==5){toast('Please enter exactly five key points, one per line.');return}
-    const record=saveCompletedSession(event,date,{topics:String(fd.get('topics')||'').trim(),keyPoints,gained:String(fd.get('gained')||'').trim()},false);
+    const record=await saveCompletedSession(event,date,{topics:String(fd.get('topics')||'').trim(),keyPoints,gained:String(fd.get('gained')||'').trim()},false);
+    if(!record)return;
     toast('Study reflection saved');
     openSessionQuiz(record.id);
   });
@@ -1421,6 +1472,8 @@ function showSessionRecord(recordId){
     if(attendance==='attended'){
       body+='<h3>Topics</h3><p>'+safe(reflection.topics||'None saved')+'</p><h3>Five things learned</h3><ol>'+(reflection.learned||[]).map(item=>'<li>'+safe(item)+'</li>').join('')+'</ol><h3>Study areas to revisit</h3><p>'+safe(reflection.studyAreas||'None listed')+'</p>';
       const tasks=reflection.tasks||[];body+='<h3>Assignments and classwork</h3>'+(tasks.length?'<ul>'+tasks.map(task=>'<li><strong>'+safe(task.type)+':</strong> '+safe(task.title)+' · due '+safe(task.dueDate)+'</li>').join('')+'</ul>':'<p>No assignments or classwork recorded.</p>');
+      const voiceRecordings=Array.isArray(reflection.voiceRecordings)?reflection.voiceRecordings:[];
+      if(voiceRecordings.length)body+='<h3>Voice explanations</h3><div class="saved-voice-recordings">'+voiceRecordings.map(item=>'<div class="saved-voice-recording"><span>'+safe(item.target==='learned'?'What I learned':item.target==='studyAreas'?'Study areas to review':'Topics covered')+' · '+Math.max(1,Math.round((Number(item.durationMs)||0)/1000))+' sec</span><audio controls preload="none" data-saved-class-audio="'+safe(item.id)+'"></audio></div>').join('')+'</div>';
     }else body+=(attendance==='postponed'?'<p>No lecture took place on this date, so no learning reflection is required.</p>':'<p>Learning details were skipped for this attendance record.</p>');
   }else{
     body+='<h3>Topics</h3><p>'+safe(reflection.topics||'None saved')+'</p><h3>Five key points</h3>'+(reflection.keyPoints?.length?'<ol>'+reflection.keyPoints.map(point=>'<li>'+safe(point)+'</li>').join('')+'</ol>':'<p>'+safe(reflection.gained||'None saved')+'</p>')+'<h3>Quiz performance</h3><p>'+attempts.length+' attempt'+(attempts.length===1?'':'s')+' · unlimited retakes</p>';
@@ -1429,6 +1482,7 @@ function showSessionRecord(recordId){
     body+='<button type="button" class="secondary-btn quiz-retake-btn" data-action="retake-session-quiz" data-record-id="'+safe(record.id)+'">'+(attempts.length?'Retake quiz':'Take 10-question quiz')+'</button>';
   }
   openModal(record.type==='class'?'Class record':'Study record',record.title,body,'Close',()=>closeModal());
+  if(record.type==='class'&&Array.isArray(reflection.voiceRecordings))window.EduviaVoiceReflection?.attachSavedAudio?.(reflection.voiceRecordings);
 }
 document.addEventListener('click',event=>{
   const button=event.target.closest('[data-action]');if(!button)return;

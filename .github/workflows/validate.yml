@@ -30,6 +30,7 @@ jobs:
           node --check learning-expansions.js
           node --check recall-core.js
           node --check recall.js
+          node --check voice-reflection.js
           node --check icon-system.js
           node --check native-bridge-src.js
           node --check scripts/build-web.mjs
@@ -108,6 +109,12 @@ jobs:
           grep -q 'recall.css' index.html
           grep -q 'recall.css' service-worker.js
           grep -q 'recall.css' scripts/build-web.mjs
+          grep -q 'voice-reflection.js' index.html
+          grep -q 'voice-reflection.js' service-worker.js
+          grep -q 'voice-reflection.js' scripts/build-web.mjs
+          grep -q 'voice-reflection.css' index.html
+          grep -q 'voice-reflection.css' service-worker.js
+          grep -q 'voice-reflection.css' scripts/build-web.mjs
           grep -q 'experience.css' service-worker.js
           grep -q 'entry-flow.js' scripts/build-web.mjs
           grep -q 'feature-hub.js' scripts/build-web.mjs
@@ -117,7 +124,7 @@ jobs:
           grep -q 'experience.css' scripts/build-web.mjs
           grep -q 'app.js?v=' service-worker.js
           grep -q 'eduvia-study-alarms-v2' native-bridge-src.js
-          grep -q 'eduvia-v104-eduvia-recall' service-worker.js
+          grep -q 'eduvia-v105-voice-class-reflections' service-worker.js
           grep -q 'theme-audit-2' index.html
           grep -q 'profile-audit-3-knowledge-check' index.html
           grep -q 'profile-audit-3-knowledge-check' service-worker.js

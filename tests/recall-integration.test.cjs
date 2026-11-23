@@ -7,6 +7,7 @@ const index = read('index.html'), worker = read('notifications-worker/src/index.
 const native = read('native-bridge-src.js'), serviceWorker = read('service-worker.js');
 const build = read('scripts/build-web.mjs'), workflow = read('.github/workflows/validate.yml');
 const migration = read('notifications-worker/migrations/0003_recall_notification_routes.sql');
+const androidPrep = read('scripts/prepare-android.mjs');
 
 test('Recall is registered as a valid deep-link route and a Play learning tool', () => {
   assert.ok(app.includes("'recall'"));
@@ -47,4 +48,47 @@ test('Recall assets are loaded, cached, copied into the web build and syntax-che
   }
   assert.ok(workflow.includes('node --check recall-core.js'));
   assert.ok(workflow.includes('node --check recall.js'));
+});
+
+
+test('class voice reflections record locally, attach transcripts and preserve audio in portable backups', () => {
+ const studio=read('study-studio.js');
+ const voice=read('voice-reflection.js');
+ assert.ok(studio.includes("indexedDB.open(STUDIO_DB,3)"));
+ assert.ok(studio.includes("createObjectStore('classAudio',{keyPath:'id'})"));
+ assert.ok(studio.includes("putStudioRecord('classAudio'"));
+ assert.ok(studio.includes("getStudioRecord('classAudio',clip.id)"));
+ assert.ok(studio.includes("classAudio:classAudioRecords"));
+ assert.ok(studio.includes("classAudio=zip.folder('class-audio')"));
+ assert.ok(studio.includes("stores=[STUDIO_STORE,'academicRecords','personalDocuments','classAudio']"));
+ assert.ok(voice.includes('navigator.mediaDevices.getUserMedia'));
+ assert.ok(voice.includes('new MediaRecorder'));
+ assert.ok(voice.includes('window.SpeechRecognition || window.webkitSpeechRecognition'));
+ assert.ok(voice.includes('getPending:'));
+ assert.ok(voice.includes('function cancel()'));
+ assert.ok(read('app.js').includes('EduviaVoiceReflection?.cancel?.()'));
+ assert.ok(voice.includes('attachSavedAudio'));
+ assert.ok(studio.includes("field('Five things you learned'"));
+ assert.ok(studio.includes('if(!record)return;'));
+});
+
+test('voice reflection assets are built, cached and syntax-checked', () => {
+ const html=read('index.html');
+ const sw=read('service-worker.js');
+ const build=read('scripts/build-web.mjs');
+ const workflow=read('.github/workflows/validate.yml');
+ for(const asset of ['voice-reflection.js','voice-reflection.css']){
+  assert.ok(html.includes(asset));
+  assert.ok(sw.includes(asset));
+  assert.ok(build.includes(asset));
+ }
+ assert.ok(workflow.includes('node --check voice-reflection.js'));
+ assert.ok(workflow.includes("eduvia-v105-voice-class-reflections"));
+});
+
+
+test('Android build declares the native microphone capture permissions requested by Capacitor WebView', () => {
+ assert.ok(androidPrep.includes('android.permission.RECORD_AUDIO'));
+ assert.ok(androidPrep.includes('android.permission.MODIFY_AUDIO_SETTINGS'));
+ assert.ok(androidPrep.includes('android.permission.CAMERA'));
 });

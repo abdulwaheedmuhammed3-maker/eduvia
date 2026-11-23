@@ -41,10 +41,24 @@ jobs:
       - name: Prepare the app and native permissions
         run: npm run android:prepare
 
+      - name: Configure the persistent Eduvia beta signing key
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          EDUVIA_ANDROID_KEYSTORE_BASE64: ${{ secrets.EDUVIA_ANDROID_KEYSTORE_BASE64 }}
+          EDUVIA_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.EDUVIA_ANDROID_KEYSTORE_PASSWORD }}
+          EDUVIA_ANDROID_KEY_ALIAS: ${{ secrets.EDUVIA_ANDROID_KEY_ALIAS }}
+          EDUVIA_ANDROID_KEY_PASSWORD: ${{ secrets.EDUVIA_ANDROID_KEY_PASSWORD }}
+        run: node scripts/configure-android-signing.mjs
+
       - name: Build installable APK
+        env:
+          EDUVIA_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.EDUVIA_ANDROID_KEYSTORE_PASSWORD }}
+          EDUVIA_ANDROID_KEY_ALIAS: ${{ secrets.EDUVIA_ANDROID_KEY_ALIAS }}
+          EDUVIA_ANDROID_KEY_PASSWORD: ${{ secrets.EDUVIA_ANDROID_KEY_PASSWORD }}
         run: cd android && ./gradlew assembleDebug
 
       - name: Upload APK artifact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v7
         with:
           name: eduvia-android-apk

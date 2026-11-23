@@ -1508,6 +1508,7 @@ function editStudyProfile(){
       toast('Complete your learning provider, stage, programme, level and academic session for a formal education profile.');
       return;
     }
+    const previousProfile={...data.profile};
     for(const key of ['learnerType','learningFocus','country','studyMode','email'])data.profile[key]=String(fd.get(key)||'').trim();
     if(type==='formal'){
       for(const key of ['institution','stage','programme','level','term','department'])data.profile[key]=String(fd.get(key)||'').trim();
@@ -1515,6 +1516,6 @@ function editStudyProfile(){
     }else{
       data.profile.programme=data.profile.learningFocus;
     }
-    closeModal();save();toast('Learning profile updated');
+    if(!save()){data.profile=previousProfile;render();return}closeModal();toast('Learning profile updated');
   });
 }

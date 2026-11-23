@@ -165,15 +165,24 @@ window.eduLectureMaterials={
   async remove(lectureId){
     const index=(data.materials||[]).findIndex(item=>item?.kind==='recorded-lecture'&&String(item.id)===String(lectureId));
     if(index<0)return false;
-    const [removed]=data.materials.splice(index,1);
+    const removed=data.materials[index];
     const fallbackIndex=(data.materialText||[]).findIndex(item=>String(item?.id)===String(lectureId));
-    const fallback=fallbackIndex>=0?data.materialText.splice(fallbackIndex,1)[0]:null;
+    const fallback=fallbackIndex>=0?data.materialText[fallbackIndex]:null;
+    const storedInIndexedDb=!fallback;
+    const storedRecord=storedInIndexedDb?await readMaterial(String(lectureId)):null;
+    if(storedInIndexedDb&&!storedRecord){toast('Eduvia could not read the stored lecture file. Nothing was removed.');return false}
+    if(storedInIndexedDb&&!await removeStoredMaterial(String(lectureId))){
+      toast('Eduvia could not remove the stored lecture file. Nothing was removed.');
+      return false;
+    }
+    data.materials.splice(index,1);
+    if(fallback)data.materialText.splice(fallbackIndex,1);
     if(!save()){
       data.materials.splice(index,0,removed);
       if(fallback)data.materialText.splice(Math.max(0,fallbackIndex),0,fallback);
+      if(storedInIndexedDb)try{await putStudioRecord(STUDIO_STORE,storedRecord)}catch{toast('The lecture file could not be restored after the planner save failed. Export a backup and check device storage.')}
       return false;
     }
-    await removeStoredMaterial(String(lectureId));
     return true;
   }
 };

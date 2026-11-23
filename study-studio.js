@@ -914,12 +914,26 @@ async function exportPortableBackup(){
     if(!window.JSZip)await loadStudioScript('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js');
     const zip=new window.JSZip();zip.file('eduvia-data.json',JSON.stringify(data,null,2));
     const documents=zip.folder('personal-documents');
-    for(const metadata of data.personalDocuments||[]){const record=await getStudioRecord('personalDocuments',metadata.id);const blob=record?.blob||record?.file;if(blob)documents.file(metadata.id,blob)}
+    for(const metadata of data.personalDocuments||[]){
+      const record=await getStudioRecord('personalDocuments',metadata.id),blob=record?.blob||record?.file;
+      if(!blob)throw new Error('A saved personal document is missing from device storage: '+String(metadata.name||metadata.id)+'. Restore it before exporting.');
+      documents.file(String(metadata.id),blob);
+    }
     const archives=zip.folder('academic-records');
-    for(const metadata of data.academicHistory||[]){const record=await getStudioRecord('academicRecords',metadata.id);if(record)archives.file(metadata.id+'.json',JSON.stringify(record))}
+    for(const metadata of data.academicHistory||[]){
+      const record=await getStudioRecord('academicRecords',metadata.id);
+      if(!record)throw new Error('An archived academic record is missing from device storage: '+String(metadata.label||metadata.id)+'. Restore it before exporting.');
+      archives.file(String(metadata.id)+'.json',JSON.stringify(record));
+    }
     const materials=zip.folder('course-materials');
-    for(const metadata of data.materials||[]){const record=await getStudioRecord(STUDIO_STORE,metadata.id);if(record)materials.file(metadata.id+'.json',JSON.stringify(record))}
-    const bundle=await zip.generateAsync({type:'blob',compression:'STORE'});download(bundle,'eduvia-portable-backup-'+todayISO()+'.zip');toast('Portable backup ready. Keep the file private.');
+    for(const metadata of data.materials||[]){
+      const record=await getStudioRecord(STUDIO_STORE,metadata.id);
+      if(!record)throw new Error('Extracted course material is missing from device storage: '+String(metadata.name||metadata.id)+'. Restore it before exporting.');
+      materials.file(String(metadata.id)+'.json',JSON.stringify(record));
+    }
+    const bundle=await zip.generateAsync({type:'blob',compression:'STORE'});
+    download(bundle,'eduvia-portable-backup-'+todayISO()+'.zip');
+    toast('Portable backup ready. Keep the file private.');
   }catch(error){toast('Could not create the backup: '+(error.message||'storage is unavailable'))}
 }
 async function importPlannerJsonBackup(file){
@@ -957,6 +971,24 @@ async function importPlannerJsonBackup(file){
   data=restored;currentPage='today';location.hash='today';save();
   toast('Planner JSON restored. Use the portable ZIP to move phone documents and full education records.');
 }
+async function replaceStudioStoresAtomically(groups){
+  const storeNames=Object.keys(groups);
+  const db=await studioDb();
+  return await new Promise((resolve,reject)=>{
+    let tx;
+    try{
+      tx=db.transaction(storeNames,'readwrite');
+      for(const storeName of storeNames){
+        const store=tx.objectStore(storeName);
+        store.clear();
+        for(const record of groups[storeName]||[])store.put(record);
+      }
+    }catch(error){db.close();reject(error);return}
+    tx.oncomplete=()=>{db.close();resolve()};
+    tx.onerror=()=>{db.close();reject(tx.error||new Error('The device could not save the restored files.'))};
+    tx.onabort=()=>{db.close();reject(tx.error||new Error('The file restore was cancelled by device storage.'))};
+  });
+}
 async function importPortableBackup(file){
   if(!file)return;
   if(file.size>500*1024*1024){toast('That backup is over 500 MB.');return}
@@ -966,38 +998,82 @@ async function importPortableBackup(file){
     if(!dataFile)throw new Error('This ZIP does not contain an Eduvia backup.');
     const imported=JSON.parse(await dataFile.async('string'));
     if(!imported||typeof imported!=='object'||Array.isArray(imported)||!imported.profile||typeof imported.profile!=='object'||Array.isArray(imported.profile)||!Array.isArray(imported.courses)||!Array.isArray(imported.events))throw new Error('The ZIP does not contain a complete Eduvia planner backup.');
-    if(!confirm('Replace the planner data on this device with the selected backup? This changes the current courses, history, and document list.'))return;
-    imported.academicHistory=Array.isArray(imported.academicHistory)?imported.academicHistory:[];
-    imported.personalDocuments=Array.isArray(imported.personalDocuments)?imported.personalDocuments:[];
-    imported.materials=Array.isArray(imported.materials)?imported.materials:[];
-    const importedDocs=[];
-    for(const metadata of imported.personalDocuments){const entry=zip.file('personal-documents/'+metadata.id);if(!entry)continue;const blob=await entry.async('blob');await putStudioRecord('personalDocuments',{id:metadata.id,blob:new Blob([blob],{type:metadata.type||''}),name:metadata.name});importedDocs.push(metadata)}
-    imported.personalDocuments=importedDocs;
-    const importedArchives=[];
-    for(const metadata of imported.academicHistory){const entry=zip.file('academic-records/'+metadata.id+'.json');if(!entry)continue;const record=JSON.parse(await entry.async('string'));await putStudioRecord('academicRecords',record);importedArchives.push(metadata)}
-    imported.academicHistory=importedArchives;
-    const importedMaterials=[];
+
+    const uniqueRecords=(items,label)=>{
+      if(!Array.isArray(items))throw new Error('The backup contains an invalid '+label+' list.');
+      const seen=new Set();
+      return items.map((item,index)=>{
+        if(!item||typeof item!=='object'||Array.isArray(item)||item.id===undefined||item.id===null||String(item.id).trim()==='')throw new Error('Backup '+label+' item '+(index+1)+' has no valid ID.');
+        const idValue=String(item.id);
+        if(seen.has(idValue))throw new Error('The backup contains duplicate '+label+' IDs: '+idValue+'.');
+        seen.add(idValue);
+        return {...item,id:idValue};
+      });
+    };
+    imported.academicHistory=uniqueRecords(imported.academicHistory||[],'academic record');
+    imported.personalDocuments=uniqueRecords(imported.personalDocuments||[],'personal document');
+    imported.materials=uniqueRecords(imported.materials||[],'course material');
+    imported.materialText=Array.isArray(imported.materialText)?imported.materialText:[];
+    const fallbackMaterials=new Map(imported.materialText.filter(item=>item&&item.id!==undefined).map(item=>[String(item.id),item]));
+
+    // Read and validate every attachment before writing to IndexedDB or replacing planner data.
+    const documentRecords=[];
+    for(const metadata of imported.personalDocuments){
+      const entry=zip.file('personal-documents/'+metadata.id);
+      if(!entry)throw new Error('The backup is missing the file for personal document "'+String(metadata.name||metadata.title||metadata.id)+'". Nothing was restored.');
+      const blob=await entry.async('blob');
+      documentRecords.push({id:metadata.id,blob:new Blob([blob],{type:metadata.type||''}),name:metadata.name||metadata.title||''});
+    }
+    const academicRecords=[];
+    for(const metadata of imported.academicHistory){
+      const entry=zip.file('academic-records/'+metadata.id+'.json');
+      if(!entry)throw new Error('The backup is missing archived academic record "'+String(metadata.label||metadata.id)+'". Nothing was restored.');
+      const record=JSON.parse(await entry.async('string'));
+      if(!record||typeof record!=='object'||Array.isArray(record)||String(record.id)!==metadata.id)throw new Error('An archived academic record in the backup is invalid. Nothing was restored.');
+      academicRecords.push(record);
+    }
+    const materialRecords=[];
+    const fallbackIds=new Set();
     for(const metadata of imported.materials){
       const entry=zip.file('course-materials/'+metadata.id+'.json');
-      if(!entry){
-        if((imported.materialText||[]).some(item=>String(item?.id||'')===String(metadata.id)))importedMaterials.push(metadata);
-        continue;
+      let record;
+      if(entry){
+        record=JSON.parse(await entry.async('string'));
+      }else{
+        record=fallbackMaterials.get(metadata.id);
+        if(!record)throw new Error('The backup is missing extracted course material "'+String(metadata.name||metadata.id)+'". Nothing was restored.');
+        fallbackIds.add(metadata.id);
       }
-      const record=JSON.parse(await entry.async('string'));
-      try{await putStudioRecord(STUDIO_STORE,record)}
-      catch{
-        imported.materialText=Array.isArray(imported.materialText)?imported.materialText:[];
-        imported.materialText=imported.materialText.filter(item=>String(item?.id||'')!==String(record.id));
-        imported.materialText.push(record);
-      }
-      importedMaterials.push(metadata);
+      if(!record||typeof record!=='object'||Array.isArray(record)||String(record.id)!==metadata.id||typeof record.text!=='string')throw new Error('Extracted course material "'+String(metadata.name||metadata.id)+'" is invalid. Nothing was restored.');
+      materialRecords.push(record);
     }
-    imported.materials=importedMaterials;
-    data={...defaultData(),...imported,profile:{...defaultData().profile,...imported.profile}};
-    data.imports=data.imports||{courses:[],timetable:[]};
-    const keepDocs=new Set(data.personalDocuments.map(item=>item.id)),keepArchives=new Set(data.academicHistory.map(item=>item.id)),keepMaterials=new Set(data.materials.map(item=>item.id));
-    for(const [storeName,keep] of [['personalDocuments',keepDocs],['academicRecords',keepArchives],[STUDIO_STORE,keepMaterials]])for(const oldRecord of await listStudioRecords(storeName))if(!keep.has(oldRecord.id))await deleteStudioRecord(storeName,oldRecord.id);
-    currentPage='vault';location.hash='vault';save();toast('Portable backup restored on this device.');
+
+    if(!confirm('Replace the planner data on this device with the selected backup? This changes the current courses, history, and document list.'))return;
+    const previousRaw=storageGet(STORE_KEY);
+    const restored={...defaultData(),...imported,profile:{...defaultData().profile,...imported.profile}};
+    restored.imports=restored.imports&&typeof restored.imports==='object'&&!Array.isArray(restored.imports)?restored.imports:{courses:[],timetable:[]};
+    restored.imports.courses=Array.isArray(restored.imports.courses)?restored.imports.courses:[];
+    restored.imports.timetable=Array.isArray(restored.imports.timetable)?restored.imports.timetable:[];
+    // Keep only a localStorage fallback for materials whose archive entry is absent.
+    restored.materialText=restored.materialText.filter(item=>fallbackIds.has(String(item?.id||'')));
+
+    const storageError=storageSet(STORE_KEY,JSON.stringify(restored));
+    if(storageError)throw new Error('Could not save the restored planner data: '+(storageError.message||'device storage is unavailable')+'. No existing files were changed.');
+    try{
+      await replaceStudioStoresAtomically({
+        personalDocuments:documentRecords,
+        academicRecords,
+        [STUDIO_STORE]:materialRecords
+      });
+    }catch(error){
+      const rollbackError=previousRaw===null?storageRemove(STORE_KEY):storageSet(STORE_KEY,previousRaw);
+      if(rollbackError)throw new Error('File restore failed and the previous planner data could not be fully rolled back. Keep the safety copy: '+(error.message||'storage error'));
+      throw error;
+    }
+    data=restored;
+    currentPage='vault';location.hash='vault';
+    applyTheme();render();scheduleEventAlert();schedulePushSync();
+    toast('Portable backup restored on this device.');
   }catch(error){toast('Could not import this backup: '+(error.message||'file is invalid'))}
 }
 function clearData(){

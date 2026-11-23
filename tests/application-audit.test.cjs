@@ -47,7 +47,7 @@ test('study practice has one source-aware generator and a usable multiple-choice
  assert.ok(studio.includes('correctOption,'));
  assert.ok(studio.includes('citation:correct.citation'));
  assert.ok(studio.includes('location:correct.location'));
- assert.ok(studio.includes('Multiple-choice practice needs at least four distinct source passages.'));
+ assert.ok(studio.includes('Multiple-choice practice needs at least four distinct passages.'));
  assert.ok(studio.includes('select an option and open “Show answer”'));
 });
 
@@ -74,7 +74,7 @@ test('notification schedules are marked complete only after all reminder batches
  const start=worker.indexOf("if (request.method === 'POST' && url.pathname === '/v1/schedule')");
  const end=worker.indexOf("if (request.method === 'POST' && url.pathname === '/v1/test')",start);
  const schedule=worker.slice(start,end);
- assert.ok(schedule.includes("VALUES (?, ?, '', ?)"));
+ assert.ok(schedule.includes("VALUES (?, ?, \\'\\', ?)"));
  assert.ok(schedule.includes('await env.DB.batch(statements)'));
  assert.ok(schedule.includes("UPDATE devices SET schedule_hash = ? WHERE device_id = ?"));
  assert.ok(schedule.indexOf('await env.DB.batch(statements)')<schedule.indexOf('UPDATE devices SET schedule_hash'));

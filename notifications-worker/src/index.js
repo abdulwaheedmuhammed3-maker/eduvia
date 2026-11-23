@@ -163,7 +163,7 @@ async function handleFetch(request, env) {
     await env.DB.prepare('INSERT INTO devices (device_id, subscription_json, schedule_hash, updated_at) VALUES (?, ?, \'\', ?) ON CONFLICT(device_id) DO UPDATE SET subscription_json = excluded.subscription_json, updated_at = excluded.updated_at')
       .bind(id, subscriptionJson, now).run();
     if (current?.schedule_hash !== hash) {
-      await env.DB.prepare("DELETE FROM reminders WHERE device_id = ? AND status IN ('pending', 'sending')").bind(id).run();
+      await env.DB.prepare('DELETE FROM reminders WHERE device_id = ?').bind(id).run();
       for (let offset = 0; offset < reminders.length; offset += 40) {
         const statements = reminders.slice(offset, offset + 40).map(item => env.DB.prepare('INSERT INTO reminders (device_id, reminder_id, title, body, fire_at, status, attempt_count, delivered_at) VALUES (?, ?, ?, ?, ?, \'pending\', 0, NULL)')
           .bind(id, item.id, item.title, item.body, item.fireAt));

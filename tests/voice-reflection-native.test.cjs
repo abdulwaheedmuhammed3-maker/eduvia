@@ -25,6 +25,7 @@ test('Android voice reflection uses native partial transcription and preserves a
   assert.ok(voice.includes('continuousPTT: true'));
   assert.ok(voice.includes('await speech.start('));
   assert.ok(voice.includes('await speech.forceStop({ timeout: 1200 })'));
+  assert.ok(voice.includes('session.stopRecognition && !event?.forced'));
   assert.ok(voice.includes('new Blob(chunks'));
   assert.ok(voice.includes('Your audio recording will still be saved'));
 });

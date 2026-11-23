@@ -1136,7 +1136,7 @@ async function importPlannerJsonBackup(file){
   if(!Array.isArray(restored.imports.timetable))restored.imports.timetable=[];
   if(!confirm('Restore this planner JSON on this PC? It replaces the current profile, courses, timetable, notes, progress, and study records. Existing files and full education records on this PC will be kept. This JSON does not include files or full archived education records from your phone; use the portable ZIP backup for those.'))return;
   try{localStorage.setItem(STORE_KEY,JSON.stringify(restored))}catch(error){toast('Could not save this backup in this browser. Try the portable ZIP backup or free some browser storage.');return}
-  data=restored;currentPage='today';location.hash='today';save();
+  data=restored;currentPage='today';location.hash='today';applyTheme();render();scheduleEventAlert();schedulePushSync();
   toast('Planner JSON restored. Use the portable ZIP to move phone documents and full education records.');
 }
 async function replaceStudioStoresAtomically(groups){

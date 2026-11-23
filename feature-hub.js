@@ -443,7 +443,7 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
     }
   });
   document.addEventListener('input',e=>{if(e.target.id==='documentSearch'){const q=e.target.value.toLowerCase();document.querySelectorAll('[data-doc-search]').forEach(el=>el.hidden=!el.dataset.docSearch.includes(q));}});
-  function categoryKey(value){return String(value??'').trim().toLocaleLowerCase().replace(/\\s+/g,' ')}
+  function categoryKey(value){return String(value??'').trim().toLocaleLowerCase().replace(/\s+/g,' ')}
   function courseMatchKeys(course){return [categoryKey(course?.code),categoryKey(course?.name)].filter(Boolean)}
   function eventMatchKey(event,courseId=event?.courseId){return [event?.type,event?.date||'weekly',event?.day??'',event?.start,event?.end,categoryKey(event?.title),categoryKey(event?.location),courseId||''].join('|')}
   function exportCategoryBackup(kind){

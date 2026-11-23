@@ -142,6 +142,12 @@ if (isNative) {
   App.addListener('appStateChange', ({ isActive }) => {
     if (isActive) window.dispatchEvent(new Event('eduvia-native-resume'));
   });
+  LocalNotifications.addListener('localNotificationActionPerformed', event => {
+    const reminderId = String(event?.notification?.extra?.reminderId || '');
+    const match = reminderId.match(/^recall:\d{4}-\d{2}-\d{2}:([A-Za-z0-9_-]{1,64})$/);
+    if (match) window.location.hash = 'recall/' + encodeURIComponent(match[1]);
+    else if (reminderId) window.location.hash = 'today';
+  });
   App.addListener('appRestoredResult', async result => {
     if (result.pluginId !== 'Camera' || result.methodName !== 'getPhoto' || !result.success || !result.data?.dataUrl) return;
     const target = localStorage.getItem(CAMERA_TARGET_KEY) || 'document';

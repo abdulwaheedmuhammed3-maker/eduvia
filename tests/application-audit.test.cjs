@@ -98,7 +98,7 @@ test('changed assets are versioned identically in HTML and the new offline cache
  assert.ok(sw.includes('first-run-alerts-6'));
  assert.ok(sw.includes('first-run-alert-optin-2'));
  assert.ok(sw.includes('./styles.css?v=entry-flow-4&rev=application-audit-1'));
- assert.ok(workerCacheVersion(sw)==='eduvia-v103-recorded-lecture-intelligence');
+ assert.ok(workerCacheVersion(sw)==='eduvia-v105-voice-class-reflections');
 });
 function workerCacheVersion(source){return source.match(/const CACHE = '([^']+)'/)?.[1]||''}
 
@@ -237,7 +237,7 @@ test('Clear planner data waits for all IndexedDB file stores to clear before rep
  const start=studio.indexOf('async function clearAllStudioRecords()');
  const end=studio.indexOf('document.addEventListener(\'change\',e=>{',start);
  const block=studio.slice(start,end);
- assert.ok(block.includes("stores=[STUDIO_STORE,'academicRecords','personalDocuments']"));
+ assert.ok(block.includes("stores=[STUDIO_STORE,'academicRecords','personalDocuments','classAudio']"));
  assert.ok(block.includes("db.transaction(stores,'readwrite')"));
  assert.ok(block.includes("tx.objectStore(storeName).clear()"));
  assert.ok(block.includes('tx.oncomplete=()=>finish()'));

@@ -15,7 +15,9 @@ let manifest = await readFile(manifestPath, 'utf8');
 const permissions = [
   'android.permission.POST_NOTIFICATIONS',
   'android.permission.SCHEDULE_EXACT_ALARM',
-  'android.permission.CAMERA'
+  'android.permission.CAMERA',
+  'android.permission.RECORD_AUDIO',
+  'android.permission.MODIFY_AUDIO_SETTINGS'
 ];
 for (const permission of permissions) {
   const line = `    <uses-permission android:name="${permission}" />`;

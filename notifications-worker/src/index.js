@@ -110,11 +110,13 @@ function normalizeReminder(value, now) {
   const title = String(value.title || '').trim().slice(0, 100);
   const body = String(value.body || '').trim().slice(0, 220);
   if (!title || !body) return null;
-  return { id: value.id, title, body, fireAt: Math.floor(fireAt) };
+  const url = value.url === undefined ? './#today' : String(value.url);
+  if (url !== './#today' && !/^\.\/#recall\/[A-Za-z0-9_-]{1,64}$/.test(url)) return null;
+  return { id: value.id, title, body, fireAt: Math.floor(fireAt), url };
 }
 
 async function digestSchedule(reminders) {
-  const text = JSON.stringify(reminders.map(item => [item.id, item.title, item.body, item.fireAt]));
+  const text = JSON.stringify(reminders.map(item => [item.id, item.title, item.body, item.fireAt, item.url]));
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return [...new Uint8Array(digest)].map(value => value.toString(16).padStart(2, '0')).join('');
 }
@@ -170,8 +172,8 @@ async function handleFetch(request, env) {
     if (current?.schedule_hash !== hash) {
       await env.DB.prepare('DELETE FROM reminders WHERE device_id = ?').bind(id).run();
       for (let offset = 0; offset < reminders.length; offset += 40) {
-        const statements = reminders.slice(offset, offset + 40).map(item => env.DB.prepare('INSERT INTO reminders (device_id, reminder_id, title, body, fire_at, status, attempt_count, delivered_at) VALUES (?, ?, ?, ?, ?, \'pending\', 0, NULL)')
-          .bind(id, item.id, item.title, item.body, item.fireAt));
+        const statements = reminders.slice(offset, offset + 40).map(item => env.DB.prepare('INSERT INTO reminders (device_id, reminder_id, title, body, fire_at, url, status, attempt_count, delivered_at) VALUES (?, ?, ?, ?, ?, ?, \'pending\', 0, NULL)')
+          .bind(id, item.id, item.title, item.body, item.fireAt, item.url));
         if (statements.length) await env.DB.batch(statements);
       }
       await env.DB.prepare('UPDATE devices SET schedule_hash = ? WHERE device_id = ?').bind(hash, id).run();
@@ -209,7 +211,7 @@ async function sendDueReminders(env) {
   const now = Date.now();
   await env.DB.prepare("DELETE FROM reminders WHERE fire_at < ? AND status IN ('pending', 'sending', 'sent', 'failed')")
     .bind(now - MAX_LATE_MS).run();
-  const result = await env.DB.prepare("SELECT r.device_id, r.reminder_id, r.title, r.body, r.fire_at, d.subscription_json FROM reminders r JOIN devices d ON d.device_id = r.device_id WHERE r.attempt_count < 3 AND r.fire_at <= ? AND r.fire_at >= ? AND (r.status = 'pending' OR (r.status = 'sending' AND r.claim_until <= ?)) ORDER BY r.fire_at LIMIT ?")
+  const result = await env.DB.prepare("SELECT r.device_id, r.reminder_id, r.title, r.body, r.fire_at, r.url, d.subscription_json FROM reminders r JOIN devices d ON d.device_id = r.device_id WHERE r.attempt_count < 3 AND r.fire_at <= ? AND r.fire_at >= ? AND (r.status = 'pending' OR (r.status = 'sending' AND r.claim_until <= ?)) ORDER BY r.fire_at LIMIT ?")
     .bind(now, now - MAX_LATE_MS, now, MAX_SEND_PER_RUN).all();
   if (!result.results?.length) return;
   let keys;
@@ -222,7 +224,7 @@ async function sendDueReminders(env) {
       const delivered = await sendPush(JSON.parse(row.subscription_json), {
         title: row.title,
         body: row.body,
-        url: './#today',
+        url: row.url || './#today',
         tag: `eduvia-${row.reminder_id}`
       }, keys, env);
       if (delivered) {

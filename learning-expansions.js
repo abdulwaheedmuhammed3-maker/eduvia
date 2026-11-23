@@ -20,7 +20,7 @@
   }
   function updateFlashcardSchedule(card,remembered){
     const steps=[1,3,7,14,30];
-    const level=remembered?Math.min(4,(Number(card.level)||0)+1):0;
+    const level=remembered?Math.min(5,(Number(card.level)||0)+1):0;
     card.level=level;
     card.nextReview=dateOffset(todayISO(),remembered?steps[Math.max(0,level-1)]:1);
     card.lastReviewed=Date.now();

@@ -183,3 +183,10 @@ test('multiple-choice questions are topic-specific and use distractors from othe
  assert.ok(studio.includes("Multiple-choice questions need at least four distinct searchable topics or titled sections."));
  assert.ok(studio.includes("if(generated.questions.length<count)toast('Created '"));
 });
+
+test('MCQ answer reveal expressions interpolate at runtime rather than displaying template placeholders',()=>{
+ const studio=read('study-studio.js');
+ assert.ok(studio.includes('<summary>${q.options?'));
+ assert.ok(studio.includes('<p>${q.options?'));
+ assert.ok(!studio.includes('\\${q.options?'));
+});

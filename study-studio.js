@@ -462,11 +462,19 @@ function courseTemplate(){downloadCsv('code,name,credits,topics\nSUBJ 101,Sample
 function timetableTemplate(){downloadCsv('day,start,end,title,courseCode,location\nMonday,09:00,10:00,Sample class,SUBJ 101,Room or online\nWednesday,14:00,15:30,Sample tutorial,SUBJ 102,Online\n','eduvia-school-timetable-template.csv')}
 
 function saveAvailability(form){const fd=new FormData(form);const days=fd.getAll('studyDay').map(Number);if(!days.length){toast('Choose at least one day for study.');return false}const start=fd.get('studyStart'),end=fd.get('studyEnd');if(minutes(end)<=minutes(start)){toast('Your study window must end after it starts.');return false}data.profile.studyDays=days;data.profile.studyStart=start;data.profile.studyEnd=end;data.profile.planSessionMinutes=Number(fd.get('planSessionMinutes'))||45;save();studioNotice='Study times saved. The next plan will fit inside this window.';toast('Study availability saved');return true}
+function planningEventIsActive(event,planningDate,nowMinutes){
+  if(!event?.date)return true;
+  if(event.date>planningDate)return true;
+  if(event.date<planningDate)return false;
+  return minutes(event.end)>nowMinutes;
+}
+
 function generatePlan(){
   if(!data.courses.length){studioNotice='Import your learning-area list or add your courses first. Then the planner can spread sessions across them.';render();toast('Add at least one course before generating a plan.');return}
   const days=(data.profile.studyDays||[]).map(Number),start=minutes(data.profile.studyStart||'17:00'),end=minutes(data.profile.studyEnd||'21:00'),session=Number(data.profile.planSessionMinutes)||45;
   if(!days.length||end<=start){toast('Set your available days and study window first.');return}
-  const manual=data.events.filter(e=>!e.generated),classes=manual.filter(e=>e.type==='class'),blocks=manual.filter(e=>e.type==='study');
+  const planningDate=todayISO(),nowMinutes=new Date().getHours()*60+new Date().getMinutes();
+  const manual=data.events.filter(e=>!e.generated&&planningEventIsActive(e,planningDate,nowMinutes)),classes=manual.filter(e=>e.type==='class'),blocks=manual.filter(e=>e.type==='study');
   const candidates=[];for(const day of days){for(let t=start;t+session<=end;t+=30){const collision=[...classes,...blocks].some(e=>Number(e.day)===day&&minutes(e.start)<t+session+15&&minutes(e.end)+15>t);if(!collision)candidates.push({day,start:t,end:t+session})}}
   const count=Math.max(Number(data.profile.weeklyGoal)||5,data.courses.length);if(!candidates.length){studioNotice='No open study slots fit around your classes. Widen your study window, choose more days, or shorten each session.';render();toast('No available study slots found.');return}
   const deadlinePriority=course=>(data.deadlines||[]).filter(item=>item.courseId===course.id&&!item.completed&&item.dueDate).reduce((score,item)=>{const days=Math.ceil((new Date(item.dueDate+'T23:59:59').getTime()-Date.now())/86400000);return score+(days<0?180:days<=3?150:days<=7?110:days<=14?65:days<=30?25:5)},0);const ranked=[...data.courses].sort((a,b)=>(deadlinePriority(b)+(Number(b.credits)||3))-(deadlinePriority(a)+(Number(a.credits)||3)));const chosen=[];

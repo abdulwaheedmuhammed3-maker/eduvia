@@ -39,3 +39,15 @@ test('PDF extraction refuses files over the 250-page processing limit instead of
  const pdfBranch=studio.slice(studio.indexOf("if(ext==='pdf')"),studio.indexOf("if(['docx','pptx']",studio.indexOf("if(ext==='pdf')")));
  assert.ok(pdfBranch.indexOf('ensurePdfPageLimit(doc.numPages)')<pdfBranch.indexOf('Math.min(doc.numPages,250)'),'the guard must run before page extraction begins');
 });
+
+
+test('study availability only confirms saved changes and restores prior values when storage fails',()=>{
+ const start=studio.indexOf('function saveAvailability(form)');
+ const end=studio.indexOf('\n',start);
+ const fn=studio.slice(start,end);
+ assert.ok(fn.includes('if(!save())'),'availability updates must check the storage result');
+ assert.ok(fn.includes('Object.assign(data.profile,previous)'),'failed writes must restore the prior in-memory preferences');
+ assert.ok(fn.includes('form.elements.studyStart.value=previous.studyStart'),'failed writes must restore the visible start time');
+ assert.ok(fn.includes('form.querySelectorAll'),'failed writes must restore visible selected days');
+ assert.ok(fn.indexOf('if(!save())')<fn.indexOf("toast('Study availability saved')"),'success must only be shown after a successful save');
+});

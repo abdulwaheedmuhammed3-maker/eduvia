@@ -32,6 +32,14 @@ Learners can create personal roadmaps around academic, career, professional-skil
 
 Eduvia creates study guides and practice questions on the device from learning-area topics and uploaded materials. It has no AI connection or API key requirement. Use **Find a learning resource online** to open a normal web search; review the results yourself and save useful links or notes to the learning kit.
 
+## Recorded lectures and image scanning
+
+Each course workspace includes a **Recorded lectures** area. Import a saved Google Meet transcript as TXT, VTT, SRT or DOCX, and attach lecture PDFs, PowerPoint slides, screenshots or photographs. Eduvia extracts embedded PDF and slide text, and uses its existing browser OCR reader to scan image uploads and scanned PDF pages. Extracted text keeps page, slide and source-file markers where available.
+
+The first version selects major statements directly from the uploaded source text and labels each point with its source location. This is an extractive study aid, not a verified AI interpretation or a speech-to-text engine. Check technical details, equations and OCR output against the original lecture. Notes and extracted text are saved with the course on the current device and are included in the existing course-material backup flow.
+
+A Google Drive, Docs or Meet URL can be saved as a source reference, but direct private-Drive download is not enabled. It requires a Google OAuth client and user-authorised Drive access; Eduvia must not ask for or store a Google account password. Audio/video transcription and AI-written summaries also require a configured secure processing service. Until those integrations are configured, upload the recording's transcript and its slides/images instead. First-time PDF/Office/OCR processing may need an internet connection to load the existing document-reader libraries.
+
 ## Materials and privacy
 
 Uploaded files are read in the browser. Extracted text and planner details stay in that browser on that device. The original files are not uploaded to an Eduvia server. Settings can download a planner JSON backup; Personal documents can create a portable ZIP with files, education history, and recorded results. The ZIP is not encrypted, so keep it private. There are no accounts or automatic cloud sync in this version.

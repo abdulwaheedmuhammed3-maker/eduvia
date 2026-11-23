@@ -156,7 +156,7 @@ window.eduLectureMaterials={
     if(!save()){
       data.materials=data.materials.filter(item=>item.id!==meta.id);
       data.materialText=data.materialText.filter(item=>item.id!==meta.id);
-      if(storedInIndexedDb)await removeStoredMaterial(meta.id);
+      if(storedInIndexedDb&&!await removeStoredMaterial(meta.id))toast('The lecture was not saved, but its extracted file could not be cleaned up. Export a backup and check device storage.');
       throw new Error('Eduvia could not save this lecture. Check device storage and try again.');
     }
     return {...meta};

@@ -397,3 +397,30 @@ test('new personal documents roll back their stored blob when planner metadata c
  assert.ok(add.includes("deleteStudioRecord('personalDocuments',documentId)"));
  assert.ok(add.indexOf('if(!save()){')<add.indexOf("toast('Document saved on this device')"));
 });
+
+
+test('restored tutorial links only render absolute HTTP or HTTPS destinations',()=>{
+ const app=read('app.js');
+ assert.ok(app.includes("function safeHttpUrl(value='')"));
+ assert.ok(app.includes("['http:','https:'].includes(url.protocol)"));
+ assert.ok(app.includes('href="${safeHttpUrl(r.url)}"'));
+ assert.ok(!app.includes('href="${safe(r.url)}"'));
+});
+
+test('imported record identifiers are escaped before entering HTML attributes',()=>{
+ const app=read('app.js');
+ const studio=read('study-studio.js');
+ assert.ok(app.includes('data-id="${safe(e.id)}"'));
+ assert.ok(app.includes('data-id="${safe(c.id)}"'));
+ assert.ok(app.includes('data-id="${safe(r.id)}"'));
+ assert.ok(app.includes('value="${safe(c.id)}"'));
+ assert.ok(!/data-id="\\$\\{[ecr]\\.id\\}"/.test(app));
+ assert.ok(!/value="\\$\\{c\\.id\\}"/.test(app));
+ assert.ok(studio.includes('data-id="${safe(m.id)}"'));
+ assert.ok(!studio.includes('data-id="${m.id}"'));
+});
+
+test('persisted course colours are constrained to the built-in palette before rendering',()=>{
+ const app=read('app.js');
+ assert.ok(app.includes('let chosen=COLORS.includes(course?.color)?course.color:COLORS[0]'));
+});

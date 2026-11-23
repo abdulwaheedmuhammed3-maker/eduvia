@@ -9,8 +9,6 @@ const hub=read('feature-hub.js');
 const roadmaps=read('roadmaps.js');
 const index=read('index.html');
 const polish=read('ui-polish.css');
-const experience=read('experience.js');
-const exp=read('learning-expansions.js');
 
 test('Play uses one grouped toolkit and the Exam Centre opens its real screen',()=>{
  const play=experience.match(/function play\(\)\{([\s\S]*?)\n\}/)?.[1]||'';
@@ -58,7 +56,7 @@ test('service worker caches the new stylesheet and updated screen modules',()=>{
 
 test('Create and View actions stay anchored at the bottom of their cards',()=>{
  const view=experience.includes('<section class="exp-inline-cta exp-inline-cta-action-bottom">')&&experience.includes('data-page="progress"');
- const create=exp.includes('<div class="exp-empty exp-empty-action-bottom">')&&exp.includes('data-page="flashcards"');
+ const create=expansion.includes('<div class="exp-empty exp-empty-action-bottom">')&&exp.includes('data-page="flashcards"');
  assert.ok(view,'View learning progress remains a real bottom-aligned action');
  assert.ok(create,'Create flashcards remains a real bottom-aligned action');
  assert.ok(polish.includes('.exp-inline-cta-action-bottom>button'));

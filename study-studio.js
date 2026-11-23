@@ -1329,6 +1329,7 @@ async function saveCompletedSession(event,date,reflection,complete=true,voiceRec
     }
     closeModal();
     window.EduviaVoiceReflection?.clearPending?.();
+    if (record.type === 'class') window.eduRecallRefreshQuestionBank?.().catch(() => {});
     return record;
   }catch(error){
     data.studyRecords=previousRecords;

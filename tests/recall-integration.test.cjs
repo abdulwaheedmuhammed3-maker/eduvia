@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const read = path => fs.readFileSync(path, 'utf8');
-const app = read('app.js'), recall = read('recall.js'), core = read('recall-core.js');
+const app = read('app.js'), recall = read('recall.js'), core = read('recall-core.js'), studio = read('study-studio.js');
 const index = read('index.html'), worker = read('notifications-worker/src/index.js');
 const native = read('native-bridge-src.js'), serviceWorker = read('service-worker.js');
 const build = read('scripts/build-web.mjs'), workflow = read('.github/workflows/validate.yml');
@@ -21,6 +21,8 @@ test('Recall question bank is built from local course materials and flashcards',
   assert.ok(recall.includes('data.flashcards'));
   assert.ok(recall.includes('data.resources'));
   assert.ok(recall.includes('window.eduRecallBuildReminders'));
+  assert.ok(recall.includes('Array.isArray(data.studyRecords) ? data.studyRecords : []'));
+  assert.ok(studio.includes('window.eduRecallRefreshQuestionBank?.()'));
   assert.ok(app.includes('window.eduRecallBuildReminders(now)'));
 });
 test('Recall schedules the selected hourly rate and never includes the saved answer in a notification', () => {

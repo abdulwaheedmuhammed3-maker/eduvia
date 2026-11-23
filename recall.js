@@ -31,7 +31,7 @@
       lastReviewedAt: Number(old.lastReviewedAt) || 0
     };
   }
-  async function buildQuestionBank() {
+  async function buildQuestionBank(silent = false) {
     const previous = JSON.parse(JSON.stringify(state));
     const oldQuestions = new Map(state.questions.map(item => [item.id, item]));
     const next = [], seen = new Set();
@@ -95,6 +95,29 @@
         'What are the key points in your note "' + String(note.title || 'Personal note') + '"?',
         note.body, note.title || 'Personal note', course && course.name || 'Saved note', ''));
     });
+    (Array.isArray(data.studyRecords) ? data.studyRecords : []).filter(record => {
+      const reflection = record && record.reflection || {};
+      return record?.type === 'class' && (reflection.attendance || 'attended') === 'attended';
+    }).forEach(record => {
+      const reflection = record.reflection || {};
+      const topics = String(reflection.topics || '').trim();
+      const learned = (Array.isArray(reflection.learned) ? reflection.learned : String(reflection.learned || '').split(/\r?\n+/))
+        .map(item => String(item || '').trim()).filter(Boolean);
+      const studyAreas = String(reflection.studyAreas || '').trim();
+      const answer = [
+        topics ? 'Topics covered:\n' + topics : '',
+        learned.length ? 'What I learned:\n' + learned.map((item, index) => (index + 1) + '. ' + item).join('\n') : '',
+        studyAreas ? 'Study areas to revisit:\n' + studyAreas : ''
+      ].filter(Boolean).join('\n\n').slice(0, 1000);
+      if (answer.length < 35) return;
+      const linked = (data.courses || []).find(item => item.id === record.courseId);
+      const course = linked || { id: record.courseId || '', name: record.courseName || record.title || 'Class reflection' };
+      const date = String(record.date || '');
+      const dateLabel = date ? ' on ' + date : '';
+      const prompt = 'Without looking at your notes, summarise the class' + (course.name ? ' for ' + course.name : '') + dateLabel + '.';
+      add(sourceQuestion('class-reflection', 'class-reflection:' + record.id, course, prompt, answer,
+        'Saved class reflection', date || 'Class record', ''));
+    });
     state.questions = next.slice(0, 160);
     const validMaterialIds = new Set((data.materials || []).map(item => String(item.id)));
     state.questions = state.questions.filter(item => !item.materialId || validMaterialIds.has(String(item.materialId)));
@@ -102,7 +125,7 @@
       data.recallState = previous; state = data.recallState; render(); return false;
     }
     schedulePushSync();
-    toast('Recall question bank refreshed from your saved learning materials.');
+    if (!silent) toast('Recall question bank refreshed from your saved learning materials.');
     return true;
   }
   function blockedByDate(now) {
@@ -111,7 +134,7 @@
       const day = new Date(now); day.setDate(day.getDate() + offset);
       const date = day.toLocaleDateString('en-CA');
       const events = typeof dayEvents === 'function' ? dayEvents(date) : [];
-      output[date] = (events || []).map(event => ({ start: event.start, end: event.end, bufferMinutes: 10 }));
+      output[date] = (events || []).filter(event => event.type === 'class').map(event => ({ start: event.start, end: event.end, bufferMinutes: 10 }));
     }
     return output;
   }
@@ -245,6 +268,8 @@
       if (kind === 'rate-remembered' || kind === 'rate-review') { rateQuestion(action.dataset.id, kind === 'rate-remembered'); return; }
     }
   });
+  window.eduRecallRefreshQuestionBank = () => buildQuestionBank(true);
+
   const oldPlay = window.eduPageRenderers && window.eduPageRenderers.play;
   if (window.eduPageRenderers) {
     window.eduPageRenderers.recall = renderRecall;

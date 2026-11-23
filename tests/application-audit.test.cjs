@@ -95,7 +95,7 @@ test('changed assets are versioned identically in HTML and the new offline cache
  assert.ok(html.includes('first-run-alerts-6'));
  assert.ok(sw.includes('first-run-alerts-6'));
  assert.ok(html.includes('first-run-alert-optin-2'));
- assert.ok(sw.includes('first-run-alerts-4'));
+ assert.ok(sw.includes('first-run-alerts-6'));
  assert.ok(sw.includes('first-run-alert-optin-2'));
  assert.ok(sw.includes('./styles.css?v=entry-flow-4&rev=application-audit-1'));
  assert.ok(workerCacheVersion(sw)==='eduvia-v99-full-application-audit');

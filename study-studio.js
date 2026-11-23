@@ -131,6 +131,55 @@ async function readMaterial(materialId){
     });
   }catch{return fallbackMaterial(materialId)}
 }
+window.eduLectureMaterials={
+  list(courseId){
+    return (data.materials||[]).filter(item=>item?.kind==='recorded-lecture'&&String(item.courseId||'')===String(courseId||''))
+      .sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).map(item=>({...item}));
+  },
+  async save(record){
+    if(!record||!record.id||!String(record.text||'').trim())throw new Error('A lecture transcript or readable slide text is required.');
+    data.materials=data.materials||[];
+    data.materialText=data.materialText||[];
+    const meta={
+      id:String(record.id),kind:'recorded-lecture',name:String(record.name||'Recorded lecture'),
+      ext:'lecture',courseId:String(record.courseId||''),createdAt:Number(record.createdAt)||Date.now(),
+      lectureDate:String(record.lectureDate||''),sourceUrl:String(record.sourceUrl||''),
+      characters:String(record.text).length,keyPoints:Array.isArray(record.keyPoints)?record.keyPoints:[],
+      topics:Array.isArray(record.topics)?record.topics:[],attachments:Array.isArray(record.attachments)?record.attachments:[],
+      summaryMethod:'extractive-local-v1'
+    };
+    const stored={...record,id:meta.id,name:meta.name,courseId:meta.courseId,createdAt:meta.createdAt};
+    let storedInIndexedDb=false;
+    try{await storeMaterial(stored);storedInIndexedDb=true}
+    catch{data.materialText.push(stored)}
+    data.materials.push(meta);
+    if(!save()){
+      data.materials=data.materials.filter(item=>item.id!==meta.id);
+      data.materialText=data.materialText.filter(item=>item.id!==meta.id);
+      if(storedInIndexedDb)await removeStoredMaterial(meta.id);
+      throw new Error('Eduvia could not save this lecture. Check device storage and try again.');
+    }
+    return {...meta};
+  },
+  async read(lectureId){return readMaterial(String(lectureId||''))},
+  async remove(lectureId){
+    const index=(data.materials||[]).findIndex(item=>item?.kind==='recorded-lecture'&&String(item.id)===String(lectureId));
+    if(index<0)return false;
+    const [removed]=data.materials.splice(index,1);
+    const fallbackIndex=(data.materialText||[]).findIndex(item=>String(item?.id)===String(lectureId));
+    const fallback=fallbackIndex>=0?data.materialText.splice(fallbackIndex,1)[0]:null;
+    if(!save()){
+      data.materials.splice(index,0,removed);
+      if(fallback)data.materialText.splice(Math.max(0,fallbackIndex),0,fallback);
+      return false;
+    }
+    await removeStoredMaterial(String(lectureId));
+    return true;
+  }
+};
+window.eduExtractLectureAsset=async function(file){
+  return extractDocument(file,'material');
+};
 window.eduOpenCourseMaterial=async function(materialId){
  try{
   const record=await readMaterial(materialId);
@@ -193,7 +242,7 @@ async function extractDocument(file,kind=''){
     if(text)return text;
     throw new Error('I could not read text from that image. Try a clearer, well-lit image with the full page in frame.');
   }
-  if(['txt','md','csv','tsv','json'].includes(ext))return await file.text();
+  if(['txt','md','csv','tsv','json','vtt','srt'].includes(ext))return await file.text();
   if(['xls','xlsx'].includes(ext)){
     if(!window.XLSX)await loadStudioScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
     const workbook=window.XLSX.read(await file.arrayBuffer(),{type:'array'});

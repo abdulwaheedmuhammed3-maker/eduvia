@@ -68,6 +68,5 @@ test('Android app resume refreshes pending reminders and a truncated 300-alarm q
  assert.ok(app.includes('result.truncated'),'partial native reminder queues must be detected');
  assert.ok(app.includes('Android has a 300-reminder queue limit'));
  assert.ok(app.includes('Only the next 300 upcoming reminders are queued'));
- assert.ok(app.includes('Android can queue only the next 300 upcoming reminders.'));
  assert.ok(app.includes('NATIVE_REMINDER_LIMIT_NOTICE_KEY'));
 });

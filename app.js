@@ -108,7 +108,24 @@ let eventAlertTimer = null;
 let pushSyncTimer = null;
 let pushSyncPromise = null;
 
-function loadData(){try{const d=JSON.parse(storageGet(STORE_KEY));if(!d||typeof d!=='object'||!d.profile)return defaultData();const defaults=defaultData();return {...defaults,...d,profile:{...defaults.profile,...d.profile},courses:Array.isArray(d.courses)?d.courses:[],events:Array.isArray(d.events)?d.events:[],resources:Array.isArray(d.resources)?d.resources:[],completed:Array.isArray(d.completed)?d.completed:[],studyRecords:Array.isArray(d.studyRecords)?d.studyRecords:[],academicHistory:Array.isArray(d.academicHistory)?d.academicHistory:[],personalDocuments:Array.isArray(d.personalDocuments)?d.personalDocuments:[],exams:Array.isArray(d.exams)?d.exams:[],revisionTasks:Array.isArray(d.revisionTasks)?d.revisionTasks:[],mockExamAttempts:Array.isArray(d.mockExamAttempts)?d.mockExamAttempts:[]}}catch{return defaultData()}}
+function loadData(){
+  try{
+    const saved=JSON.parse(storageGet(STORE_KEY));
+    if(!saved||typeof saved!=='object'||Array.isArray(saved)||!saved.profile||typeof saved.profile!=='object'||Array.isArray(saved.profile))return defaultData();
+    const defaults=defaultData(),loaded={...defaults,...saved,profile:{...defaults.profile,...saved.profile}};
+    const arrays=['courses','events','resources','completed','studyRecords','academicHistory','personalDocuments','exams','revisionTasks','mockExamAttempts','deadlines','flashcards','materials','materialText','pendingCarryovers','askHistory','discoverSavedGuides','discoverReadHistory','playChallengeAttempts','wellnessCheckins','roadmaps'];
+    for(const key of arrays)loaded[key]=Array.isArray(saved[key])?saved[key].filter(item=>item&&typeof item==='object'&&!Array.isArray(item)):defaults[key];
+    loaded.topicMastery=saved.topicMastery&&typeof saved.topicMastery==='object'&&!Array.isArray(saved.topicMastery)?saved.topicMastery:{};
+    loaded.imports=saved.imports&&typeof saved.imports==='object'&&!Array.isArray(saved.imports)?saved.imports:{courses:[],timetable:[]};
+    loaded.imports.courses=Array.isArray(loaded.imports.courses)?loaded.imports.courses:[];
+    loaded.imports.timetable=Array.isArray(loaded.imports.timetable)?loaded.imports.timetable:[];
+    loaded.profile.studyDays=Array.isArray(loaded.profile.studyDays)?loaded.profile.studyDays:[1,2,3,4,5,6];
+    loaded.studyPlan=saved.studyPlan&&typeof saved.studyPlan==='object'&&!Array.isArray(saved.studyPlan)?saved.studyPlan:null;
+    loaded.activeMockExam=saved.activeMockExam&&typeof saved.activeMockExam==='object'&&!Array.isArray(saved.activeMockExam)?saved.activeMockExam:null;
+    loaded.lastMockExam=saved.lastMockExam&&typeof saved.lastMockExam==='object'&&!Array.isArray(saved.lastMockExam)?saved.lastMockExam:null;
+    return loaded;
+  }catch{return defaultData()}
+}
 function learnerTypeOf(profile=data.profile||{}){
   return window.EduviaLearnerProfile.resolveLearnerType(profile);
 }

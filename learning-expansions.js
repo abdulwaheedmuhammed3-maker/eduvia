@@ -168,7 +168,7 @@
   }
   function renderExpandedDiscover(){
     const library=expandedDiscoverGuides(),saved=data.discoverSavedGuides||[],read=data.discoverReadHistory||[];
-    const cats=[['Learn smarter','pink','Memory, focus and learning habits.'],['Academic skills','blue','Writing, research and clear communication.'],['Exam preparation','orange','Revision methods and exam readiness.'],['Opportunities','purple','Scholarships, programmes and applications.'],['Digital skills','blue','Digital literacy, AI and safer learning online.'],['Career readiness','purple','Projects, portfolios and professional growth.']];
+    const cats=[['Learn smarter','pink','Active recall and understanding how you learn.'],['Study smarter','pink','Memory, focus, spaced review and effective study habits.'],['Academic skills','blue','Writing, research and clear communication.'],['Exam preparation','orange','Revision methods and exam readiness.'],['Opportunities','purple','Scholarships, programmes and applications.'],['Digital skills','blue','Digital literacy, AI and safer learning online.'],['Career readiness','purple','Projects, portfolios and professional growth.']];
     const article=discoverView.article?library.find(item=>item.title===discoverView.article):null;
     if(article){
       const isSaved=saved.includes(article.title),isRead=read.some(item=>item.title===article.title);

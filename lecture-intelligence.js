@@ -43,20 +43,20 @@
     const emit=value=>{
       const split=String(value||'').match(/[^.!?]+[.!?]?/g)||[value];
       for(const piece of split){
-        const sentence=piece.replace(/\\s+/g,' ').trim();
+        const sentence=piece.replace(/\s+/g,' ').trim();
         const words=tokens(sentence);
         if(words.length<5||sentence.length<28)continue;
-        if(/^(speaker|unknown speaker|participant)\\s*\\d*\\s*:/i.test(sentence))continue;
+        if(/^(speaker|unknown speaker|participant)\s*\d*\s*:/i.test(sentence))continue;
         output.push({text:sentence,words,position:output.length,page:location.page||'',slide:location.slide||'',source:location.source||'',section:location.section||''});
       }
     };
     const flush=()=>{if(pending.trim())emit(pending);pending=''};
-    for(const rawLine of text.split('\\n')){
+    for(const rawLine of text.split('\n')){
       const line=rawLine.trim();
       if(!line){flush();continue}
       const marker=markersFromLine(line,location);
       if(marker){flush();location=marker;continue}
-      const bullet=line.match(/^(?:[•▪‣*-]|\\d+[.)])\\s*(.+)$/);
+      const bullet=line.match(/^(?:[•▪‣*-]|\d+[.)])\s*(.+)$/);
       if(bullet){flush();emit(bullet[1]);continue}
       pending+=(pending?' ':'')+line;
       if(/[.!?][”’"']?$/.test(line))flush();

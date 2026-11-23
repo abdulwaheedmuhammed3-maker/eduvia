@@ -157,8 +157,11 @@ async function handleFetch(request, env) {
     if (current?.schedule_hash === hash && current.subscription_json === subscriptionJson) {
       return json({ ok: true, synced: reminders.length, unchanged: true }, 200, headers);
     }
-    await env.DB.prepare('INSERT INTO devices (device_id, subscription_json, schedule_hash, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(device_id) DO UPDATE SET subscription_json = excluded.subscription_json, schedule_hash = excluded.schedule_hash, updated_at = excluded.updated_at')
-      .bind(id, subscriptionJson, hash, now).run();
+    // Keep the old hash until every replacement reminder is written. If a delete
+    // or batch insert fails, the next sync must retry instead of treating a partial
+    // schedule as complete. New devices start with an empty hash for the same reason.
+    await env.DB.prepare('INSERT INTO devices (device_id, subscription_json, schedule_hash, updated_at) VALUES (?, ?, \'\', ?) ON CONFLICT(device_id) DO UPDATE SET subscription_json = excluded.subscription_json, updated_at = excluded.updated_at')
+      .bind(id, subscriptionJson, now).run();
     if (current?.schedule_hash !== hash) {
       await env.DB.prepare("DELETE FROM reminders WHERE device_id = ? AND status IN ('pending', 'sending')").bind(id).run();
       for (let offset = 0; offset < reminders.length; offset += 40) {
@@ -166,6 +169,7 @@ async function handleFetch(request, env) {
           .bind(id, item.id, item.title, item.body, item.fireAt));
         if (statements.length) await env.DB.batch(statements);
       }
+      await env.DB.prepare('UPDATE devices SET schedule_hash = ? WHERE device_id = ?').bind(hash, id).run();
     }
     return json({ ok: true, synced: reminders.length }, 200, headers);
   }

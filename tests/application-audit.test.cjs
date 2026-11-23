@@ -123,3 +123,13 @@ test('category backup matching collapses actual whitespace before matching cours
  assert.ok(feature.includes(".replace(/\\s+/g,' ')"));
  assert.ok(!feature.includes(".replace(/\\\\s+/g,' ')"));
 });
+
+test('material reads and portable backup exports use the saved extracted-text fallback when IndexedDB is unavailable',()=>{
+ const studio=read('study-studio.js');
+ assert.ok(studio.includes('function fallbackMaterial(materialId)'));
+ assert.ok(studio.includes('resolve(req.result||fallbackMaterial(materialId))'));
+ assert.ok(studio.includes("storeName===STUDIO_STORE?fallbackMaterial(recordId):null"));
+ assert.ok(studio.includes('const cached=fallback();if(cached)return cached;throw error'));
+ assert.ok(studio.includes('imported.materialText.push(record)'));
+ assert.ok(studio.includes("if((imported.materialText||[]).some(item=>String(item?.id||'')===String(metadata.id)))importedMaterials.push(metadata)"));
+});

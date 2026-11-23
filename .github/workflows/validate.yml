@@ -12,6 +12,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Install application dependencies
+        run: npm install --no-package-lock --no-audit --no-fund
       - name: Check JavaScript syntax
         run: |
           node --check learner-profile.js
@@ -21,15 +23,18 @@ jobs:
           node --check entry-flow.js
           node --check study-studio.js
           node --check course-intelligence.js
-          node --test tests/course-intelligence.test.cjs tests/learner-profile.test.cjs tests/study-studio-structure.test.cjs tests/roadmap-core.test.cjs tests/theme-styles.test.cjs tests/exam-centre-qa.test.cjs tests/learning-expansions.test.cjs tests/navigation-layout.test.cjs tests/notifications-onboarding.test.cjs
+          npm test
           node --check feature-hub.js
           node --check experience.js
           node --check learning-expansions.js
           node --check icon-system.js
           node --check native-bridge-src.js
+          node --check scripts/build-web.mjs
           node --check scripts/prepare-android.mjs
           node --check service-worker.js
           node --check notifications-worker/src/index.js
+      - name: Build the production web bundle
+        run: npm run build:web
       - name: Verify feature bundle is loaded and cached
         run: |
           grep -q 'roadmap-core.js' index.html

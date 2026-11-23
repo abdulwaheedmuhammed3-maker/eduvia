@@ -354,7 +354,7 @@ button{ -webkit-tap-highlight-color:transparent}
 .course-file-button input{display:none}
 .course-detail-hero{margin-bottom:14px}
 .course-material-reader{max-height:58vh;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface-soft,#f7f8f5)}
-.course-material-reader pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-family:inherit;font-size:13px;line-height:1.65;color:var(--text)}
+.course-material-reader pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-family:inherit;font-size:13px;line-height:1.65;color:var(--ink)}
 @media(max-width:640px){.course-detail-section{padding:14px}.course-item-actions{width:100%;margin-top:8px}.course-item-actions .secondary-btn{flex:1}}
 
 
@@ -828,7 +828,7 @@ html[data-theme="dark"] .integrated-section-toggle{background:#27352c;color:#9ec
 .action-disclosure>summary::-webkit-details-marker{display:none}
 .action-disclosure>summary h3,.action-disclosure>summary strong{margin:0}
 .action-disclosure>summary p{margin:5px 0 0;color:var(--muted);font-size:.9rem}
-.disclosure-cta{flex:0 0 auto;border-radius:12px;background:var(--surface-2,var(--panel));padding:10px 14px;font-weight:700;color:var(--accent)}
+.disclosure-cta{flex:0 0 auto;border-radius:12px;background:var(--surface-soft,var(--paper,#fff));padding:10px 14px;font-weight:700;color:var(--accent-purple,var(--green,#655ee0))}
 .disclosure-body{padding:0 16px 16px}
 .action-disclosure[open]>summary{border-bottom:1px solid var(--line)}
 @media(max-width:600px){.action-disclosure>summary{padding:14px}.disclosure-cta{padding:9px 11px}}

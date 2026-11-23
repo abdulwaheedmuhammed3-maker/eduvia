@@ -29,3 +29,7 @@ The schedule is sent only when reminders or the phone subscription change. The W
 For Workers Builds, connect the GitHub repository on production branch `main`, set the root directory to `notifications-worker`, leave the build command blank, and use `npm run db:migrate && npm run deploy` as the production deploy command. The Worker name must be `eduvia-notifications`. The D1 database ID is already set in `wrangler.jsonc`.
 
 This service only needs a production deployment, so disable Preview builds. If you later enable previews for testing, configure a separate Preview command, Preview-safe variables, and a separate D1 database. Do not point Preview builds at the production database.
+
+## Eduvia Recall notifications
+
+Recall questions are built on the learner's device from saved flashcards, course topics and locally indexed course materials. The notification service receives only the short question prompt, its delivery time and a same-site route back to that question. Answers, course documents, source passages and learning results are not uploaded to the Worker. Applying migration `0003_recall_notification_routes.sql` adds the validated in-app destination used when a learner taps a Recall notification.

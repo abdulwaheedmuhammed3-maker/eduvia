@@ -75,10 +75,14 @@ if(systemThemeQuery&&!systemThemeQuery.addEventListener)systemThemeQuery.addList
 const SUPPORTED_PAGE_ROUTES=new Set([
   'today','my-study','courses','course-detail','timetable','habit','tutorials','study','practice','setup',
   'progress','records','education','vault','settings','profile','more','planner','flashcards','mastery',
-  'mock-exam','mock-results','exams','play','ask','discover','wellness','insights','roadmaps'
+  'mock-exam','mock-results','exams','play','ask','discover','wellness','insights','roadmaps','recall'
 ]);
 function resolveHashRoute(hash){
   const route=String(hash||'').replace(/^#/,'');
+  if(route.startsWith('recall/')){
+    const recallQuestionId=route.slice(7);
+    return /^[A-Za-z0-9_-]{1,64}$/.test(recallQuestionId)?{page:'recall',recallQuestionId}:{page:'recall',recallQuestionId:''};
+  }
   if(route.startsWith('course/')){
     try{
       const courseId=decodeURIComponent(route.slice(7));
@@ -92,6 +96,7 @@ function resolveHashRoute(hash){
 const initialRoute=resolveHashRoute(location.hash);
 let currentPage=initialRoute.page;
 let selectedCourseId=initialRoute.courseId;
+let currentRecallQuestionId=initialRoute.recallQuestionId||'';
 let selectedDate = todayISO();
 
 let weekOffset = 0;
@@ -395,7 +400,7 @@ function nativeAlertsAreActive(){return Boolean(window.EduviaNative?.isNative)&&
 function pushDeviceToken(){let token=storageGet(PUSH_TOKEN_KEY);if(token)return token;const bytes=new Uint8Array(32);crypto.getRandomValues(bytes);token=btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');storageSet(PUSH_TOKEN_KEY,token);return token}
 function pushKeyBytes(value){const normalized=value.replace(/-/g,'+').replace(/_/g,'/');const padded=normalized+'='.repeat((4-normalized.length%4)%4);return Uint8Array.from(atob(padded),c=>c.charCodeAt(0))}
 async function pushApi(path,options={},token=''){if(!PUSH_API_URL)throw new Error('Eduvia’s free notification service is not connected yet.');const headers={...(options.headers||{})};if(options.body)headers['Content-Type']='application/json';if(token)headers.Authorization='Bearer '+token;const response=await fetch(PUSH_API_URL+path,{...options,headers,cache:'no-store'});const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.error||'The notification service could not be reached.');return result}
-function buildPushReminders(now=new Date()){const reminders=[],until=now.getTime()+90*24*60*60*1000;for(let offset=0;offset<90;offset++){const day=addDays(new Date(now.getFullYear(),now.getMonth(),now.getDate()),offset),date=day.toLocaleDateString('en-CA');for(const event of dayEvents(date)){if(!eventHasPhoneAlert(event)||data.completed.some(item=>item.eventId===event.id&&item.date===date)||classRecordForDate(event.id,date))continue;const [hour,minute]=String(event.start||'').split(':').map(Number);if(!Number.isFinite(hour)||!Number.isFinite(minute))continue;const start=new Date(day);start.setHours(hour,minute,0,0);const fireAt=start.getTime();if(fireAt<=now.getTime()||fireAt>until)continue;const kind=event.type==='study'?'Study session':'Lecture';reminders.push({id:String(event.id)+':'+date,title:kind+' starts now',body:String(event.title)+' is scheduled to start now.',fireAt})}if(data.profile.reminderTime){const [hour,minute]=String(data.profile.reminderTime).split(':').map(Number);if(Number.isFinite(hour)&&Number.isFinite(minute)){const at=new Date(day);at.setHours(hour,minute,0,0);if(at>now&&at.getTime()<=until)reminders.push({id:'daily-reading:'+date,title:'Time for a little reading',body:'A short study session keeps your goal moving.',fireAt:at.getTime()})}}}return reminders.sort((a,b)=>a.id.localeCompare(b.id))}
+function buildPushReminders(now=new Date()){const reminders=[],until=now.getTime()+90*24*60*60*1000;for(let offset=0;offset<90;offset++){const day=addDays(new Date(now.getFullYear(),now.getMonth(),now.getDate()),offset),date=day.toLocaleDateString('en-CA');for(const event of dayEvents(date)){if(!eventHasPhoneAlert(event)||data.completed.some(item=>item.eventId===event.id&&item.date===date)||classRecordForDate(event.id,date))continue;const [hour,minute]=String(event.start||'').split(':').map(Number);if(!Number.isFinite(hour)||!Number.isFinite(minute))continue;const start=new Date(day);start.setHours(hour,minute,0,0);const fireAt=start.getTime();if(fireAt<=now.getTime()||fireAt>until)continue;const kind=event.type==='study'?'Study session':'Lecture';reminders.push({id:String(event.id)+':'+date,title:kind+' starts now',body:String(event.title)+' is scheduled to start now.',fireAt})}if(data.profile.reminderTime){const [hour,minute]=String(data.profile.reminderTime).split(':').map(Number);if(Number.isFinite(hour)&&Number.isFinite(minute)){const at=new Date(day);at.setHours(hour,minute,0,0);if(at>now&&at.getTime()<=until)reminders.push({id:'daily-reading:'+date,title:'Time for a little reading',body:'A short study session keeps your goal moving.',fireAt:at.getTime()})}}}if(typeof window.eduRecallBuildReminders==='function')reminders.push(...window.eduRecallBuildReminders(now));return reminders.filter(item=>item&&Number.isFinite(Number(item.fireAt))&&Number(item.fireAt)>now.getTime()).sort((a,b)=>Number(a.fireAt)-Number(b.fireAt)).slice(0,600)}
 async function syncPushSchedule(subscription=null,token=''){if(!PUSH_API_URL||!pushIsActive()||!('serviceWorker'in navigator))return;if(pushSyncPromise)return pushSyncPromise;pushSyncPromise=(async()=>{const deviceToken=token||storageGet(PUSH_TOKEN_KEY);if(!deviceToken)return;const registration=await navigator.serviceWorker.ready,pushSubscription=subscription||await registration.pushManager.getSubscription();if(!pushSubscription)return;await pushApi('/v1/schedule',{method:'POST',body:JSON.stringify({subscription:pushSubscription.toJSON(),reminders:buildPushReminders()})},deviceToken)})();try{return await pushSyncPromise}finally{pushSyncPromise=null}}
 function schedulePushSync(){clearTimeout(pushSyncTimer);if(window.EduviaNative?.isNative){if(!nativeAlertsAreActive())return;pushSyncTimer=setTimeout(async()=>{try{const result=await window.EduviaNative.scheduleReminders(buildPushReminders());if(!result.enabled&&nativeAlertsAreActive()){storageRemove(NATIVE_ALERTS_ENABLED_KEY);updatePhoneNotificationButton(false);if(currentPage==='settings')render();toast(result.reason==='exact-alarm'?'Eduvia alarms paused. Allow exact alarms again in your phone settings.':'Eduvia notifications paused. Allow notifications again in your phone settings.')}}catch{}},1500);return}if(!PUSH_API_URL||!pushIsActive())return;pushSyncTimer=setTimeout(()=>syncPushSchedule().catch(()=>{}),1500)}
 function updatePhoneNotificationButton(active){const button=document.querySelector('[data-action="enable-notifications"],[data-action="disable-notifications"]');if(!button)return;button.dataset.action=active?'disable-notifications':'enable-notifications';button.textContent=active?'Turn off':(window.EduviaNative?.isNative?'Enable alarms & notifications':'Enable & send test');}
@@ -482,6 +487,7 @@ window.addEventListener('hashchange',()=>{
   const route=resolveHashRoute(location.hash);
   currentPage=route.page;
   selectedCourseId=route.courseId;
+  currentRecallQuestionId=route.recallQuestionId||'';
   if(location.hash&&route.page==='today'&&location.hash!=='#today')history.replaceState(null,'',location.pathname+location.search+'#today');
   if(location.hash.startsWith('#course/')&&route.page==='courses')history.replaceState(null,'',location.pathname+location.search+'#courses');
   render();

@@ -1,0 +1,1 @@
+ALTER TABLE reminders ADD COLUMN url TEXT NOT NULL DEFAULT './#today';

@@ -107,7 +107,7 @@
     }
 
     const partialHandle = await speech.addListener('partialResults', event => {
-      if (active !== session || session.stopRecognition || session.transcriptionDisabled) return;
+      if (active !== session || session.discard || (session.stopRecognition && !event?.forced) || session.transcriptionDisabled) return;
       const accumulated = String(event?.accumulated || '').trim();
       const current = Array.isArray(event?.matches) ? String(event.matches[0] || '').trim() : '';
       const transcript = String(event?.accumulatedText || '').trim() || [accumulated, current].filter(Boolean).join(' ').trim();

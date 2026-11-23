@@ -191,6 +191,17 @@ data.mockExamAttempts=Array.isArray(data.mockExamAttempts)?data.mockExamAttempts
 data.activeMockExam=data.activeMockExam||null;
 data.lastMockExam=data.lastMockExam||null;
 let mockExamTicker=null;
+let mockAutosaveWarningShown=false;
+function persistMockExamDraft(){
+  const error=storageSet(STORE_KEY,JSON.stringify(data));
+  if(error){
+    if(!mockAutosaveWarningShown)toast('Your mock exam changes could not be saved. Export a backup or free some device storage before continuing.');
+    mockAutosaveWarningShown=true;
+    return false;
+  }
+  mockAutosaveWarningShown=false;
+  return true;
+}
 function renderMockExamHub(){
  const recent=data.mockExamAttempts.slice(0,5).map(attempt=>'<div class="schedule-row"><div class="schedule-time">'+esc(new Date(attempt.submittedAt).toLocaleDateString())+'</div><div class="schedule-row-main"><div><strong>'+esc(attempt.courseName||'Mock examination')+'</strong><span>'+attempt.questions.length+' questions · '+attempt.durationMinutes+' minutes · '+attempt.answeredCount+' answered</span></div></div><button class="text-btn" data-mock-action="open-result" data-id="'+esc(attempt.id)+'">Review →</button></div>').join('');
  const form='<details class="action-disclosure"><summary><div><strong>Start a timed mock examination</strong><p>Generate a paper from your course notes and topics</p></div><span class="disclosure-cta">＋ Start mock</span></summary><div class="disclosure-body"><form id="mockExamSetup" class="form-grid">'+
@@ -286,14 +297,14 @@ document.addEventListener('input',event=>{
  if(event.target.matches('[data-mock-answer]')&&data.activeMockExam){
   data.activeMockExam.answers=data.activeMockExam.answers||[];
   data.activeMockExam.answers[Number(event.target.dataset.mockAnswer)]=event.target.value;
-  try{localStorage.setItem(STORE_KEY,JSON.stringify(data))}catch{}
+  persistMockExamDraft();
  }
 });
 document.addEventListener('change',event=>{
  if(event.target.matches('[data-mock-rating]')&&data.lastMockExam){
   data.lastMockExam.review=data.lastMockExam.review||[];
   data.lastMockExam.review[Number(event.target.dataset.mockRating)]=event.target.value;
-  try{localStorage.setItem(STORE_KEY,JSON.stringify(data))}catch{}
+  persistMockExamDraft();
  }
 });
 document.addEventListener('click',event=>{
@@ -390,12 +401,21 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
       const reminders=base(now),until=now.getTime()+90*86400000;
       for(const d of data.deadlines||[]){if(d.completed||!d.dueDate)continue;const at=new Date(d.dueDate+'T09:00:00').getTime()-86400000;if(at>now.getTime()&&at<=until)reminders.push({id:'deadline:'+d.id,title:'Deadline tomorrow',body:String(d.title)+' is due tomorrow.',fireAt:at})}
       for(const d of data.personalDocuments||[]){if(!d.expiryDate)continue;const lead=Math.max(0,Number(d.remindDays)||14),at=new Date(d.expiryDate+'T09:00:00').getTime()-lead*86400000;if(at>now.getTime()&&at<=until)reminders.push({id:'document-expiry:'+d.id,title:'Document expiry coming up',body:String(d.title||d.name)+' expires on '+d.expiryDate+'.',fireAt:at})}
-      const unique=new Map();for(const reminder of reminders)unique.set(String(reminder.id),reminder);return [...unique.values()].sort((a,b)=>a.fireAt-b.fireAt);
+      const unique=new Map();for(const reminder of reminders)unique.set(String(reminder.id),reminder);return [...unique.values()].sort((a,b)=>a.fireAt-b.fireAt).slice(0,600);
     };
   }
-  function notifyExpiringDocuments(){
+  async function notifyExpiringDocuments(){
     if(!('Notification' in window)||Notification.permission!=='granted')return;
-    const now=new Date();for(const d of data.personalDocuments||[]){if(!d.expiryDate)continue;const days=Math.ceil((new Date(d.expiryDate+'T23:59:59').getTime()-now.getTime())/86400000),lead=Math.max(0,Number(d.remindDays)||14);if(days>lead)continue;const key='eduvia-doc-expiry:'+d.id+':'+d.expiryDate;if(storageGet(key)==='1')continue;storageSet(key,'1');showStudyNotification(days<0?'Document has expired':'Document expiry reminder',String(d.title||d.name)+' '+(days<0?'expired':'expires')+(days===0?' today':days===1?' tomorrow':' in '+days+' days')+'.');}
+    const now=new Date();
+    for(const d of data.personalDocuments||[]){
+      if(!d.expiryDate)continue;
+      const days=Math.ceil((new Date(d.expiryDate+'T23:59:59').getTime()-now.getTime())/86400000),lead=Math.max(0,Number(d.remindDays)||14);
+      if(days>lead)continue;
+      const key='eduvia-doc-expiry:'+d.id+':'+d.expiryDate;
+      if(storageGet(key)==='1')continue;
+      const shown=await showStudyNotification(days<0?'Document has expired':'Document expiry reminder',String(d.title||d.name)+' '+(days<0?'expired':'expires')+(days===0?' today':days===1?' tomorrow':' in '+days+' days')+'.');
+      if(shown)storageSet(key,'1');
+    }
   }
   window.addEventListener('focus',notifyExpiringDocuments);setTimeout(notifyExpiringDocuments,1500);
   document.addEventListener('click',async event=>{

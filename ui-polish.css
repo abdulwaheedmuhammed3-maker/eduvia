@@ -226,3 +226,68 @@ html[data-theme="dark"] .more-tool-card-pink .more-tool-icon{background:#493044;
 @media(prefers-reduced-motion:reduce){
   .learning-expansion-card,.more-tool-card{transition:none}
 }
+
+/* Keep the primary actions anchored to the bottom edge of their own cards. */
+.exp-inline-cta-action-bottom{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-rows:1fr auto;
+  align-items:end;
+  min-height:154px;
+}
+.exp-inline-cta-action-bottom>div{
+  grid-column:1;
+  grid-row:1;
+  align-self:start;
+  min-width:0;
+}
+.exp-inline-cta-action-bottom>button{
+  grid-column:2;
+  grid-row:1 / span 2;
+  align-self:end;
+  min-width:220px;
+  min-height:48px;
+}
+.exp-play-challenge .exp-empty-action-bottom{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  min-height:224px;
+}
+.exp-play-challenge .exp-empty-action-bottom>button{
+  margin-top:auto;
+  min-height:48px;
+}
+.exp-academic-grid button{min-height:128px}
+.exp-academic-grid button small{margin-top:auto}
+@media(max-width:760px){
+  .exp-inline-cta-action-bottom{
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    justify-content:flex-start;
+    min-height:190px;
+    padding:18px;
+  }
+  .exp-inline-cta-action-bottom>div{margin:0}
+  .exp-inline-cta-action-bottom>button{
+    width:100%;
+    min-width:0;
+    margin-top:auto;
+    align-self:stretch;
+  }
+  .exp-play-challenge .exp-empty-action-bottom{
+    min-height:230px;
+    padding:19px;
+  }
+  .exp-play-challenge .exp-empty-action-bottom>button{
+    width:100%;
+    align-self:stretch;
+    margin-top:auto;
+  }
+  .exp-academic-grid button{min-height:138px}
+}
+@media(max-width:380px){
+  .exp-inline-cta-action-bottom{min-height:198px}
+  .exp-play-challenge .exp-empty-action-bottom{min-height:238px}
+}

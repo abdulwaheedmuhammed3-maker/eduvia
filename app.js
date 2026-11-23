@@ -425,7 +425,7 @@ function deleteCourse(courseId){
   record.courseId='';
  };
  data.events=data.events.filter(event=>String(event.courseId||'')!==String(courseId));
- for(const collection of [data.resources,data.deadlines,data.personalDocuments,data.materials,data.materialText,data.studyRecords,data.flashcards,data.exams,data.revisionTasks,data.roadmaps]){
+ for(const collection of [data.resources,data.deadlines,data.personalDocuments,data.materials,data.materialText,data.studyRecords,data.completed,data.flashcards,data.exams,data.revisionTasks,data.roadmaps]){
   if(Array.isArray(collection))collection.forEach(unlink);
  }
  data.courses=data.courses.filter(item=>String(item.id)!==String(courseId));

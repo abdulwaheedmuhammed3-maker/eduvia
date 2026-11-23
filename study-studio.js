@@ -384,14 +384,16 @@ async function previewMaterial(file,text,linkedCourseId=''){
   let storedInIndexedDb=false;
   try{await storeMaterial(record);storedInIndexedDb=true}
   catch{data.materialText=data.materialText||[];data.materialText.push(record);m.warning='stored in browser backup instead'}
-  data.materials.push(m);pendingStudioImport=null;
+  data.materials.push(m);
   studioNotice='Learning material saved and indexed on this device. Ask, tutorials, practice and flashcards can retrieve passages with source references.';
   if(!save()){
     data.materials=data.materials.filter(item=>item.id!==m.id);
     data.materialText=(data.materialText||[]).filter(item=>item.id!==m.id);
     if(storedInIndexedDb)await removeStoredMaterial(m.id);
+    studioNotice='';
     render();return;
   }
+  pendingStudioImport=null;
   closeModal();toast('Course material saved and indexed');
  });
 }

@@ -199,7 +199,7 @@ window.eduDownloadCourseMaterial=async function(materialId){
  }catch(error){toast('Could not download this material: '+(error.message||'storage is unavailable'))}
 };
 
-async function removeStoredMaterial(materialId){try{const db=await studioDb();await new Promise((resolve,reject)=>{const tx=db.transaction(STUDIO_STORE,'readwrite');tx.objectStore(STUDIO_STORE).delete(materialId);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});db.close()}catch{} }
+async function removeStoredMaterial(materialId){let db;try{db=await studioDb();await new Promise((resolve,reject)=>{const tx=db.transaction(STUDIO_STORE,'readwrite');tx.objectStore(STUDIO_STORE).delete(materialId);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Could not remove the stored material.'))});return true}catch{return false}finally{db?.close()}}
 async function getStudioRecord(storeName,recordId){
   const fallback=()=>storeName===STUDIO_STORE?fallbackMaterial(recordId):null;
   try{
@@ -656,7 +656,7 @@ document.addEventListener('submit',e=>{
  data.profile.planSessionMinutes=Number(fd.get('planSessionMinutes'))||25;data.profile.sessionMinutes=data.profile.planSessionMinutes;
  data.profile.studyDays=days;data.profile.setupComplete=true;if(!save()){data.profile=previousProfile;return}setPage('my-study');toast('Your learning space is ready. Add a learning area to begin.');
 });
-document.addEventListener('click',e=>{
+document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-action]');if(!b)return;
   switch(b.dataset.action){
     case'generate-plan':generatePlan();break;
@@ -668,7 +668,7 @@ document.addEventListener('click',e=>{
     case'find-curriculum':findCurriculum();break;
     case'generate-practice':generatePractice();break;
     case'go-practice':window.practiceCourseId=data.courses.find(c=>c.name===studioLesson?.course)?.id||'';setPage('practice');break;
-    case'delete-material':removeStoredMaterial(b.dataset.id);data.materials=data.materials.filter(m=>m.id!==b.dataset.id);data.materialText=(data.materialText||[]).filter(m=>m.id!==b.dataset.id);save();toast('Material removed from this device');break;
+    case'delete-material':{const materialId=String(b.dataset.id||''),stored=await getStudioRecord(STUDIO_STORE,materialId),previousMaterials=data.materials,previousText=data.materialText;if(!await removeStoredMaterial(materialId)){toast('Eduvia could not remove the stored file. Nothing was removed.');break}data.materials=data.materials.filter(m=>String(m.id)!==materialId);data.materialText=(data.materialText||[]).filter(m=>String(m.id)!==materialId);if(!save()){data.materials=previousMaterials;data.materialText=previousText;if(stored)try{await putStudioRecord(STUDIO_STORE,stored)}catch{}render();break}toast('Material removed from this device');break}
   }
 });
 

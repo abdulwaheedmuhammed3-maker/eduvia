@@ -37,8 +37,19 @@ function storageSet(key,value){
 function storageRemove(key){
   try{window.localStorage.removeItem(key);return null}catch(error){return error}
 }
-// Existing local planner data identifies a returning user; never show first-run permission onboarding to them.
-if(storageGet(STORE_KEY)!==null&&storageGet(FIRST_LAUNCH_ALERT_PROMPT_KEY)===null){
+// Only a completed profile or existing learning records identify a legacy install.
+// Country selection is persisted during onboarding, so the mere presence of planner
+// storage must not suppress the first-run invitation for an unfinished profile.
+function isLegacyEduviaInstall(){
+  try{
+    const saved=JSON.parse(storageGet(STORE_KEY)||'null');
+    if(!saved||typeof saved!=='object'||Array.isArray(saved))return false;
+    if(saved.profile?.setupComplete===true)return true;
+    return ['courses','events','resources','completed','studyRecords','academicHistory','personalDocuments']
+      .some(key=>Array.isArray(saved[key])&&saved[key].length>0);
+  }catch{return false}
+}
+if(storageGet(FIRST_LAUNCH_ALERT_PROMPT_KEY)===null&&isLegacyEduviaInstall()){
   storageSet(FIRST_LAUNCH_ALERT_PROMPT_KEY,'1');
 }
 function chooseEntryMotivationQuote(){let previous=-1;try{const value=storageGet('eduvia-entry-quote-v1'),saved=value===null?-1:Number(value);if(Number.isInteger(saved))previous=saved}catch{}const choices=MOTIVATION_QUOTES.map((_,index)=>index).filter(index=>index!==previous);const selected=choices[Math.floor(Math.random()*choices.length)];try{storageSet('eduvia-entry-quote-v1',String(selected))}catch{}return MOTIVATION_QUOTES[selected]}
@@ -379,7 +390,11 @@ function promptFirstLaunchNotifications(){
   ()=>{closeModal();enableNotifications()}
  );
 }
+function markFirstLaunchNotificationsPending(){
+ if(storageGet(FIRST_LAUNCH_ALERT_PROMPT_KEY)!=='1')storageSet(FIRST_LAUNCH_ALERT_PROMPT_KEY,'pending');
+}
 window.eduPromptFirstLaunchNotifications=promptFirstLaunchNotifications;
+window.eduMarkFirstLaunchNotificationsPending=markFirstLaunchNotificationsPending;
 
 async function disableNotifications(){if(window.EduviaNative?.isNative){try{await window.EduviaNative.disableAlerts();storageRemove(NATIVE_ALERTS_ENABLED_KEY);updatePhoneNotificationButton(false);clearTimeout(eventAlertTimer);clearTimeout(window.daymarkReminder);render();toast('Eduvia alarms and notifications are off on this phone.')}catch(error){toast(error.message||'Eduvia could not turn off phone alerts.')}return}const token=storageGet(PUSH_TOKEN_KEY);try{if(token)await pushApi('/v1/unsubscribe',{method:'POST'},token);if('serviceWorker'in navigator){const registration=await navigator.serviceWorker.ready,subscription=await registration.pushManager.getSubscription();if(subscription)await subscription.unsubscribe()}storageRemove(PUSH_TOKEN_KEY);storageRemove(PUSH_ENABLED_KEY);storageSet(PUSH_DISABLED_KEY,'1');updatePhoneNotificationButton(false);clearTimeout(eventAlertTimer);clearTimeout(window.daymarkReminder);render();toast('Eduvia phone notifications are off.')}catch(error){toast(error.message||'Could not turn off phone notifications. Try again when online.')}}
 function deleteCourse(courseId){if(!confirm('Remove this course and its linked timetable items?'))return;data.courses=data.courses.filter(c=>c.id!==courseId);data.events=data.events.filter(e=>e.courseId!==courseId);data.resources=data.resources.filter(r=>r.courseId!==courseId);save();toast('Course removed')}

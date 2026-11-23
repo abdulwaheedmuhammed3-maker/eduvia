@@ -233,7 +233,7 @@ function mockClock(milliseconds){
 function renderMockExam(){
  const active=data.activeMockExam;
  if(!active)return pageHead('PRACTICE UNDER PRESSURE','No active mock examination','Start a timed paper from Courses.','<button class="secondary-btn" data-page="courses">Back to courses</button>');
- if(active.status!=='in-progress'||!Array.isArray(active.questions)||!active.questions.length){data.activeMockExam=null;save();return pageHead('PRACTICE UNDER PRESSURE','Exam session could not be restored','The saved session was incomplete or already finished. Your submitted attempts remain available for review.','<button class="secondary-btn" data-page="courses">Back to courses</button>')}
+ if(active.status!=='in-progress'||!Array.isArray(active.questions)||!active.questions.length){data.activeMockExam=null;if(!save()){data.activeMockExam=active;return pageHead('PRACTICE UNDER PRESSURE','Exam session could not be restored','The saved session could not be cleared because device storage is unavailable. Your existing saved data was retained.','<button class="secondary-btn" data-page="courses">Back to courses</button>')}return pageHead('PRACTICE UNDER PRESSURE','Exam session could not be restored','The saved session was incomplete or already finished. Your submitted attempts remain available for review.','<button class="secondary-btn" data-page="courses">Back to courses</button>')}
  active.answers=Array.isArray(active.answers)?active.answers: [];
  active.answers=active.questions.map((_,index)=>String(active.answers[index]||''));
  const endsAt=Number(active.endsAt);
@@ -490,7 +490,7 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
     let source;
     try{source=JSON.parse(await file.text());if(source?.format!=='eduvia-category-backup'||source.kind!==expectedKind||!Array.isArray(source.items))throw new Error('Choose a valid '+expectedKind+' backup exported by Eduvia.');if(source.items.some(item=>!item||typeof item!=='object'||Array.isArray(item)||!item.id))throw new Error('The backup contains an invalid record.');if(expectedKind==='courses'&&source.items.some(item=>typeof item.name!=='string'||!item.name.trim()))throw new Error('A course is missing its name.');if(expectedKind==='timetable'&&source.items.some(item=>typeof item.title!=='string'||!item.title.trim()))throw new Error('A timetable item is missing its title.')}catch(error){toast('Backup could not be read: '+error.message+'. Nothing was changed.');return}
     openModal('Preview '+(expectedKind==='courses'?'courses':'timetable')+' restore',file.name+' · '+source.items.length+' record'+(source.items.length===1?'':'s'),'<p>Eduvia will merge these records with the existing '+(expectedKind==='courses'?'courses':'timetable')+'. Matching records will be skipped. Nothing already saved will be deleted or overwritten.</p><p>A full safety copy of the current device data will be downloaded before importing.</p>','Merge backup',async()=>{
-      try{await safetyPortableZip();let added=0,duplicates=0,unlinked=0;
+      try{await safetyPortableZip();const previousCourses=[...(data.courses||[])],previousEvents=[...(data.events||[])];let added=0,duplicates=0,unlinked=0;
         if(expectedKind==='courses'){
           const byId=new Map((data.courses||[]).map(c=>[String(c.id),c])),byKey=new Map();for(const c of data.courses||[])for(const key of courseMatchKeys(c))if(!byKey.has(key))byKey.set(key,c);
           for(const course of source.items){const match=byId.get(String(course.id))||courseMatchKeys(course).map(key=>byKey.get(key)).find(Boolean);if(match){duplicates++;continue}const copy={...course,id:String(course.id)};data.courses.push(copy);byId.set(String(copy.id),copy);for(const key of courseMatchKeys(copy))if(!byKey.has(key))byKey.set(key,copy);added++}
@@ -500,7 +500,7 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
           const ids=new Set((data.events||[]).map(e=>String(e.id))),signatures=new Set((data.events||[]).map(e=>eventMatchKey(e,e.courseId)));
           for(const event of source.items){const mappedCourse=resolveCourse(event.courseId),copy={...event,id:String(event.id),courseId:mappedCourse};if(event.courseId&&!mappedCourse)unlinked++;const signature=eventMatchKey(copy,mappedCourse);if(ids.has(String(copy.id))||signatures.has(signature)){duplicates++;continue}data.events.push(copy);ids.add(String(copy.id));signatures.add(signature);added++}
         }
-        save();closeModal();render();toast('Restore complete: '+added+' added, '+duplicates+' duplicates skipped'+(unlinked?'; '+unlinked+' timetable item(s) have no matching course link.':''));
+        if(!save()){data.courses=previousCourses;data.events=previousEvents;render();return}closeModal();render();toast('Restore complete: '+added+' added, '+duplicates+' duplicates skipped'+(unlinked?'; '+unlinked+' timetable item(s) have no matching course link.':''));
       }catch(error){toast('Restore failed: '+(error.message||'unknown error'))}
     });
   }

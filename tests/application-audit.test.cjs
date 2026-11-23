@@ -81,6 +81,20 @@ test('notification schedules are marked complete only after all reminder batches
  assert.ok(!schedule.includes('schedule_hash = excluded.schedule_hash'));
 });
 
+test('changed assets are versioned identically in HTML and the new offline cache',()=>{
+ const html=read('index.html');
+ const sw=read('service-worker.js');
+ for(const asset of ['styles.css','experience.css','study-studio.js','feature-hub.js','learning-expansions.js']){
+  const url=html.match(new RegExp('(?:src|href)="([^"]*'+asset+'[^"]*)"'))?.[1];
+  assert.ok(url&&url.includes('audit=1')||asset==='styles.css'||asset==='experience.css','the changed asset must have a cache-busting revision: '+asset);
+  if(asset!=='styles.css'&&asset!=='experience.css')assert.ok(sw.includes('./'+url));
+ }
+ assert.ok(html.includes('styles.css?v=entry-flow-4&rev=application-audit-1'));
+ assert.ok(sw.includes('./styles.css?v=entry-flow-4&rev=application-audit-1'));
+ assert.ok(workerCacheVersion(sw)==='eduvia-v94-full-application-audit');
+});
+function workerCacheVersion(source){return source.match(/const CACHE = '([^']+)'/)?.[1]||''}
+
 test('pull-request validation installs dependencies, runs the suite and builds the real web bundle',()=>{
  assert.ok(workflow.includes('npm install --no-package-lock'));
  assert.ok(workflow.includes('npm test'));

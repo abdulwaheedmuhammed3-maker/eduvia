@@ -21,6 +21,14 @@ test('VTT cleanup removes cue numbers and time ranges but retains spoken words',
   assert.match(cleaned,/Normalisation reduces duplication/);
 });
 
+test('OCR image bullet lines can become source-labelled lecture points',()=>{
+  const text='[SOURCE: photographed-slide.png]\\n• Arrays store values in an ordered sequence\\n• Linked lists connect nodes through references';
+  const result=core.summarizeLecture(text,6);
+  assert.equal(result.keyPoints.length,2);
+  assert.ok(result.keyPoints.every(point=>point.location.includes('photographed-slide.png')));
+  assert.ok(result.keyPoints.some(point=>point.text.includes('Arrays store values')));
+});
+
 test('short or unreadable material does not produce invented points',()=>{
   const result=core.summarizeLecture('[SOURCE: poor-photo.png]\nunclear text 123');
   assert.deepEqual(result.keyPoints,[]);

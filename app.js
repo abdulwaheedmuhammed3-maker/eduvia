@@ -37,6 +37,10 @@ function storageSet(key,value){
 function storageRemove(key){
   try{window.localStorage.removeItem(key);return null}catch(error){return error}
 }
+// Existing local planner data identifies a returning user; never show first-run permission onboarding to them.
+if(storageGet(STORE_KEY)!==null&&storageGet(FIRST_LAUNCH_ALERT_PROMPT_KEY)===null){
+  storageSet(FIRST_LAUNCH_ALERT_PROMPT_KEY,'1');
+}
 function chooseEntryMotivationQuote(){let previous=-1;try{const value=storageGet('eduvia-entry-quote-v1'),saved=value===null?-1:Number(value);if(Number.isInteger(saved))previous=saved}catch{}const choices=MOTIVATION_QUOTES.map((_,index)=>index).filter(index=>index!==previous);const selected=choices[Math.floor(Math.random()*choices.length)];try{storageSet('eduvia-entry-quote-v1',String(selected))}catch{}return MOTIVATION_QUOTES[selected]}
 const entryMotivationQuote = chooseEntryMotivationQuote();
 let data = loadData();

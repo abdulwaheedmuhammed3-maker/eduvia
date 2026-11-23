@@ -90,8 +90,12 @@ test('changed assets are versioned identically in HTML and the new offline cache
   if(asset!=='styles.css'&&asset!=='experience.css')assert.ok(sw.includes('./'+url));
  }
  assert.ok(html.includes('styles.css?v=entry-flow-4&rev=application-audit-1'));
+ assert.ok(html.includes('first-run-alerts-2'));
+ assert.ok(html.includes('first-run-alert-optin-2'));
+ assert.ok(sw.includes('first-run-alerts-2'));
+ assert.ok(sw.includes('first-run-alert-optin-2'));
  assert.ok(sw.includes('./styles.css?v=entry-flow-4&rev=application-audit-1'));
- assert.ok(workerCacheVersion(sw)==='eduvia-v94-full-application-audit');
+ assert.ok(workerCacheVersion(sw)==='eduvia-v95-full-application-audit');
 });
 function workerCacheVersion(source){return source.match(/const CACHE = '([^']+)'/)?.[1]||''}
 

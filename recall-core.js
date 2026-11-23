@@ -117,7 +117,7 @@
     return output.sort((a, b) => a.fireAt - b.fireAt);
   }
   function reviewResult(level, remembered, fromDate) {
-    const nextLevel = remembered ? Math.min(4, Math.max(0, Number(level) || 0) + 1) : 0;
+    const nextLevel = remembered ? Math.min(5, Math.max(0, Number(level) || 0) + 1) : 0;
     const days = remembered ? REVIEW_DAYS[Math.max(0, nextLevel - 1)] : 1;
     return { level: nextLevel, days, nextReview: addDays(fromDate, days) };
   }

@@ -144,7 +144,7 @@ if (isNative) {
   });
   LocalNotifications.addListener('localNotificationActionPerformed', event => {
     const reminderId = String(event?.notification?.extra?.reminderId || '');
-    const match = reminderId.match(/^recall:\\d{4}-\\d{2}-\\d{2}:([A-Za-z0-9_-]{1,64})$/);
+    const match = reminderId.match(/^recall:\d{4}-\d{2}-\d{2}:([A-Za-z0-9_-]{1,64})$/);
     if (match) window.location.hash = 'recall/' + encodeURIComponent(match[1]);
     else if (reminderId) window.location.hash = 'today';
   });

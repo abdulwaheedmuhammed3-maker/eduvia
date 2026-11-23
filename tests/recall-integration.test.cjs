@@ -31,7 +31,8 @@ test('Recall scheduling is bounded and notifications contain the prompt, not the
 });
 test('web push validates and preserves the in-app Recall destination', () => {
   assert.ok(worker.includes("value.url === undefined ? './#today' : String(value.url)"));
-  assert.match(worker, /recall\\\/[A-Za-z0-9_-]/);
+  assert.ok(worker.includes("url !== './#today'"));
+  assert.ok(worker.includes('[A-Za-z0-9_-]{1,64}'));
   assert.ok(worker.includes('r.url, d.subscription_json'));
   assert.ok(worker.includes("url: row.url || './#today'"));
   assert.ok(migration.includes("ADD COLUMN url TEXT NOT NULL DEFAULT './#today'"));

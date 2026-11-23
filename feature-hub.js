@@ -25,7 +25,7 @@
   }
   function reviewInterval(card, remembered){
     const steps=[1,3,7,14,30];
-    const level=remembered?Math.min(4,(Number(card.level)||0)+1):0;
+    const level=remembered?Math.min(5,(Number(card.level)||0)+1):0;
     return {level,nextReview:new Date(Date.now()+(remembered?steps[Math.max(0,level-1)]:1)*86400000).toLocaleDateString('en-CA')};
   }
   function renderFlashcards(){

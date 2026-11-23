@@ -39,6 +39,6 @@ test('Recall avoids scheduled class blocks and does not repeat a question in its
 test('Recall review intervals lengthen when remembered and reset after a missed answer', () => {
   assert.deepEqual(recall.reviewResult(0, true, '2026-11-23'), { level: 1, days: 1, nextReview: '2026-11-24' });
   assert.deepEqual(recall.reviewResult(1, true, '2026-11-23'), { level: 2, days: 3, nextReview: '2026-11-26' });
-  assert.deepEqual(recall.reviewResult(4, true, '2026-11-23'), { level: 4, days: 30, nextReview: '2026-12-23' });
+  assert.deepEqual(recall.reviewResult(4, true, '2026-11-23'), { level: 5, days: 30, nextReview: '2026-12-23' });
   assert.deepEqual(recall.reviewResult(4, false, '2026-11-23'), { level: 0, days: 1, nextReview: '2026-11-24' });
 });

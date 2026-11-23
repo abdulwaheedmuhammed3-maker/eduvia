@@ -360,7 +360,9 @@ function nextEventReminder(now=new Date()){
       if(!eventHasPhoneAlert(event)||data.completed.some(item=>item.eventId===event.id&&item.date===date)||classRecordForDate(event.id,date))continue;
       const [hour,minute]=String(event.start||'').split(':').map(Number);if(!Number.isFinite(hour)||!Number.isFinite(minute))continue;
       const at=new Date(day);at.setHours(hour,minute,0,0);
-      if(at>now&&(!next||at<next.at))next={event,date,at};
+      const alertKey='eduvia-event-alert:'+event.id+':'+date;
+      if(storageGet(alertKey)==='1'||at.getTime()<=now.getTime()-10*60*1000)continue;
+      if(!next||at<next.at)next={event,date,at};
     }
   }
   return next;
@@ -371,9 +373,14 @@ function scheduleEventAlert(){
   const next=nextEventReminder(),delay=next?next.at.getTime()-Date.now():6*60*60*1000;
   eventAlertTimer=setTimeout(async()=>{
     if(next){
-      const key='eduvia-event-alert:'+next.event.id+':'+next.date;let already=false;
-      try{already=storageGet(key)==='1'}catch{}
-      if(!already){try{storageSet(key,'1')}catch{};const label=next.event.type==='class'?'Class':'Learning session';await showStudyNotification(label+' starts now',next.event.title+' is scheduled to start now.');}
+      const key='eduvia-event-alert:'+next.event.id+':'+next.date;
+      const label=next.event.type==='class'?'Class':'Learning session';
+      const shown=await showStudyNotification(label+' starts now',next.event.title+' is scheduled to start now.');
+      if(!shown){
+        eventAlertTimer=setTimeout(()=>scheduleEventAlert(),60_000);
+        return;
+      }
+      storageSet(key,'1');
     }
     scheduleEventAlert();
   },Math.max(100,Math.min(delay,24*60*60*1000)));
@@ -388,7 +395,7 @@ function buildPushReminders(now=new Date()){const reminders=[],until=now.getTime
 async function syncPushSchedule(subscription=null,token=''){if(!PUSH_API_URL||!pushIsActive()||!('serviceWorker'in navigator))return;if(pushSyncPromise)return pushSyncPromise;pushSyncPromise=(async()=>{const deviceToken=token||storageGet(PUSH_TOKEN_KEY);if(!deviceToken)return;const registration=await navigator.serviceWorker.ready,pushSubscription=subscription||await registration.pushManager.getSubscription();if(!pushSubscription)return;await pushApi('/v1/schedule',{method:'POST',body:JSON.stringify({subscription:pushSubscription.toJSON(),reminders:buildPushReminders()})},deviceToken)})();try{return await pushSyncPromise}finally{pushSyncPromise=null}}
 function schedulePushSync(){clearTimeout(pushSyncTimer);if(window.EduviaNative?.isNative){if(!nativeAlertsAreActive())return;pushSyncTimer=setTimeout(async()=>{try{const result=await window.EduviaNative.scheduleReminders(buildPushReminders());if(!result.enabled&&nativeAlertsAreActive()){storageRemove(NATIVE_ALERTS_ENABLED_KEY);updatePhoneNotificationButton(false);if(currentPage==='settings')render();toast(result.reason==='exact-alarm'?'Eduvia alarms paused. Allow exact alarms again in your phone settings.':'Eduvia notifications paused. Allow notifications again in your phone settings.')}}catch{}},1500);return}if(!PUSH_API_URL||!pushIsActive())return;pushSyncTimer=setTimeout(()=>syncPushSchedule().catch(()=>{}),1500)}
 function updatePhoneNotificationButton(active){const button=document.querySelector('[data-action="enable-notifications"],[data-action="disable-notifications"]');if(!button)return;button.dataset.action=active?'disable-notifications':'enable-notifications';button.textContent=active?'Turn off':(window.EduviaNative?.isNative?'Enable alarms & notifications':'Enable & send test');}
-async function showStudyNotification(title,body){try{if('serviceWorker'in navigator){const registration=await navigator.serviceWorker.ready;await registration.showNotification(title,{body,icon:'./icon.svg',badge:'./icon.svg'});return}if('Notification'in window&&Notification.permission==='granted')new Notification(title,{body,icon:'./icon.svg'})}catch{}}
+async function showStudyNotification(title,body){try{if('serviceWorker'in navigator){const registration=await navigator.serviceWorker.ready;await registration.showNotification(title,{body,icon:'./icon.svg',badge:'./icon.svg'});return true}if('Notification'in window&&Notification.permission==='granted'){new Notification(title,{body,icon:'./icon.svg'});return true}}catch{}return false}
 async function enableNotifications(){if(window.EduviaNative?.isNative){try{const result=await window.EduviaNative.enableAlerts(buildPushReminders());if(!result.enabled){toast(result.reason==='exact-alarm'?'Allow Eduvia to schedule exact alarms in the phone settings, then try again.':'Allow Eduvia notifications in the phone settings, then try again.');return}storageSet(NATIVE_ALERTS_ENABLED_KEY,'1');storageRemove(PUSH_DISABLED_KEY);updatePhoneNotificationButton(true);scheduleReminder();scheduleEventAlert();toast(`Eduvia alerts are on. ${result.scheduled} class and study reminders are scheduled on this phone.`)}catch(error){toast(error.message||'Eduvia could not set up phone alarms.')}return}if(!PUSH_API_URL){toast('Eduvia’s free phone notification service is not connected yet.');return}if(!window.isSecureContext||!('Notification'in window)||!('PushManager'in window)||!('serviceWorker'in navigator)){toast('Phone push notifications are not supported by this browser.');return}if(isIosDevice()&&!isStandaloneApp()){openModal('Add Eduvia to your Home Screen','iPhone and iPad web apps can receive Eduvia alerts after they are added to the Home Screen.','<ol><li>Open Eduvia in Safari.</li><li>Tap Share.</li><li>Choose “Add to Home Screen”, then open the new Eduvia icon.</li><li>Return to Settings and enable phone notifications.</li></ol>','Got it',()=>closeModal());return}try{let permission=Notification.permission;if(permission==='default')permission=await Notification.requestPermission();if(permission!=='granted'){toast('Allow notifications in your phone settings, then try again.');return}const config=await pushApi('/v1/config');if(!config.publicKey)throw new Error('Eduvia could not prepare its notification keys.');const registration=await navigator.serviceWorker.ready;let subscription=await registration.pushManager.getSubscription();if(subscription){const savedKey=subscription.options?.applicationServerKey;if(savedKey&&btoa(String.fromCharCode(...new Uint8Array(savedKey))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')!==config.publicKey){await subscription.unsubscribe();subscription=null}}if(!subscription)subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:pushKeyBytes(config.publicKey)});const token=pushDeviceToken();await pushApi('/v1/schedule',{method:'POST',body:JSON.stringify({subscription:subscription.toJSON(),reminders:buildPushReminders()})},token);storageSet(PUSH_ENABLED_KEY,'1');storageRemove(PUSH_DISABLED_KEY);updatePhoneNotificationButton(true);try{await pushApi('/v1/test',{method:'POST'},token);toast('Eduvia notifications are on. A test alert is on its way.')}catch{toast('Eduvia notifications are on, but the test alert could not be sent.')}scheduleReminder();scheduleEventAlert()}catch(error){storageRemove(PUSH_ENABLED_KEY);toast(error.message||'Eduvia could not enable phone notifications.')}}
 function promptFirstLaunchNotifications(){
  if(storageGet(FIRST_LAUNCH_ALERT_PROMPT_KEY)==='1')return;

@@ -104,7 +104,7 @@ function renderPractice(){
   const course=data.courses.find(c=>c.id===(window.practiceCourseId||''))||data.courses[0];
   return `${pageHead('RECALL IT. APPLY IT.','Practice & tests','Generate questions from your saved learning materials, then check your answers against the source.','<button class="secondary-btn" data-page="study">← Study studio</button>')}
   <section class="panel practice-setup"><details class="action-disclosure"><summary><div><h3>Build a practice set</h3><p>Choose a learning area, question style and number of questions</p></div><span class="disclosure-cta">＋ Build set</span></summary><div class="disclosure-body"><p>Use your saved learning materials first. Without notes, questions use your learning topics and may be broader.</p><div class="practice-controls"><label>Learning area<select id="practiceCourseSelect">${courseOptions(course?.id||'')}</select></label><label>Question style<select id="questionStyle"><option value="mixed">Mixed review</option><option value="short">Short answer</option><option value="essay">Exam-style essay</option><option value="mcq">Multiple choice</option></select></label><label>Number of questions<select id="questionCount"><option>5</option><option selected>10</option><option>15</option></select></label><button class="primary-btn" data-action="generate-practice">Generate practice set</button></div><p class="privacy-note-inline">Practice questions are created on this device from your uploaded materials and learning topics.</p><p class="privacy-note-inline">For multiple-choice questions, select an option and open “Show answer” to check your choice. Written answers are reviewed against the source; Eduvia does not automatically grade this practice set.</p></div></details></section>
-  ${studioPractice.length?`<section class="panel practice-results"><div class="panel-head"><div><h3>${safe(studioPractice.title||'Your practice set')}</h3><p>${safe(studioPractice.source||'Generated from your study materials')} · ${studioPractice.questions.length} questions</p></div><button class="panel-link" data-action="generate-practice">Make another set ↻</button></div><div class="question-list">${studioPractice.questions.map((q,i)=>`<article class="question-card"><div class="question-number">${String(i+1).padStart(2,'0')}</div><div class="question-content"><strong>${safe(q.question)}</strong>${q.options?`<div class="question-options">${q.options.map((opt,j)=>`<label><input type="radio" name="q${i}" value="${j}"> ${safe(opt)}</label>`).join('')}</div>`:`<textarea placeholder="Write your answer here…"></textarea>`}<details><summary>Show source passage / sample answer</summary><p>${safe(q.answer||'Review the linked course material and explain the key idea in your own words.')}</p>${q.source?`<small>From: ${safe(q.citation||([q.source,q.location].filter(Boolean).join(' · ')))}</small>`:''}</details></div></article>`).join('')}</div></section>`:emptyState('✓','Your practice space is ready','Choose a course and generate a short practice set from your course materials.','', '')}`;
+  ${studioPractice.length?`<section class="panel practice-results"><div class="panel-head"><div><h3>${safe(studioPractice.title||'Your practice set')}</h3><p>${safe(studioPractice.source||'Generated from your study materials')} · ${studioPractice.questions.length} questions</p></div><button class="panel-link" data-action="generate-practice">Make another set ↻</button></div><div class="question-list">${studioPractice.questions.map((q,i)=>`<article class="question-card"><div class="question-number">${String(i+1).padStart(2,'0')}</div><div class="question-content"><strong>${safe(q.question)}</strong>${q.options?`<div class="question-options">${q.options.map((opt,j)=>`<label><input type="radio" name="q${i}" value="${j}"> ${safe(opt)}</label>`).join('')}</div>`:`<textarea placeholder="Write your answer here…"></textarea>`}<details><summary>\${q.options?'Show correct choice / source passage':'Show source passage / sample answer'}</summary><p>\${q.options?'Correct choice: '+safe(q.options[q.correctOption]||q.answer):safe(q.answer||'Review the linked course material and explain the key idea in your own words.')}</p>\${q.source?'<small>From: '+safe(q.citation||([q.source,q.location].filter(Boolean).join(' · ')))+'</small>':''}</details></div></article>`).join('')}</div></section>`:emptyState('✓','Your practice space is ready','Choose a course and generate a short practice set from your course materials.','', '')}`;
 }
 
 function renderSetup(){
@@ -456,31 +456,69 @@ function localPractice(course,sources,count,style){
  const requested=style==='mcq'?Math.max(count*4,16):Math.max(count,8);
  const passages=window.eduCourseIntelligence?.search(sources,query,requested)||[];
  if(style==='mcq'){
-  const seen=new Set(),candidates=[];
-  for(const item of passages){
-   const text=String(item.text||'').replace(/\s+/g,' ').trim();
-   const key=text.toLocaleLowerCase();
-   if(text.length<45||seen.has(key))continue;
-   seen.add(key);
-   candidates.push({...item,text:text.slice(0,220)});
+  const engine=window.eduCourseIntelligence;
+  if(!engine)return {title:(course.code||course.name)+' · multiple-choice practice',source:'Course retrieval is unavailable',questions:[],requestedCount:count};
+  // Use explicit course topics first. Clearly labelled document sections fill gaps,
+  // allowing each correct passage to be contrasted with passages about other topics.
+  const labels=[];
+  const addLabel=value=>{
+   const label=String(value||'').trim();
+   if(label&&!labels.some(item=>item.toLocaleLowerCase()===label.toLocaleLowerCase()))labels.push(label);
+  };
+  topicList.forEach(addLabel);
+  for(const source of sources){
+   const index=source.index?.version===engine.version?source.index:engine.buildIndex(source.text);
+   for(const chunk of index.chunks||[]){addLabel(chunk.section);if(labels.length>=12)break}
+   if(labels.length>=12)break;
   }
-  const questions=[];
-  for(let offset=0;offset+3<candidates.length&&questions.length<count;offset+=4){
-   const group=candidates.slice(offset,offset+4),correct=group[0];
-   const options=group.map(item=>item.text),correctOption=questions.length%group.length;
-   [options[0],options[correctOption]]=[options[correctOption],options[0]];
-   questions.push({
-    question:'Which statement is found in the selected course passage?',
-    answer:correct.text,
-    options,
-    correctOption,
-    source:correct.name,
-    location:correct.location,
-    citation:correct.citation,
-    materialId:correct.materialId
-   });
+  const groups=labels.map(topic=>{
+   const passages=engine.search(sources,topic,20).map(item=>({...item,text:String(item.text||'').replace(/\s+/g,' ').trim().slice(0,220)})).filter(item=>item.text.length>=45);
+   const seen=new Set();
+   return {topic,passages:passages.filter(item=>{
+    const key=item.text.toLocaleLowerCase();if(seen.has(key))return false;seen.add(key);return true;
+   })};
+  }).filter(group=>group.passages.length);
+  if(groups.length<4)return {
+   title:(course.code||course.name)+' · multiple-choice practice',
+   source:'At least four distinct searchable topics or titled sections are needed for unambiguous choices',
+   questions:[],requestedCount:count
+  };
+  const questions=[],usedAnswers=new Set(),answerOffsets=new Map(groups.map(group=>[group.topic,0]));
+  let advanced=true;
+  while(questions.length<count&&advanced){
+   advanced=false;
+   for(let targetIndex=0;targetIndex<groups.length&&questions.length<count;targetIndex++){
+    const target=groups[targetIndex],offset=answerOffsets.get(target.topic)||0;
+    const remaining=target.passages.slice(offset);
+    const correct=remaining.find(item=>!usedAnswers.has(item.text.toLocaleLowerCase()));
+    if(!correct)continue;
+    const distractors=[];
+    for(let step=1;step<groups.length&&distractors.length<3;step++){
+     const other=groups[(targetIndex+step)%groups.length];
+     const candidate=other.passages.find(item=>{
+      const key=item.text.toLocaleLowerCase();
+      return key!==correct.text.toLocaleLowerCase()&&!distractors.some(existing=>existing.text.toLocaleLowerCase()===key);
+     });
+     if(candidate)distractors.push(candidate);
+    }
+    if(distractors.length<3)continue;
+    usedAnswers.add(correct.text.toLocaleLowerCase());
+    answerOffsets.set(target.topic,offset+remaining.indexOf(correct)+1);
+    const options=[correct,...distractors].map(item=>item.text),correctOption=questions.length%options.length;
+    [options[0],options[correctOption]]=[options[correctOption],options[0]];
+    questions.push({
+     question:'Which passage best explains '+target.topic+' according to your course material?',
+     answer:correct.text,options,correctOption,topic:target.topic,
+     source:correct.name,location:correct.location,citation:correct.citation,materialId:correct.materialId
+    });
+    advanced=true;
+   }
   }
-  return {title:(course.code||course.name)+' · multiple-choice practice',source:questions.length?'Retrieved passages from course materials':'Not enough distinct source passages for multiple-choice practice',questions};
+  return {
+   title:(course.code||course.name)+' · multiple-choice practice',
+   source:questions.length?'Topic-based choices retrieved from your course materials':'Not enough distinct source passages to form single-answer questions',
+   questions,requestedCount:count
+  };
  }
  const questions=passages.slice(0,count).map((item,index)=>{
   const essay=style==='essay'||(style==='mixed'&&index%2===1);
@@ -513,8 +551,8 @@ async function generatePractice(){
   const count=Number(document.getElementById('questionCount')?.value)||10,style=document.getElementById('questionStyle')?.value||'mixed';
   const sources=await loadCourseText(course.id);
   const generated=localPractice(course,sources,count,style);
-  if(!generated.questions.length){toast(style==='mcq'?'Multiple-choice practice needs at least four distinct passages in the selected course material. Add more source material or choose another question style.':'Add course topics or searchable learning materials before generating a practice set.');return}
-  studioPractice=generated;window.practiceCourseId=course.id;currentPage='practice';render();document.querySelector('.practice-results')?.scrollIntoView({behavior:'smooth',block:'start'});
+  if(!generated.questions.length){toast(style==='mcq'?'Multiple-choice questions need at least four distinct searchable topics or titled sections. Add clear course topics/headings or choose another question style.':'Add course topics or searchable learning materials before generating a practice set.');return}
+  studioPractice=generated;if(generated.questions.length<count)toast('Created '+generated.questions.length+' of '+count+' requested questions. The available topics or sections limit the source material for this set.');window.practiceCourseId=course.id;currentPage='practice';render();document.querySelector('.practice-results')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 document.addEventListener('change',e=>{if(e.target.id==='materialImportFile'&&e.target.files?.length>1){e.stopImmediatePropagation();toast('Add materials one file at a time so you can link each one to the right course.');handleStudioFile('material',e.target.files[0])}},true);

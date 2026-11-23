@@ -1046,7 +1046,7 @@ function addPersonalDocument(file,courseIdOverride=''){
     data.personalDocuments.unshift(metadata);
     if(!save()){
       data.personalDocuments=data.personalDocuments.filter(item=>item.id!==documentId);
-      try{await deleteStudioRecord('personalDocuments',documentId)}catch{}
+      try{await deleteStudioRecord('personalDocuments',documentId)}catch{toast('The document was not added to your cabinet, but its file could not be cleaned up. Export a backup and check device storage.')}
       render();return;
     }
     window.eduTargetDocumentCourseId='';closeModal();toast('Document saved on this device');
@@ -1062,11 +1062,19 @@ async function downloadPersonalDocument(documentId){
 }
 async function deletePersonalDocument(documentId){
   if(!confirm('Remove this document from your personal cabinet?'))return;
-  const previous=data.personalDocuments||[],remaining=previous.filter(docMeta=>docMeta.id!==documentId);
-  data.personalDocuments=remaining;
-  if(!save()){data.personalDocuments=previous;render();return}
-  try{await deleteStudioRecord('personalDocuments',documentId);toast('Document removed')}
-  catch(error){toast('The document was removed from your cabinet, but its stored file could not be cleaned up: '+(error.message||'storage is unavailable'))}
+  const previous=data.personalDocuments||[],index=previous.findIndex(docMeta=>String(docMeta.id)===String(documentId));
+  if(index<0)return;
+  let storedRecord;
+  try{storedRecord=await getStudioRecord('personalDocuments',documentId)}catch(error){toast('Could not read this document before removal: '+(error.message||'storage is unavailable'));return}
+  if(!storedRecord){toast('This document is not available in device storage. Restore a backup before removing its record.');return}
+  try{await deleteStudioRecord('personalDocuments',documentId)}catch(error){toast('Could not remove the stored file. Nothing was removed: '+(error.message||'storage is unavailable'));return}
+  data.personalDocuments=previous.filter(docMeta=>String(docMeta.id)!==String(documentId));
+  if(!save()){
+    data.personalDocuments=previous;
+    try{await putStudioRecord('personalDocuments',storedRecord)}catch{toast('The planner could not save the removal and the document file could not be restored. Export a backup and check device storage.')}
+    render();return
+  }
+  toast('Document removed');
 }
 async function listStudioRecords(storeName){const db=await studioDb();return await new Promise((resolve,reject)=>{const tx=db.transaction(storeName,'readonly'),req=tx.objectStore(storeName).getAll();req.onsuccess=()=>{db.close();resolve(req.result||[])};req.onerror=()=>{db.close();reject(req.error)}})}
 async function exportPortableBackup(){

@@ -49,7 +49,7 @@ test('the refinement stylesheet is loaded last and supports light and dark theme
 test('service worker caches the new stylesheet and updated screen modules',()=>{
  const sw=read('service-worker.js');
  assert.ok(sw.includes('./ui-polish.css?v=layout-audit-2'));
- assert.ok(sw.includes('eduvia-v105-voice-class-reflections'));
+ assert.ok(sw.includes('eduvia-v106-native-speech-keywords'));
  assert.ok(sw.includes('play-screen-cleanup-2'));
  assert.ok(sw.includes('primary-nav-map-1'));
 });

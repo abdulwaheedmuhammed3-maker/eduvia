@@ -1359,8 +1359,9 @@ function beginSessionCompletion(event,date){
       if(attended&&classwork&&!classworkDue){toast('Add a deadline for the classwork.');return}
       const tasks=[];if(attended&&assignment)tasks.push({type:'Assignment',title:assignment,dueDate:assignmentDue});if(attended&&classwork)tasks.push({type:'Classwork',title:classwork,dueDate:classworkDue});
       const recordings=attended?(window.EduviaVoiceReflection?.getPending?.()||[]):[];
+      const submitButton=document.querySelector('#activeForm button[type="submit"]');if(submitButton)submitButton.disabled=true;
       const record=await saveCompletedSession(event,date,{attendance,topics:attended?String(fd.get('topics')||'').trim():'',learned:attended?learned:[],studyAreas:attended?String(fd.get('studyAreas')||'').trim():'',tasks},true,recordings);
-      if(!record)return;
+      if(!record){if(submitButton)submitButton.disabled=false;return}
       toast(attended?'Class reflection saved and class completed':attendance==='postponed'?'Class marked as postponed. It was not counted as attended.':'Class attendance record saved');
     });
     const attendanceSelect=document.getElementById('f-attendance'),reflectionFields=document.getElementById('classReflectionFields');
@@ -1375,8 +1376,9 @@ function beginSessionCompletion(event,date){
   openModal('Study reflection',subtitle,body,'Save and start 10-question quiz',fd=>{
     const keyPoints=splitSessionList(String(fd.get('keyPoints')||''));
     if(keyPoints.length!==5){toast('Please enter exactly five key points, one per line.');return}
+    const submitButton=document.querySelector('#activeForm button[type="submit"]');if(submitButton)submitButton.disabled=true;
     const record=await saveCompletedSession(event,date,{topics:String(fd.get('topics')||'').trim(),keyPoints,gained:String(fd.get('gained')||'').trim()},false);
-    if(!record)return;
+    if(!record){if(submitButton)submitButton.disabled=false;return}
     toast('Study reflection saved');
     openSessionQuiz(record.id);
   });

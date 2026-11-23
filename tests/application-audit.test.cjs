@@ -389,7 +389,7 @@ test('personal document deletion removes the blob first and restores it if metad
  assert.ok(remove.includes("storedRecord=await getStudioRecord('personalDocuments',documentId)"));
  assert.ok(remove.indexOf("await deleteStudioRecord('personalDocuments',documentId)")<remove.indexOf('data.personalDocuments=previous.filter'));
  assert.ok(remove.indexOf("await deleteStudioRecord('personalDocuments',documentId)")<remove.indexOf('if(!save())'));
- assert.ok(remove.includes('if(!save()){data.personalDocuments=previous;'));
+ assert.ok(remove.includes('if(!save()){\n    data.personalDocuments=previous;'));
  assert.ok(remove.includes("await putStudioRecord('personalDocuments',storedRecord)"));
 });
 

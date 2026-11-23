@@ -58,8 +58,8 @@ jobs:
           grep -q 'entry-flow.js' index.html
           grep -q 'entry-flow.css' index.html
           grep -q 'visual-refresh.css' index.html
-          grep -q 'discover-touch-fix-3' index.html
-          grep -q 'discover-touch-fix-3' service-worker.js
+          grep -q 'discover-touch-fix-4' index.html
+          grep -q 'discover-touch-fix-4' service-worker.js
           grep -q 'exp-discover-grid' experience.css
           grep -q 'touch-action:manipulation' experience.css
           grep -q 'exp-ask-prompt-grid' experience.css

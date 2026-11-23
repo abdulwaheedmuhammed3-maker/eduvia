@@ -89,3 +89,11 @@ test('restored Google source references are revalidated before becoming clickabl
  assert.ok(helper.includes('escapeHtml(trusted)'));
  assert.ok(!helper.includes('escapeHtml(value)'));
 });
+
+ 
+test('learning profile editor restores all saved profile fields when storage fails',()=>{
+ const start=studio.indexOf('function editStudyProfile()');
+ const editor=studio.slice(start);
+ assert.ok(editor.includes('const previousProfile={...data.profile}'));
+ assert.ok(editor.includes("if(!save()){data.profile=previousProfile;render();return}closeModal();toast('Learning profile updated')"));
+});

@@ -78,7 +78,7 @@ function masteryKey(courseId, topic){return courseId+'::'+topic;}
     window.eduFeatureNavWrapped=true;
     window.syncNav=function(){
       originalSyncNav();
-      const destinations={planner:'timetable',flashcards:'courses',mastery:'courses',practice:'courses',tutorials:'courses','mock-exam':'courses','mock-results':'courses',progress:'habit',records:'habit',education:'more',vault:'more',profile:'more',study:'more',settings:'more',setup:'more',exams:'play'};
+      const destinations={today:'today','my-study':'my-study',courses:'my-study','course-detail':'my-study',timetable:'my-study',habit:'my-study',planner:'play',flashcards:'play',mastery:'play',practice:'play',tutorials:'my-study','mock-exam':'play','mock-results':'play',progress:'my-study',records:'my-study',education:'my-study',vault:'my-study',profile:'my-study',study:'my-study',settings:'my-study',setup:'my-study',exams:'play',play:'play',ask:'ask',discover:'discover'};
       const destination=destinations[currentPage]||currentPage;
       document.querySelectorAll('.mobile-nav-item[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page===destination));
       const labels={planner:'Assignments & deadlines',flashcards:'Flashcards',mastery:'Learning mastery',practice:'Practice & tests',tutorials:'Tutorials & notes','mock-exam':'Timed mock examination','mock-results':'Mock exam review',progress:'Study progress',records:'Session records',education:'Academic history',exams:'Examination centre',vault:'Personal library'};

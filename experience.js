@@ -69,16 +69,8 @@ function discover(){
  '<section class="exp-inline-cta"><div><b>Learn with your own learning material.</b><span>Study guides are a starting point. Bring your notes into Eduvia for personal practice.</span></div><button class="primary-btn" data-page="study">Open Study Studio ↗</button></section>';
 }
 function play(){
- const due=(data.flashcards||[]).filter(c=>!c.nextReview||c.nextReview<=todayISO()).length;
  return hd('NO GRADES. NO PRESSURE.','Play & learn','Short challenges, practice sets and recall tools to help you learn actively.')+
- '<section class="exp-play-hero"><div><div class="eyebrow">LEARN BY DOING</div><h2>Play a little.<br><em>Know a lot.</em></h2><p>Turn your course topics and saved materials into questions you can practise.</p><button class="exp-play-cta" data-page="practice">Start practising ↗</button></div><div class="exp-play-art">◇<i>✳</i><b>?</b></div></section>'+
- '<section class="exp-tool-grid">'+
- '<button class="exp-tool-card exp-tool-pink" data-page="practice">'+ic('✓','pink')+'<b>Practice & tests</b><span>Generate questions from courses and notes.</span><small>Open practice ↗</small></button>'+
- '<button class="exp-tool-card exp-tool-lime" data-page="flashcards">'+ic('▤','lime')+'<b>Flashcards</b><span>Review key ideas and schedule recall.</span><small>'+(data.flashcards||[]).length+' saved · '+due+' due ↗</small></button>'+
- '<button class="exp-tool-card exp-tool-purple" data-page="mastery">'+ic('◎','purple')+'<b>Topic mastery</b><span>Track topics you are learning and know confidently.</span><small>Check progress ↗</small></button>'+
- '<button class="exp-tool-card exp-tool-blue" data-page="planner">'+ic('◷','blue')+'<b>Deadlines & planner</b><span>Keep assignments, tests and revision milestones visible.</span><small>Open planner ↗</small></button>'+
- '<button class="exp-tool-card exp-tool-orange" data-page="more">'+ic('🎓','orange')+'<b>Exam centre</b><span>Exam dates, revision plans and mock examinations.</span><small>'+(data.exams||[]).length+' exams saved ↗</small></button></section>'+
- '<section class="exp-inline-cta"><div><b>Practise with your own course material.</b><span>Upload notes or slides in Study Studio first.</span></div><button class="primary-btn" data-page="study">Open Study Studio ↗</button></section>';
+ '<section class="exp-play-hero"><div><div class="eyebrow">LEARN BY DOING</div><h2>Play a little.<br><em>Know a lot.</em></h2><p>Turn your course topics and saved materials into questions you can practise. Choose a tool below and keep building confidence at your own pace.</p><button class="exp-play-cta" data-page="practice">Start practising ↗</button></div><div class="exp-play-art" aria-hidden="true">◇<i>✳</i><b>?</b></div></section>';
 }
 function myStudy(){
  const p=data.profile||{},w=getWeekStats(),type=learnerTypeOf(p),formal=type==='formal',examLearner=type==='exam-prep';

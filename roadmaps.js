@@ -140,7 +140,8 @@ function renderRoadmap(roadmap){
     window.syncNav=function(){
       previousSyncNav();
       if(currentPage!=='roadmaps')return;
-      document.querySelectorAll('.nav-item[data-page],.mobile-nav-item[data-page]').forEach(item=>item.classList.toggle('active',item.dataset.page==='more'));
+      document.querySelectorAll('.nav-item[data-page]').forEach(item=>item.classList.toggle('active',item.dataset.page==='more'));
+      document.querySelectorAll('.mobile-nav-item[data-page]').forEach(item=>item.classList.toggle('active',item.dataset.page==='my-study'));
       const crumb=document.getElementById('crumbCurrent');if(crumb)crumb.textContent='Learning roadmaps';
     };
   }
@@ -152,12 +153,6 @@ function renderRoadmap(roadmap){
         '<section class="roadmap-entry-strip"><div class="roadmap-entry-symbol">↗</div><div><strong>Learning roadmaps</strong><span>Set a bigger goal and break it into milestones.</span></div><button type="button" data-page="roadmaps">Open roadmaps →</button></section>';
     };
   }
-  const previousMore=window.eduPageRenderers?.more;
-  if(typeof previousMore==='function'){
-    window.eduPageRenderers.more=function(){
-      return previousMore()+
-        '<button type="button" class="roadmap-more-entry" data-page="roadmaps"><span>↗</span><strong>Learning roadmaps</strong><small>Goals, milestones and progress</small></button>';
-    };
-  }
+
   if(typeof render==='function')render();
 })();

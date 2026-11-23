@@ -21,7 +21,7 @@ jobs:
           node --check entry-flow.js
           node --check study-studio.js
           node --check course-intelligence.js
-          node --test tests/course-intelligence.test.cjs tests/learner-profile.test.cjs tests/study-studio-structure.test.cjs tests/roadmap-core.test.cjs tests/theme-styles.test.cjs tests/exam-centre-qa.test.cjs tests/learning-expansions.test.cjs
+          node --test tests/course-intelligence.test.cjs tests/learner-profile.test.cjs tests/study-studio-structure.test.cjs tests/roadmap-core.test.cjs tests/theme-styles.test.cjs tests/exam-centre-qa.test.cjs tests/learning-expansions.test.cjs tests/navigation-layout.test.cjs
           node --check feature-hub.js
           node --check experience.js
           node --check learning-expansions.js
@@ -60,10 +60,13 @@ jobs:
           grep -q 'experience.js' index.html
           grep -q 'experience.css' index.html
           grep -q 'icon-system.css' index.html
+          grep -q 'ui-polish.css' index.html
           grep -q 'icon-system.js' index.html
           grep -q 'icon-system.css' service-worker.js
+          grep -q 'ui-polish.css' service-worker.js
           grep -q 'icon-system.js' service-worker.js
           grep -q 'icon-system.css' scripts/build-web.mjs
+          grep -q 'ui-polish.css' scripts/build-web.mjs
           grep -q 'icon-system.js' scripts/build-web.mjs
           grep -q 'material-outline-2' index.html
           grep -q 'material-outline-2' service-worker.js
@@ -90,7 +93,7 @@ jobs:
           grep -q 'experience.css' scripts/build-web.mjs
           grep -q 'app.js?v=' service-worker.js
           grep -q 'eduvia-study-alarms-v2' native-bridge-src.js
-          grep -q 'eduvia-v89-learning-expansions' service-worker.js
+          grep -q 'eduvia-v90-ui-structure' service-worker.js
           grep -q 'theme-audit-2' index.html
           grep -q 'profile-audit-3-knowledge-check' index.html
           grep -q 'profile-audit-3-knowledge-check' service-worker.js

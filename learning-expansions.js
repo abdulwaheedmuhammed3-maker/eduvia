@@ -52,17 +52,19 @@
     const attempts=Array.isArray(data.playChallengeAttempts)?data.playChallengeAttempts:[];
     const totalRemembered=attempts.reduce((n,item)=>n+Number(item.remembered||0),0);
     const totalRated=attempts.reduce((n,item)=>n+Number(item.total||0),0);
-    return base+
-      '<section class="exp-section"><div class="exp-section-heading"><div><div class="eyebrow">LEARN THROUGH PLAY</div><h2>Small challenges. Real progress.</h2></div></div>'+
+    const cards=Array.isArray(data.flashcards)?data.flashcards:[];
+    const due=dueFlashcards().length;
+    const tools='<section class="exp-section exp-play-tools"><div class="exp-section-heading"><div><div class="eyebrow">YOUR PLAY TOOLKIT</div><h2>Choose how you want to practise.</h2><p>Each tool connects to your courses, saved materials and revision activity.</p></div></div>'+
       '<div class="learning-expansion-grid">'+
-      '<button class="learning-expansion-card" data-page="practice">'+icon('✓','pink')+'<strong>Course practice</strong><span>Generate practice from your saved notes and topics.</span><small>Open practice →</small></button>'+
-      '<button class="learning-expansion-card" data-page="flashcards">'+icon('▤','blue')+'<strong>Spaced flashcards</strong><span>Recall key ideas and review difficult cards again.</span><small>'+(data.flashcards||[]).length+' saved cards →</small></button>'+
-      '<button class="learning-expansion-card" data-page="mastery">'+icon('◎','purple')+'<strong>Topic mastery</strong><span>Track confidence and spot topics that need work.</span><small>Review your topics →</small></button>'+
-      '<button class="learning-expansion-card" data-page="exams">'+icon('🎓','orange')+'<strong>Exam practice</strong><span>Use your examination timetable and timed mock papers.</span><small>'+(data.exams||[]).length+' exams saved →</small></button>'+
-      '</div></section>'+
-      recallSprintMarkup()+
-      panel('Your play record','<div class="stats-row"><div class="stat-card"><div class="stat-label">SPRINTS PLAYED</div><div class="stat-value">'+attempts.length+'</div></div><div class="stat-card"><div class="stat-label">REMEMBERED</div><div class="stat-value">'+totalRemembered+'</div></div><div class="stat-card"><div class="stat-label">CARDS RATED</div><div class="stat-value">'+totalRated+'</div></div></div>'+
-      (attempts.length?'<div class="exp-expansion-list">'+attempts.slice(0,5).map(item=>'<div class="exp-expansion-item"><div><strong>'+Number(item.scorePercent||0)+'% · '+Number(item.remembered||0)+' of '+Number(item.total||0)+' remembered</strong><small>'+esc(new Date(item.completedAt).toLocaleString())+'</small></div></div>').join('')+'</div>':'<p class="privacy-note-inline">Completed recall sprints will appear here.</p>'));
+      '<button class="learning-expansion-card" data-page="practice">'+icon('✓','pink')+'<strong>Practice & tests</strong><span>Generate questions from your saved notes and topics.</span><small>Open practice →</small></button>'+
+      '<button class="learning-expansion-card" data-page="flashcards">'+icon('▤','blue')+'<strong>Flashcards</strong><span>Review key ideas and schedule spaced recall.</span><small>'+cards.length+' saved · '+due+' due →</small></button>'+
+      '<button class="learning-expansion-card" data-page="mastery">'+icon('◎','purple')+'<strong>Topic mastery</strong><span>Track confidence and identify topics to revisit.</span><small>Review your topics →</small></button>'+
+      '<button class="learning-expansion-card" data-page="planner">'+icon('◷','orange')+'<strong>Assignments & planner</strong><span>Keep coursework, tests and deadlines visible.</span><small>Open planner →</small></button>'+
+      '<button class="learning-expansion-card" data-page="exams">'+icon('🎓','lime')+'<strong>Exam & revision centre</strong><span>Manage exam dates, revision plans and timed mock papers.</span><small>'+(data.exams||[]).length+' exams saved →</small></button>'+
+      '</div></section>';
+    return base+tools+recallSprintMarkup()+
+      panel('Your play record','<div class="stats-row"><div class="stat-card"><div class="stat-label">SPRINTS PLAYED</div><div class="stat-value">'+attempts.length+'</div></div><div class="stat-card"><div class="stat-label">REMEMBERED</div><div class="stat-value">'+totalRemembered+'</div></div><div class="stat-card"><div class="stat-label">CARDS RATED</div><div class="stat-value">'+totalRated+'</div></div></div>'+(attempts.length?'<div class="exp-expansion-list">'+attempts.slice(0,5).map(item=>'<div class="exp-expansion-item"><div><strong>'+Number(item.scorePercent||0)+'% · '+Number(item.remembered||0)+' of '+Number(item.total||0)+' remembered</strong><small>'+esc(new Date(item.completedAt).toLocaleString())+'</small></div></div>').join('')+'</div>':'<p class="privacy-note-inline">Completed recall sprints will appear here.</p>'))+
+      '<section class="exp-inline-cta"><div><b>Practise with your own course material.</b><span>Upload notes or slides in Study Studio to create more relevant questions and flashcards.</span></div><button class="primary-btn" data-page="study">Open Study Studio ↗</button></section>';
   }
   function startRecallSprint(){
     const all=Array.isArray(data.flashcards)?data.flashcards.filter(card=>card&&String(card.front||'').trim()&&String(card.back||'').trim()):[];
@@ -266,8 +268,7 @@
     return typeof oldMyStudy==='function'?oldMyStudy()+buttons:buttons;
   }
   function updateMoreLinks(){
-    const extra='<div class="learning-expansion-grid"><button class="learning-expansion-card" data-page="wellness">'+icon('♡','lime')+'<strong>Study Wellness</strong><span>Study balance and daily check-ins.</span></button><button class="learning-expansion-card" data-page="insights">'+icon('↗','purple')+'<strong>Performance Insights</strong><span>Quiz patterns and learning analytics.</span></button></div>';
-    return typeof oldMore==='function'?oldMore()+extra:extra;
+    return typeof oldMore==='function'?oldMore():'';
   }
 
   document.addEventListener('submit',async event=>{

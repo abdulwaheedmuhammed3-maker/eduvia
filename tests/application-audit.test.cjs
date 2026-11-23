@@ -100,3 +100,26 @@ test('pull-request validation installs dependencies, runs the suite and builds t
  assert.ok(workflow.includes('npm test'));
  assert.ok(workflow.includes('npm run build:web'));
 });
+
+test('initial and changed hash routes safely handle invalid URLs and malformed course IDs',()=>{
+ const app=read('app.js');
+ assert.ok(app.includes('const SUPPORTED_PAGE_ROUTES=new Set(['));
+ assert.ok(app.includes('function resolveHashRoute(hash)'));
+ assert.ok(app.includes("catch{\n      return {page:'courses',courseId:''};\n    }"));
+ assert.ok(app.includes("SUPPORTED_PAGE_ROUTES.has(route)?route:'today'"));
+ assert.ok(app.includes('const initialRoute=resolveHashRoute(location.hash)'));
+ assert.ok(app.includes('const route=resolveHashRoute(location.hash)'));
+ assert.ok(!app.includes("decodeURIComponent(initialRoute.slice(7))"));
+});
+
+test('legacy roadmap categories remain selected when editing a saved goal',()=>{
+ const roadmaps=read('roadmaps.js');
+ assert.ok(roadmaps.includes("const options=selected&&!categories.includes(selected)?[selected,...categories]:categories"));
+ assert.ok(roadmaps.includes("options.map(category=>"));
+});
+
+test('category backup matching collapses actual whitespace before matching courses',()=>{
+ const feature=read('feature-hub.js');
+ assert.ok(feature.includes(".replace(/\\s+/g,' ')"));
+ assert.ok(!feature.includes(".replace(/\\\\s+/g,' ')"));
+});

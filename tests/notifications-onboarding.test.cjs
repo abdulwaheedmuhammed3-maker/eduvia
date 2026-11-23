@@ -16,8 +16,13 @@ test('first-run notification invitation appears after profile setup, not on exis
  assert.ok(startup.includes('dismissExistingUserSplash()'));
  assert.ok(!startup.includes('eduPromptFirstLaunchNotifications'));
  const storageGuard=app.slice(app.indexOf('function storageRemove(key)'),app.indexOf('function chooseEntryMotivationQuote'));
- assert.ok(storageGuard.includes('storageGet(STORE_KEY)!==null'));
+ assert.ok(storageGuard.includes('function isLegacyEduviaInstall()'));
+ assert.ok(storageGuard.includes("saved.profile?.setupComplete===true"));
  assert.ok(storageGuard.includes("storageSet(FIRST_LAUNCH_ALERT_PROMPT_KEY,'1')"));
+ assert.ok(app.includes("storageGet(FIRST_LAUNCH_ALERT_PROMPT_KEY)==='1'"));
+ assert.ok(app.includes("storageSet(FIRST_LAUNCH_ALERT_PROMPT_KEY,'pending')"));
+ assert.ok(entry.includes('window.eduMarkFirstLaunchNotificationsPending()'));
+ assert.ok(entry.includes('window.eduPromptFirstLaunchNotifications()'));
 });
 
 test('first-run invitation is shown once and has a user-controlled enable action',()=>{
@@ -46,9 +51,9 @@ test('browser and Android permission requests remain behind an explicit user act
 test('returning users retain Settings controls and assets are cache-versioned together',()=>{
  assert.ok(app.includes('Eduvia phone notifications'));
  assert.ok(app.includes('data-action="${pushEnabled?\'disable-notifications\':\'enable-notifications\'}"'));
- assert.ok(index.includes('first-run-alerts-1'));
- assert.ok(index.includes('first-run-alert-optin-1'));
- assert.ok(worker.includes('eduvia-v94-full-application-audit'));
- assert.ok(worker.includes('first-run-alerts-1'));
- assert.ok(worker.includes('first-run-alert-optin-1'));
+ assert.ok(index.includes('first-run-alerts-2'));
+ assert.ok(index.includes('first-run-alert-optin-2'));
+ assert.ok(worker.includes('eduvia-v95-full-application-audit'));
+ assert.ok(worker.includes('first-run-alerts-2'));
+ assert.ok(worker.includes('first-run-alert-optin-2'));
 });

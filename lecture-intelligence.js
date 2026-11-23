@@ -79,7 +79,7 @@
       const unique=[...new Set(item.words)];
       const salience=unique.reduce((sum,word)=>sum+Math.log1p(frequencies.get(word)||1),0)/Math.sqrt(Math.max(1,item.words.length));
       const lengthBonus=item.words.length>=10&&item.words.length<=28?.35:0;
-      const sectionBonus=item.section?.length?.25:0;
+      const sectionBonus=item.section?0.25:0;
       return {...item,score:salience+lengthBonus+sectionBonus};
     }).sort((a,b)=>b.score-a.score||a.position-b.position);
     const chosen=[];

@@ -134,8 +134,10 @@ test('material reads and portable backup exports use the saved extracted-text fa
  assert.ok(studio.includes('resolve(req.result||fallbackMaterial(materialId))'));
  assert.ok(studio.includes("storeName===STUDIO_STORE?fallbackMaterial(recordId):null"));
  assert.ok(studio.includes('const cached=fallback();if(cached)return cached;throw error'));
- assert.ok(studio.includes('imported.materialText.push(record)'));
- assert.ok(studio.includes("if((imported.materialText||[]).some(item=>String(item?.id||'')===String(metadata.id)))importedMaterials.push(metadata)"));
+ assert.ok(studio.includes('const fallbackMaterials=new Map(imported.materialText.filter(item=>item&&item.id!==undefined).map(item=>[String(item.id),item]))'));
+ assert.ok(studio.includes('record=fallbackMaterials.get(metadata.id)'));
+ assert.ok(studio.includes('materialRecords.push(record)'));
+ assert.ok(studio.includes('restored.materialText=[]'));
 });
 
 test('course and timetable imports fall back from unmatched course codes to exact course names',()=>{

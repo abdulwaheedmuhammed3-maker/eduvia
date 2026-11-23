@@ -192,3 +192,13 @@ test('MCQ answer reveal expressions interpolate at runtime rather than displayin
  assert.ok(studio.includes('<p>${q.options?'));
  assert.ok(!studio.includes('\\${q.options?'));
 });
+
+test('Android APK is built for pull requests but the beta release is published only outside PRs',()=>{
+ const workflow=read('.github/workflows/build-android.yml');
+ assert.ok(workflow.includes('pull_request:'));
+ assert.ok(workflow.includes('branches: [main]'));
+ assert.ok(workflow.includes("if: github.event_name != 'pull_request'"));
+ assert.ok(workflow.includes('npm run android:prepare'));
+ assert.ok(workflow.includes('./gradlew assembleDebug'));
+ assert.ok(workflow.includes('actions/upload-artifact@v7'));
+});

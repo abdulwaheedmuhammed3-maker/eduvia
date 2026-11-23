@@ -230,3 +230,18 @@ test('notification Worker returns generic server errors instead of exposing inte
  assert.ok(worker.includes("expected ? error.message : 'The notification service could not complete that request.'"));
  assert.ok(!worker.includes("{ error: error?.message || 'The notification service could not complete that request.' }"));
 });
+
+test('Clear planner data waits for all IndexedDB file stores to clear before reporting success',()=>{
+ const studio=read('study-studio.js');
+ const start=studio.indexOf('async function clearAllStudioRecords()');
+ const end=studio.indexOf('document.addEventListener(\'change\',e=>{',start);
+ const block=studio.slice(start,end);
+ assert.ok(block.includes("stores=[STUDIO_STORE,'academicRecords','personalDocuments']"));
+ assert.ok(block.includes("db.transaction(stores,'readwrite')"));
+ assert.ok(block.includes("tx.objectStore(storeName).clear()"));
+ assert.ok(block.includes('tx.oncomplete=()=>finish()'));
+ assert.ok(block.includes('tx.onabort=()=>finish('));
+ assert.ok(block.includes('await clearAllStudioRecords()'));
+ assert.ok(block.includes('could not clear uploaded file storage'));
+ assert.ok(!block.includes('indexedDB.deleteDatabase(STUDIO_DB)'));
+});

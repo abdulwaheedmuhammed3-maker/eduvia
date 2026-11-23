@@ -438,18 +438,23 @@ function deleteCourse(courseId){
  const course=data.courses.find(item=>String(item.id)===String(courseId));
  if(!course)return;
  if(!confirm('Remove '+course.name+' and its timetable entries? Your notes, uploaded files, documents, deadlines, flashcards, study records, exams and roadmaps will be kept as unlinked personal records.'))return;
+ const collectionNames=['resources','deadlines','personalDocuments','materials','materialText','studyRecords','completed','flashcards','exams','revisionTasks','roadmaps'];
+ const previousCollections=collectionNames.map(name=>(data[name]||[]).map(record=>({...record})));
+ const previousEvents=data.events,previousCourses=data.courses,previousSelection=selectedCourseId,previousPage=currentPage,previousHash=location.hash;
  const unlink=record=>{
   if(!record||String(record.courseId||'')!==String(courseId))return;
   record.courseName=record.courseName||course.name;
   record.courseId='';
  };
  data.events=data.events.filter(event=>String(event.courseId||'')!==String(courseId));
- for(const collection of [data.resources,data.deadlines,data.personalDocuments,data.materials,data.materialText,data.studyRecords,data.completed,data.flashcards,data.exams,data.revisionTasks,data.roadmaps]){
-  if(Array.isArray(collection))collection.forEach(unlink);
- }
+ for(const name of collectionNames){if(Array.isArray(data[name]))data[name].forEach(unlink)}
  data.courses=data.courses.filter(item=>String(item.id)!==String(courseId));
  if(String(selectedCourseId)===String(courseId)){selectedCourseId='';currentPage='courses';location.hash='courses'}
- save();toast('Course removed. Its learning records were kept and unlinked.');
+ if(!save()){
+  collectionNames.forEach((name,index)=>data[name]=previousCollections[index]);
+  data.events=previousEvents;data.courses=previousCourses;selectedCourseId=previousSelection;currentPage=previousPage;location.hash=previousHash;render();return
+ }
+ toast('Course removed. Its learning records were kept and unlinked.');
 }
 function deleteEvent(eventId){const previousEvents=data.events;data.events=data.events.filter(e=>e.id!==eventId);if(!save()){data.events=previousEvents;return}toast('Timetable item removed')}
 function clearData(){if(!confirm('This will permanently remove your learning areas, schedule, resources, and progress from this device. Download a backup first if you want to keep them.'))return;data=defaultData();if(!save())return;toast('Learning data cleared')}

@@ -146,3 +146,27 @@ test('course and timetable imports fall back from unmatched course codes to exac
  assert.ok(studio.includes("replaces class entries previously imported through Learning Studio"));
  assert.ok(studio.includes('Manually created classes and personal study sessions are kept'));
 });
+
+test('portable backup export and safety copies refuse to omit missing stored files',()=>{
+ const studio=read('study-studio.js');
+ const feature=read('feature-hub.js');
+ assert.ok(studio.includes("if(!blob)throw new Error('A saved personal document is missing"));
+ assert.ok(studio.includes("if(!record)throw new Error('An archived academic record is missing"));
+ assert.ok(studio.includes("if(!record)throw new Error('Extracted course material is missing"));
+ assert.ok(feature.includes("if(!record)throw new Error('The safety copy is incomplete"));
+});
+
+test('portable ZIP restore validates attachments before a single atomic IndexedDB replacement',()=>{
+ const studio=read('study-studio.js');
+ const start=studio.indexOf('async function importPortableBackup(file)');
+ const end=studio.indexOf('function clearData()',start);
+ const restore=studio.slice(start,end);
+ assert.ok(restore.indexOf('Read and validate every attachment')<restore.indexOf("if(!confirm("));
+ assert.ok(restore.indexOf("if(!confirm(")<restore.indexOf("storageSet(STORE_KEY,JSON.stringify(restored))"));
+ assert.ok(restore.includes('The backup is missing the file for personal document'));
+ assert.ok(restore.includes('The backup is missing archived academic record'));
+ assert.ok(restore.includes('The backup is missing extracted course material'));
+ assert.ok(restore.includes('await replaceStudioStoresAtomically('));
+ assert.ok(restore.includes('const rollbackError='));
+ assert.ok(studio.includes('tx.objectStore(storeName).clear()'));
+});

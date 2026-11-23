@@ -25,3 +25,17 @@ test('weekly study planning ignores expired one-off timetable entries but respec
  assert.ok(generator.includes('blockers=manual.filter(e=>planningEventIsActive(e,planningDate,nowMinutes))'),'only active and future events should block weekly slots');
  assert.ok(generator.includes('data.events=manual.concat('),'the original manual schedule must be preserved when generated sessions are replaced');
 });
+
+
+test('PDF extraction refuses files over the 250-page processing limit instead of silently truncating them',()=>{
+ const start=studio.indexOf('function ensurePdfPageLimit(');
+ const end=studio.indexOf('\n}',start)+2;
+ const helper=studio.slice(start,end);
+ assert.ok(start>=0&&end>1,'the PDF page guard must exist');
+ const context={};
+ vm.runInNewContext(helper+';globalThis.checkPdfPageLimit=ensurePdfPageLimit;',context);
+ assert.doesNotThrow(()=>context.checkPdfPageLimit(250));
+ assert.throws(()=>context.checkPdfPageLimit(251),/more than 250 pages/i);
+ const pdfBranch=studio.slice(studio.indexOf("if(ext==='pdf')"),studio.indexOf("if(['docx','pptx']",studio.indexOf("if(ext==='pdf')")));
+ assert.ok(pdfBranch.indexOf('ensurePdfPageLimit(doc.numPages)')<pdfBranch.indexOf('Math.min(doc.numPages,250)'),'the guard must run before page extraction begins');
+});

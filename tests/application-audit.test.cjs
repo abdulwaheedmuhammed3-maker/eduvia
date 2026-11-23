@@ -254,3 +254,19 @@ test('canonical default data initializes every feature store used after a clear/
   assert.ok(new RegExp('(?:^|,)'+field+':').test(match[1]),'defaultData is missing '+field);
  }
 });
+
+test('deleting a course keeps linked learner content and clears only timetable entries',()=>{
+ const app=read('app.js');
+ const start=app.indexOf('function deleteCourse(courseId)');
+ const end=app.indexOf('function deleteEvent(eventId)',start);
+ const remove=app.slice(start,end);
+ assert.ok(remove.includes("data.events=data.events.filter(event=>String(event.courseId||'')!==String(courseId))"));
+ assert.ok(remove.includes('record.courseName=record.courseName||course.name'));
+ for(const name of ['data.resources','data.deadlines','data.personalDocuments','data.materials','data.materialText','data.studyRecords','data.flashcards','data.exams','data.revisionTasks','data.roadmaps']){
+  assert.ok(remove.includes(name),'linked records must be preserved and unlinked: '+name);
+ }
+ assert.ok(remove.includes('data.courses=data.courses.filter'));
+ assert.ok(remove.includes("data.courses=data.courses.filter")||remove.includes("data.courses = data.courses.filter"));
+ assert.ok(remove.includes("location.hash='courses'"));
+ assert.ok(remove.includes('kept and unlinked'));
+});

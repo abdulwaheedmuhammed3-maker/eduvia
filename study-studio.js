@@ -478,6 +478,7 @@ function generatePlan(){
   if(!data.courses.length){studioNotice='Import your learning-area list or add your courses first. Then the planner can spread sessions across them.';render();toast('Add at least one course before generating a plan.');return}
   const days=(data.profile.studyDays||[]).map(Number),start=minutes(data.profile.studyStart||'17:00'),end=minutes(data.profile.studyEnd||'21:00'),session=Number(data.profile.planSessionMinutes)||45;
   if(!days.length||end<=start){toast('Set your available days and study window first.');return}
+  const previousEvents=data.events,previousStudyPlan=data.studyPlan,previousNotice=studioNotice;
   const planningDate=todayISO(),nowMinutes=new Date().getHours()*60+new Date().getMinutes();
   const manual=data.events.filter(e=>!e.generated),blockers=manual.filter(e=>planningEventIsActive(e,planningDate,nowMinutes)),classes=blockers.filter(e=>e.type==='class'),blocks=blockers.filter(e=>e.type==='study');
   const candidates=[];for(const day of days){for(let t=start;t+session<=end;t+=30){const collision=[...classes,...blocks].some(e=>Number(e.day)===day&&minutes(e.start)<t+session+15&&minutes(e.end)+15>t);if(!collision)candidates.push({day,start:t,end:t+session})}}
@@ -486,7 +487,7 @@ function generatePlan(){
   for(const slot of candidates){if(chosen.length>=count)break;if(chosen.some(x=>x.day===slot.day&&slot.start<x.end+30&&slot.end+30>x.start))continue;let course=ranked[chosen.length%ranked.length];if(ranked.length>1&&chosen.length&&course.id===chosen[chosen.length-1].course.id)course=ranked[(chosen.length+1)%ranked.length];const idx=chosen.filter(x=>x.course.id===course.id).length;const topics=course.topics||[];const weakTopics=topics.filter(topic=>(data.topicMastery?.[course.id+'::'+topic]?.status||'not-started')!=='confident');const priorityTopics=[...weakTopics,...topics.filter(topic=>!weakTopics.includes(topic))];const topic=priorityTopics.length?priorityTopics[idx%priorityTopics.length]:'next course topic';chosen.push({...slot,course,topic})}
   data.events=manual.concat(chosen.map(x=>({id:id(),title:`Study · ${x.course.code||x.course.name}${x.topic&&x.topic!=='next course topic'?` · ${x.topic}`:''}`,type:'study',createdAt:todayISO(),courseId:x.course.id,date:'',day:x.day,start:toTime(x.start),end:toTime(x.end),location:'',remind:true,duration:session,generated:true,topic:x.topic})));
   studioNotice=`Generated ${chosen.length} weekly learning sessions across ${new Set(chosen.map(x=>x.course.id)).size} of ${data.courses.length} courses. Review the schedule and adjust your availability if you want to fit in more.`;
-  data.studyPlan={generatedAt:Date.now(),count:chosen.length,courseCount:data.courses.length};save();toast(`${chosen.length} learning sessions added to your timetable`);
+  data.studyPlan={generatedAt:Date.now(),count:chosen.length,courseCount:data.courses.length};if(!save()){data.events=previousEvents;data.studyPlan=previousStudyPlan;studioNotice=previousNotice;render();return}toast(`${chosen.length} learning sessions added to your timetable`);
 }
 function toTime(n){return`${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`}
 
@@ -647,12 +648,13 @@ document.addEventListener('submit',e=>{
  if(!learnerType||!focus){toast('Choose your learning path and add what you are learning.');return}
  if(formal&&['institution','stage','programme','level','term'].some(key=>!String(fd.get(key)||'').trim())){toast('Formal education learners should complete their institution, learning stage, programme, level and academic period.');return}
  if(!days.length){toast('Choose at least one day you can learn.');return}
+ const previousProfile={...data.profile};
  for(const key of ['country','institution','stage','programme','level','term'])data.profile[key]=String(fd.get(key)||'').trim();
  data.profile.learnerType=learnerType;data.profile.learningFocus=focus;data.profile.goal=data.profile.goal||'Make steady progress with learning';
  data.profile.weeklyGoal=Math.min(30,Math.max(1,Number(fd.get('weeklyGoal'))||5));
  data.profile.studyStart=fd.get('studyStart');data.profile.studyEnd=fd.get('studyEnd');
  data.profile.planSessionMinutes=Number(fd.get('planSessionMinutes'))||25;data.profile.sessionMinutes=data.profile.planSessionMinutes;
- data.profile.studyDays=days;data.profile.setupComplete=true;save();setPage('my-study');toast('Your learning space is ready. Add a learning area to begin.');
+ data.profile.studyDays=days;data.profile.setupComplete=true;if(!save()){data.profile=previousProfile;return}setPage('my-study');toast('Your learning space is ready. Add a learning area to begin.');
 });
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-action]');if(!b)return;

@@ -423,18 +423,18 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
     const b=event.target.closest('[data-feature]');if(!b)return;
     const action=b.dataset.feature,idValue=b.dataset.id;
     if(action==='add-deadline'){const disclosure=document.getElementById('deadlineEntryDetails');if(disclosure)disclosure.open=true;disclosure?.scrollIntoView({behavior:'smooth',block:'center'});return}
-    if(action==='import-reflection-deadline'){if(!data.deadlines.some(x=>x.sourceId===idValue)){data.deadlines.push({id:uid(),sourceId:idValue,title:b.dataset.title||'Class reflection deadline',kind:'assignment',courseId:b.dataset.course||'',dueDate:b.dataset.date,completed:false,createdAt:Date.now()});save();}return}
-    if(action==='toggle-deadline'){const item=data.deadlines.find(x=>x.id===idValue);if(item)item.completed=!item.completed;save();return}
-    if(action==='delete-deadline'){data.deadlines=data.deadlines.filter(x=>x.id!==idValue);save();return}
-    if(action==='add-card'){const context=window.eduRoadmapFlashcardContext||null;openModal('Create a flashcard','Write a clear prompt and a concise answer.','<label class="form-field">Course'+selectCourse('courseId',context?.courseId||'')+'</label><label class="form-field">Question<input name="front" required maxlength="180" value="'+(context?esc('Explain: '+context.milestoneTitle):'')+'"></label><label class="form-field">Answer<textarea name="back" required maxlength="500"></textarea></label>','Save card',fd=>{const roadmap=data.roadmaps?.find(item=>String(item.id)===String(context?.roadmapId)),milestone=roadmap?.milestones?.find(item=>String(item.id)===String(context?.milestoneId));data.flashcards.push({id:uid(),courseId:fd.get('courseId'),front:fd.get('front').trim(),back:fd.get('back').trim(),roadmapId:milestone?roadmap.id:'',milestoneId:milestone?milestone.id:'',level:0,nextReview:today(),createdAt:Date.now()});if(milestone){context.intent='review';context.courseId=String(fd.get('courseId')||'')}closeModal();save()});return}
-    if(action==='rate-card'){const card=data.flashcards.find(x=>x.id===idValue);if(card){const next=reviewInterval(card,b.dataset.known==='1');Object.assign(card,next);card.lastReviewed=Date.now();save();}return}
-    if(action==='delete-card'){data.flashcards=data.flashcards.filter(x=>x.id!==idValue);save();return}
+    if(action==='import-reflection-deadline'){if(!data.deadlines.some(x=>x.sourceId===idValue)){const deadline={id:uid(),sourceId:idValue,title:b.dataset.title||'Class reflection deadline',kind:'assignment',courseId:b.dataset.course||'',dueDate:b.dataset.date,completed:false,createdAt:Date.now()};data.deadlines.push(deadline);if(!save())data.deadlines=data.deadlines.filter(item=>item.id!==deadline.id)}return}
+    if(action==='toggle-deadline'){const item=data.deadlines.find(x=>x.id===idValue);if(item){const previous=item.completed;item.completed=!item.completed;if(!save()){item.completed=previous;render()}}return}
+    if(action==='delete-deadline'){const previous=data.deadlines;data.deadlines=data.deadlines.filter(x=>x.id!==idValue);if(!save()){data.deadlines=previous;render()}return}
+    if(action==='add-card'){const context=window.eduRoadmapFlashcardContext||null;openModal('Create a flashcard','Write a clear prompt and a concise answer.','<label class="form-field">Course'+selectCourse('courseId',context?.courseId||'')+'</label><label class="form-field">Question<input name="front" required maxlength="180" value="'+(context?esc('Explain: '+context.milestoneTitle):'')+'"></label><label class="form-field">Answer<textarea name="back" required maxlength="500"></textarea></label>','Save card',fd=>{const roadmap=data.roadmaps?.find(item=>String(item.id)===String(context?.roadmapId)),milestone=roadmap?.milestones?.find(item=>String(item.id)===String(context?.milestoneId)),card={id:uid(),courseId:fd.get('courseId'),front:fd.get('front').trim(),back:fd.get('back').trim(),roadmapId:milestone?roadmap.id:'',milestoneId:milestone?milestone.id:'',level:0,nextReview:today(),createdAt:Date.now()};data.flashcards.push(card);if(!save()){data.flashcards=data.flashcards.filter(item=>item.id!==card.id);return}if(milestone){context.intent='review';context.courseId=String(fd.get('courseId')||'')}closeModal()});return}
+    if(action==='rate-card'){const card=data.flashcards.find(x=>x.id===idValue);if(card){const previous={...card},next=reviewInterval(card,b.dataset.known==='1');Object.assign(card,next);card.lastReviewed=Date.now();if(!save()){Object.assign(card,previous);render()}}return}
+    if(action==='delete-card'){const previous=data.flashcards;data.flashcards=data.flashcards.filter(x=>x.id!==idValue);if(!save()){data.flashcards=previous;render()}return}
     if(action==='open-mastery'){window.eduMasteryCourse=b.dataset.course;setPage('mastery');return}
     if(action==='edit-document-meta'){const doc=data.personalDocuments.find(x=>x.id===idValue);if(!doc)return;const remindDays=[30,14,7,1].includes(Number(doc.remindDays))?Number(doc.remindDays):14;const remindOptions=[30,14,7,1].map(days=>'<option value="'+days+'" '+(remindDays===days?'selected':'')+'>'+days+' days before</option>').join('');openModal('Document tags and expiry reminder','Add search tags and an optional expiry date.','<label class="form-field">Tags<input name="tags" value="'+esc((doc.tags||[]).join(', '))+'" placeholder="ID, registration, results"></label><label class="form-field">Link to course'+selectCourse('courseId',doc.courseId||'')+'</label><label class="form-field">Expiry date<input name="expiryDate" type="date" value="'+esc(doc.expiryDate||'')+'"></label><label class="form-field">Reminder lead time<select name="remindDays">'+remindOptions+'</select></label>','Save',fd=>{doc.tags=fd.get('tags').split(',').map(x=>x.trim()).filter(Boolean);doc.courseId=String(fd.get('courseId')||'');doc.expiryDate=fd.get('expiryDate');doc.remindDays=Number(fd.get('remindDays')||14);save()});return}
     if(action==='export-backup'){try{const snap=await portableSnapshot();await downloadBackup(snap);toast('Portable backup downloaded.')}catch(e){toast('Backup failed: '+e.message)}return}
   });
   document.addEventListener('submit',async e=>{
-    if(e.target.id==='deadlineForm'){e.preventDefault();const fd=new FormData(e.target);data.deadlines.push({id:uid(),title:fd.get('title').trim(),kind:fd.get('kind'),courseId:fd.get('courseId'),dueDate:fd.get('dueDate'),notes:fd.get('notes').trim(),completed:false,createdAt:Date.now()});save();return}
+    if(e.target.id==='deadlineForm'){e.preventDefault();const fd=new FormData(e.target),deadline={id:uid(),title:fd.get('title').trim(),kind:fd.get('kind'),courseId:fd.get('courseId'),dueDate:fd.get('dueDate'),notes:fd.get('notes').trim(),completed:false,createdAt:Date.now()};data.deadlines.push(deadline);if(!save())data.deadlines=data.deadlines.filter(item=>item.id!==deadline.id);return}
     if(e.target.id==='cardGenerateForm'){
       e.preventDefault();
       const fd=new FormData(e.target),topic=String(fd.get('topic')||'').trim(),courseId=String(fd.get('courseId')||'');
@@ -453,6 +453,7 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
           }
         }catch{toast('Could not read your indexed course materials.');return}
       }
+      const previousFlashcards=[...data.flashcards],previousContext=context?{...context}:null;
       if(matched.length){
         matched.forEach((item,index)=>data.flashcards.push({
           id:uid(),courseId,front:'Explain: '+(index===0?topic:topic+' — key point '+(index+1)),
@@ -469,8 +470,9 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
           sourceCitation:'Student-provided notes',...cardLink,level:0,nextReview:today(),createdAt:Date.now()
         }));
       }
+      if(!save()){data.flashcards=previousFlashcards;if(context&&previousContext)Object.assign(context,previousContext);render();return}
       if(linkedMilestone&&context){context.intent='review';context.courseId=courseId}
-      save();toast(linkedMilestone?'Revision cards linked to this milestone.':'Source-linked review cards created.');return
+      toast(linkedMilestone?'Revision cards linked to this milestone.':'Source-linked review cards created.');return
     }
   });
   document.addEventListener('input',e=>{if(e.target.id==='documentSearch'){const q=e.target.value.toLowerCase();document.querySelectorAll('[data-doc-search]').forEach(el=>el.hidden=!el.dataset.docSearch.includes(q));}});

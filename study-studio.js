@@ -103,7 +103,7 @@ function renderStudyStudio(){
 function renderPractice(){
   const course=data.courses.find(c=>c.id===(window.practiceCourseId||''))||data.courses[0];
   return `${pageHead('RECALL IT. APPLY IT.','Practice & tests','Generate questions from your saved learning materials, then check your answers against the source.','<button class="secondary-btn" data-page="study">← Study studio</button>')}
-  <section class="panel practice-setup"><details class="action-disclosure"><summary><div><h3>Build a practice set</h3><p>Choose a learning area, question style and number of questions</p></div><span class="disclosure-cta">＋ Build set</span></summary><div class="disclosure-body"><p>Use your saved learning materials first. Without notes, questions use your learning topics and may be broader.</p><div class="practice-controls"><label>Learning area<select id="practiceCourseSelect">${courseOptions(course?.id||'')}</select></label><label>Question style<select id="questionStyle"><option value="mixed">Mixed review</option><option value="short">Short answer</option><option value="essay">Exam-style essay</option><option value="mcq">Multiple choice</option></select></label><label>Number of questions<select id="questionCount"><option>5</option><option selected>10</option><option>15</option></select></label><button class="primary-btn" data-action="generate-practice">Generate practice set</button></div><p class="privacy-note-inline">Practice questions are created on this device from your uploaded materials and learning topics.</p></div></details></section>
+  <section class="panel practice-setup"><details class="action-disclosure"><summary><div><h3>Build a practice set</h3><p>Choose a learning area, question style and number of questions</p></div><span class="disclosure-cta">＋ Build set</span></summary><div class="disclosure-body"><p>Use your saved learning materials first. Without notes, questions use your learning topics and may be broader.</p><div class="practice-controls"><label>Learning area<select id="practiceCourseSelect">${courseOptions(course?.id||'')}</select></label><label>Question style<select id="questionStyle"><option value="mixed">Mixed review</option><option value="short">Short answer</option><option value="essay">Exam-style essay</option><option value="mcq">Multiple choice</option></select></label><label>Number of questions<select id="questionCount"><option>5</option><option selected>10</option><option>15</option></select></label><button class="primary-btn" data-action="generate-practice">Generate practice set</button></div><p class="privacy-note-inline">Practice questions are created on this device from your uploaded materials and learning topics.</p><p class="privacy-note-inline">For multiple-choice questions, select an option and open “Show answer” to check your choice. Written answers are reviewed against the source; Eduvia does not automatically grade this practice set.</p></div></details></section>
   ${studioPractice.length?`<section class="panel practice-results"><div class="panel-head"><div><h3>${safe(studioPractice.title||'Your practice set')}</h3><p>${safe(studioPractice.source||'Generated from your study materials')} · ${studioPractice.questions.length} questions</p></div><button class="panel-link" data-action="generate-practice">Make another set ↻</button></div><div class="question-list">${studioPractice.questions.map((q,i)=>`<article class="question-card"><div class="question-number">${String(i+1).padStart(2,'0')}</div><div class="question-content"><strong>${safe(q.question)}</strong>${q.options?`<div class="question-options">${q.options.map((opt,j)=>`<label><input type="radio" name="q${i}" value="${j}"> ${safe(opt)}</label>`).join('')}</div>`:`<textarea placeholder="Write your answer here…"></textarea>`}<details><summary>Show source passage / sample answer</summary><p>${safe(q.answer||'Review the linked course material and explain the key idea in your own words.')}</p>${q.source?`<small>From: ${safe(q.citation||([q.source,q.location].filter(Boolean).join(' · ')))}</small>`:''}</details></div></article>`).join('')}</div></section>`:emptyState('✓','Your practice space is ready','Choose a course and generate a short practice set from your course materials.','', '')}`;
 }
 
@@ -425,30 +425,70 @@ async function generateTutorial(){
 }function searchUrl(course){const q=[data.profile.institution,data.profile.country,data.profile.stage,data.profile.programme,data.profile.level,course?.code,course?.name,'official syllabus course outline curriculum'].filter(Boolean).join(' ');return`https://www.google.com/search?q=${encodeURIComponent(q)}`}
 
 function localPractice(course,sources,count,style){
- const topics=Array.isArray(course.topics)?course.topics:[];
- const query=topics.slice(0,5).join(' ')||course.name||course.code||'';
- const passages=window.eduCourseIntelligence?.search(sources,query,Math.max(count,8))||[];
- const questions=passages.slice(0,count).map((item,index)=>({
-  question:style==='essay'?'Using the cited passage, explain the idea in your own words, give an example from your course and state why it matters.':'Explain this idea from your course material in your own words: “'+item.text.slice(0,260)+'”',
-  answer:item.text,
-  source:item.name,
-  location:item.location,
-  citation:item.citation,
-  materialId:item.materialId
- }));
- for(let i=0;questions.length<count&&topics.length;i++){
-  const topic=topics[i%topics.length];
-  questions.push({question:style==='essay'?'Write an exam-style response about '+topic+'. Support your explanation with a definition and a course example.':'Explain '+topic+' using your learning notes and give one example.',answer:'Use the terminology and examples from your instructor’s material for '+topic+'. No matching passage was retrieved for this topic, so check your notes before treating this prompt as course-specific.',source:'Course topic list',location:'No matching passage'});
+ const topicList=Array.isArray(course.topics)?course.topics:[];
+ const query=topicList.slice(0,5).join(' ')||course.name||course.code||'';
+ const requested=style==='mcq'?Math.max(count*4,16):Math.max(count,8);
+ const passages=window.eduCourseIntelligence?.search(sources,query,requested)||[];
+ if(style==='mcq'){
+  const seen=new Set(),candidates=[];
+  for(const item of passages){
+   const text=String(item.text||'').replace(/\s+/g,' ').trim();
+   const key=text.toLocaleLowerCase();
+   if(text.length<45||seen.has(key))continue;
+   seen.add(key);
+   candidates.push({...item,text:text.slice(0,220)});
+  }
+  const questions=[];
+  for(let offset=0;offset+3<candidates.length&&questions.length<count;offset+=4){
+   const group=candidates.slice(offset,offset+4),correct=group[0];
+   const options=group.map(item=>item.text);
+   const correctOption=options.indexOf(correct.text);
+   questions.push({
+    question:'Which statement is found in the selected course passage?',
+    answer:correct.text,
+    options,
+    correctOption,
+    source:correct.name,
+    location:correct.location,
+    citation:correct.citation,
+    materialId:correct.materialId
+   });
+  }
+  return {title:(course.code||course.name)+' · multiple-choice practice',source:questions.length?'Retrieved passages from course materials':'Not enough distinct source passages for multiple-choice practice',questions};
  }
- if(!questions.length)questions.push({question:'Upload course notes to generate source-based practice questions for '+course.name+'.',answer:'No course material has been indexed for this course yet.',source:'No source material'});
- return {title:(course.code||course.name)+' · practice',source:questions.some(question=>question.materialId)?'Retrieved passages from course materials':sources.length?'Course topic prompts · no matching source passages':'Course topic list',questions:questions.slice(0,count)};
+ const questions=passages.slice(0,count).map((item,index)=>{
+  const essay=style==='essay'||(style==='mixed'&&index%2===1);
+  return {
+   question:essay?'Using the cited passage, explain the idea in your own words, give an example from your course and state why it matters.':'Explain this idea from your course material in your own words: “'+item.text.slice(0,260)+'”',
+   answer:item.text,
+   source:item.name,
+   location:item.location,
+   citation:item.citation,
+   materialId:item.materialId
+  };
+ });
+ for(let i=0;questions.length<count&&topicList.length;i++){
+  const topic=topicList[i%topicList.length],essay=style==='essay'||(style==='mixed'&&questions.length%2===1);
+  questions.push({
+   question:essay?'Write an exam-style response about '+topic+'. Support your explanation with a definition and a course example.':'Explain '+topic+' using your learning notes and give one example.',
+   answer:'Use the terminology and examples from your instructor’s material for '+topic+'. No matching passage was retrieved for this topic, so check your notes before treating this prompt as course-specific.',
+   source:'Course topic list',location:'No matching passage'
+  });
+ }
+ return {
+  title:(course.code||course.name)+' · practice',
+  source:questions.some(question=>question.materialId)?'Retrieved passages from course materials':passages.length?'Course topic prompts · no matching source passages':'Course topic list',
+  questions:questions.slice(0,count)
+ };
 }
 async function generatePractice(){
   const course=selectedCourse('practiceCourseSelect')||selectedCourse('practiceCourse')||data.courses[0];
   if(!course){toast('Import or add your learning-area list first.');return}
   const count=Number(document.getElementById('questionCount')?.value)||10,style=document.getElementById('questionStyle')?.value||'mixed';
   const sources=await loadCourseText(course.id);
-  studioPractice=localPractice(course,sources,count,style);window.practiceCourseId=course.id;currentPage='practice';render();document.querySelector('.practice-results')?.scrollIntoView({behavior:'smooth',block:'start'});
+  const generated=localPractice(course,sources,count,style);
+  if(!generated.questions.length){toast(style==='mcq'?'Multiple-choice practice needs at least four distinct passages in the selected course material. Add more source material or choose another question style.':'Add course topics or searchable learning materials before generating a practice set.');return}
+  studioPractice=generated;window.practiceCourseId=course.id;currentPage='practice';render();document.querySelector('.practice-results')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 document.addEventListener('change',e=>{if(e.target.id==='materialImportFile'&&e.target.files?.length>1){e.stopImmediatePropagation();toast('Add materials one file at a time so you can link each one to the right course.');handleStudioFile('material',e.target.files[0])}},true);
@@ -485,15 +525,6 @@ document.addEventListener('click',e=>{
   }
 });
 
-function localPractice(course,sources,count,style){
-  const topicList=course.topics||[];
-  const sentences=sources.flatMap(s=>s.text.replace(/\s+/g,' ').split(/(?<=[.!?])\s+/).filter(x=>x.length>55&&x.length<420).map(sentence=>({sentence,source:s.name}))).slice(0,count);
-  const sourceName=sources[0]?.name||'course topics';
-  const prompts=sentences.map((x,i)=>{const essay=style==='essay'||(style==='mixed'&&i%2===1);return {question:essay?`Discuss the following point from your course material. Explain it, give an example, and state one implication: “${x.sentence}”`:`In your own words, explain this idea from your notes and give one example: “${x.sentence}”`,answer:x.sentence,source:x.source}});
-  for(let i=0;prompts.length<count&&topicList.length;i++){const topic=topicList[i%topicList.length],essay=style==='essay'||(style==='mixed'&&prompts.length%2===1);prompts.push({question:essay?`Write an exam-style answer on ${topic}. Define it, explain its main parts, and use an example.`:`What is ${topic}, what problem does it address, and how would you explain it to a classmate?`,answer:`Use your course material’s definitions and examples for ${topic}. Include key terms, steps or properties, and an example.`,source:sourceName})}
-  if(!prompts.length)prompts.push({question:`Using your course material for ${course.name}, explain one important idea and apply it to an example.`,answer:'Refer to your course material and include a definition, explanation, and example.',source:sourceName});
-  return {title:`${course.code||course.name} · practice`,source:sources[0]?.name||'Course topics',questions:prompts.slice(0,count)};
-}
 function findCurriculum(){
   const course=selectedCourse('lessonCourse')||data.courses[0],url=searchUrl(course),searchTab=window.open(url,'_blank');
   if(searchTab){searchTab.opener=null;studioNotice='Opened a web search for a course outline. Check that the result matches your school, level, and current curriculum.'}
@@ -788,7 +819,7 @@ function archiveCurrentTerm(){
     const nextAcademicYear=String(fd.get('nextAcademicSession')||'').trim();
     if(!academicYearKey(nextAcademicYear)){toast('Enter the next academic year in a valid format, such as 2027/2028.');return}
     const results=collectAcademicResults(fd,true);if(!results)return;
-    const archive={id:archiveId,label,recordType:'term-archive',stage:data.profile.stage||'',level:data.profile.level||'',term:data.profile.term||'',institution:data.profile.institution||'',programme:data.profile.programme||'',archivedAt:Date.now(),profile:JSON.parse(JSON.stringify(data.profile)),courses,events,completed,resources,materials,materialText:JSON.parse(JSON.stringify(data.materialText||[])),materialRecords,studyPlan:data.studyPlan||null,results,resultsNotes:String(fd.get('resultsNotes')||'').trim()};
+    const archive={id:archiveId,label,recordType:'term-archive',stage:data.profile.stage||'',level:data.profile.level||'',term:data.profile.term||'',institution:data.profile.institution||'',programme:data.profile.programme||'',archivedAt:Date.now(),profile:JSON.parse(JSON.stringify(data.profile)),courses,events,completed,resources,materials,materialText:JSON.parse(JSON.stringify(data.materialText||[])),materialRecords,studyRecords:JSON.parse(JSON.stringify(data.studyRecords||[])),studyPlan:data.studyPlan||null,results,resultsNotes:String(fd.get('resultsNotes')||'').trim()};
     const summary={...educationRecordSummary(archive),studyMinutes};
     try{await putStudioRecord('academicRecords',archive)}catch(error){toast('Could not save this term to local storage: '+(error.message||'storage is unavailable'));return}
     syncPendingCarryovers(archive);
@@ -806,12 +837,13 @@ async function viewAcademicRecord(recordId){
     const plannedStudy=(record.events||[]).filter(event=>event.type==='study').map(event=>'<li>'+safe(event.title)+' · '+safe(STUDIO_DAYS[event.day]||'')+' '+safe(timeLabel(event.start))+'–'+safe(timeLabel(event.end))+'</li>').join('')||'<li>No planned study sessions were saved.</li>';
     const completed=(record.completed||[]).filter(item=>item.type==='study'||(!item.type&&String(item.eventId||'').startsWith('focus-'))).slice(-12).reverse().map(item=>'<li>'+safe(item.date||'')+' · '+Number(item.minutes||0)+' minutes'+(item.courseId?' · '+safe((record.courses||[]).find(course=>course.id===item.courseId)?.name||'Course'):'')+'</li>').join('')||'<li>No completed study sessions were saved.</li>';
     const resources=(record.resources||[]).map(resource=>'<li>'+safe(resource.title||'Saved note')+(resource.kind?' · '+safe(resource.kind):'')+'</li>').join('')||'<li>No tutorials or notes were saved.</li>';
+    const sessionRecords=(record.studyRecords||[]).map(item=>'<li>'+safe(item.date||'')+' · '+safe(item.type==='class'?'Class':'Study')+' · '+safe(item.title||'Learning session')+' · '+(item.quizAttempts||[]).length+' quiz attempts</li>').join('')||'<li>No detailed class reflections or study quiz records were saved.</li>';
     const materials=(record.materials||[]).map(material=>'<li>'+safe(material.name||'Course material')+' · '+Number(material.characters||0).toLocaleString()+' characters</li>').join('')||'<li>No course materials were saved.</li>';
     const resultRows=(record.results||[]).map(item=>'<div class="academic-result-view-row"><strong>'+safe(item.subject)+'</strong><span>'+safe(item.code||'')+'</span><b>'+safe(item.grade)+'</b>'+(item.carryover?'<small class="carryover-result-flag">Carryover · retake next academic year</small>':'')+'</div>').join('')||'<p class="preview-note">No results saved for this period yet.</p>';
     const isResultEntry=record.recordType==='results',recordProfile=record.profile||{},recordDetails=[record.institution||record.school||recordProfile.institution,(record.stage||recordProfile.stage)?stageLabel(record.stage||recordProfile.stage):'',record.programme||recordProfile.programme,record.level||recordProfile.level,record.term||recordProfile.term,record.academicYear].filter(Boolean).join(' · ');
     const actions='<div class="academic-record-actions"><button type="button" class="secondary-btn" data-action="edit-academic-results" data-id="'+safe(record.id)+'">Edit results</button>'+(isResultEntry?'<button type="button" class="danger-btn" data-action="delete-academic-record" data-id="'+safe(record.id)+'">Remove record</button>':'')+'</div>';
     const resultSection='<section class="academic-result-section"><div class="panel-head"><div><h3>Results</h3><p>'+Number((record.results||[]).length)+' subject or course results</p></div></div><div class="academic-result-view-list">'+resultRows+'</div>'+(record.resultsNotes?'<p class="academic-record-note">'+safe(record.resultsNotes)+'</p>':'')+actions+'</section>';
-    const archivedContent=isResultEntry?'':('<div class="form-grid"><section><h3>Courses</h3><ul>'+courseList+'</ul></section><section><h3>Classes</h3><ul>'+classes+'</ul></section></div><section><h3>Planned study sessions</h3><ul>'+plannedStudy+'</ul></section><section><h3>Recent completed study sessions</h3><ul>'+completed+'</ul></section><div class="form-grid"><section><h3>Tutorials and notes</h3><ul>'+resources+'</ul></section><section><h3>Course materials</h3><ul>'+materials+'</ul></section></div>');
+    const archivedContent=isResultEntry?'':('<div class="form-grid"><section><h3>Courses</h3><ul>'+courseList+'</ul></section><section><h3>Classes</h3><ul>'+classes+'</ul></section></div><section><h3>Planned study sessions</h3><ul>'+plannedStudy+'</ul></section><section><h3>Recent completed study sessions</h3><ul>'+completed+'</ul></section><section><h3>Class reflections and study quiz records</h3><ul>'+sessionRecords+'</ul></section><div class="form-grid"><section><h3>Tutorials and notes</h3><ul>'+resources+'</ul></section><section><h3>Course materials</h3><ul>'+materials+'</ul></section></div>');
     openModal(record.label||'Education record',recordDetails||'Saved '+recordDate(record.archivedAt||record.recordedAt),'<p class="preview-note">'+(isResultEntry?'Past education results saved on this device.':'This term’s results and study record are saved on this device.')+'</p>'+resultSection+archivedContent,'Done',()=>closeModal());
   }catch(error){toast('Could not open this saved term: '+(error.message||'storage is unavailable'))}
 }
@@ -907,7 +939,7 @@ async function importPortableBackup(file){
     const zip=await window.JSZip.loadAsync(file),dataFile=zip.file('eduvia-data.json')||zip.file('daymark-data.json');
     if(!dataFile)throw new Error('This ZIP does not contain an Eduvia backup.');
     const imported=JSON.parse(await dataFile.async('string'));
-    if(!imported.profile)throw new Error('The backup does not contain a student profile.');
+    if(!imported||typeof imported!=='object'||Array.isArray(imported)||!imported.profile||typeof imported.profile!=='object'||Array.isArray(imported.profile)||!Array.isArray(imported.courses)||!Array.isArray(imported.events))throw new Error('The ZIP does not contain a complete Eduvia planner backup.');
     if(!confirm('Replace the planner data on this device with the selected backup? This changes the current courses, history, and document list.'))return;
     imported.academicHistory=Array.isArray(imported.academicHistory)?imported.academicHistory:[];
     imported.personalDocuments=Array.isArray(imported.personalDocuments)?imported.personalDocuments:[];

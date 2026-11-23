@@ -49,7 +49,7 @@ test('the refinement stylesheet is loaded last and supports light and dark theme
 test('service worker caches the new stylesheet and updated screen modules',()=>{
  const sw=read('service-worker.js');
  assert.ok(sw.includes('./ui-polish.css?v=layout-audit-2'));
- assert.ok(sw.includes('eduvia-v91-card-actions'));
+ assert.ok(sw.includes('eduvia-v92-ask-prompts'));
  assert.ok(sw.includes('play-screen-cleanup-2'));
  assert.ok(sw.includes('primary-nav-map-1'));
 });
@@ -62,4 +62,17 @@ test('Create and View actions stay anchored at the bottom of their cards',()=>{
  assert.ok(polish.includes('.exp-inline-cta-action-bottom>button'));
  assert.ok(polish.includes('.exp-play-challenge .exp-empty-action-bottom>button'));
  assert.ok(polish.includes('.exp-academic-grid button small{margin-top:auto}'));
+});
+
+
+test('Ask Eduvia prompt suggestions use a compact responsive grid',()=>{
+ const expansion=read('learning-expansions.js');
+ const css=read('experience.css');
+ assert.ok(expansion.includes('exp-ask-prompt-panel'));
+ assert.ok(expansion.includes('exp-ask-prompt-grid'));
+ assert.ok(expansion.includes('data-ask-prompt='));
+ assert.ok(css.includes('.exp-ask-prompt-grid{'));
+ assert.ok(css.includes('grid-template-columns:repeat(4,minmax(0,1fr))'));
+ assert.ok(css.includes('grid-template-columns:repeat(2,minmax(0,1fr))'));
+ assert.ok(css.includes('min-height:40px'));
 });

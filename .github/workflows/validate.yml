@@ -131,7 +131,7 @@ jobs:
           grep -q 'experience.css' scripts/build-web.mjs
           grep -q 'app.js?v=' service-worker.js
           grep -q 'eduvia-study-alarms-v2' native-bridge-src.js
-          grep -q 'eduvia-v105-voice-class-reflections' service-worker.js
+          grep -q 'eduvia-v106-native-speech-keywords' service-worker.js
           grep -q 'theme-audit-2' index.html
           grep -q 'profile-audit-3-knowledge-check' index.html
           grep -q 'profile-audit-3-knowledge-check' service-worker.js

@@ -1055,7 +1055,8 @@ async function importPortableBackup(file){
     restored.imports.courses=Array.isArray(restored.imports.courses)?restored.imports.courses:[];
     restored.imports.timetable=Array.isArray(restored.imports.timetable)?restored.imports.timetable:[];
     // Keep only a localStorage fallback for materials whose archive entry is absent.
-    restored.materialText=restored.materialText.filter(item=>fallbackIds.has(String(item?.id||'')));
+    // Every material, including localStorage-only fallback records, is restored into IndexedDB.
+    restored.materialText=[];
 
     const storageError=storageSet(STORE_KEY,JSON.stringify(restored));
     if(storageError)throw new Error('Could not save the restored planner data: '+(storageError.message||'device storage is unavailable')+'. No existing files were changed.');

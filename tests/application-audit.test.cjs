@@ -303,6 +303,7 @@ test('loadData normalizes every current feature store before renderers consume p
  const end=app.indexOf('function learnerTypeOf',start);
  const loader=app.slice(start,end);
  assert.ok(loader.includes("Array.isArray(saved[key])?saved[key].filter(item=>item&&typeof item==='object'&&!Array.isArray(item))"));
+ assert.ok(loader.includes("loaded.discoverSavedGuides=Array.isArray(saved.discoverSavedGuides)?saved.discoverSavedGuides.filter(item=>typeof item==='string'):[]"));
  for(const key of ['deadlines','flashcards','materials','materialText','pendingCarryovers','askHistory','discoverSavedGuides','discoverReadHistory','playChallengeAttempts','wellnessCheckins','roadmaps']){
   assert.ok(loader.includes("'"+key+"'"),'loadData must normalise '+key);
  }

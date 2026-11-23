@@ -98,7 +98,7 @@ function masteryKey(courseId, topic){return courseId+'::'+topic;}
 data.exams=Array.isArray(data.exams)?data.exams:[];let editingExamId='';function examDaysLeft(exam){const a=parseISO(today());a.setHours(0,0,0,0);const b=parseISO(exam.date);b.setHours(0,0,0,0);return Math.round((b-a)/86400000)}
 function examFormMarkup(){const exam=data.exams.find(item=>item.id===editingExamId)||{},editing=!!exam.id;return '<details id="examEntryDetails" class="action-disclosure" '+(editing?'open':'')+'><summary><div><strong>'+(editing?'Edit examination':'Add an examination')+'</strong><p>Save the paper date and connect it to a learning area</p></div><span class="disclosure-cta">'+(editing?'Edit':'＋ Add exam')+'</span></summary><div class="disclosure-body"><form id="examForm" class="form-grid">'+'<label class="form-field">Examination title'+input('title','text',exam.title||'','required maxlength="100" placeholder="e.g. First semester examination"')+'</label>'+'<label class="form-field">Learning area'+selectCourse('courseId',exam.courseId||'')+'</label>'+'<label class="form-field">Examination date'+input('date','date',exam.date||'','required')+'</label>'+'<label class="form-field">Start time'+input('startTime','time',exam.startTime||'')+'</label>'+'<label class="form-field full">Topics to revise<textarea name="topics" rows="3" maxlength="1500" placeholder="One topic per line">'+esc(exam.topics||'')+'</textarea></label>'+'<button class="primary-btn" type="submit">Save examination</button></form></div></details>'}
 function upcomingExam(){return data.exams.filter(exam=>examDaysLeft(exam)>=0).sort((a,b)=>String(a.date).localeCompare(String(b.date)))[0]||null}
-document.addEventListener('submit',event=>{if(event.target.id!=='examForm')return;event.preventDefault();const fd=new FormData(event.target),title=String(fd.get('title')||'').trim(),date=String(fd.get('date')||'');if(!title||!date){toast('Add an examination title and date.');return}const existing=editingExamId?data.exams.find(item=>item.id===editingExamId):null;const record={id:editingExamId||uid(),title,courseId:String(fd.get('courseId')||''),date,startTime:String(fd.get('startTime')||''),topics:String(fd.get('topics')||'').trim(),createdAt:existing?.createdAt||Date.now(),updatedAt:Date.now()};if(editingExamId){data.exams=data.exams.map(item=>item.id===editingExamId?record:item);editingExamId=''}else data.exams.push(record);save();toast('Examination saved to your timetable.')});document.addEventListener('click',event=>{const b=event.target.closest('[data-exam-action]');if(!b)return;const idValue=b.dataset.id;if(b.dataset.examAction==='delete'){if(!confirm('Remove this examination and its linked revision plan?'))return;data.exams=data.exams.filter(item=>item.id!==idValue);data.revisionTasks=data.revisionTasks.filter(task=>task.examId!==idValue);if(editingExamId===idValue)editingExamId='';save();toast('Examination and its revision plan removed.');return}if(b.dataset.examAction==='edit'){editingExamId=idValue;render();document.getElementById('examEntryDetails')?.scrollIntoView({behavior:'smooth',block:'center'})}})
+document.addEventListener('submit',event=>{if(event.target.id!=='examForm')return;event.preventDefault();const fd=new FormData(event.target),title=String(fd.get('title')||'').trim(),date=String(fd.get('date')||'');if(!title||!date){toast('Add an examination title and date.');return}const existing=editingExamId?data.exams.find(item=>item.id===editingExamId):null;const record={id:editingExamId||uid(),title,courseId:String(fd.get('courseId')||''),date,startTime:String(fd.get('startTime')||''),topics:String(fd.get('topics')||'').trim(),createdAt:existing?.createdAt||Date.now(),updatedAt:Date.now()};const previousExams=[...data.exams],previousEditingExamId=editingExamId;if(editingExamId){data.exams=data.exams.map(item=>item.id===editingExamId?record:item);editingExamId=''}else data.exams.push(record);if(!save()){data.exams=previousExams;editingExamId=previousEditingExamId;render();return}toast('Examination saved to your timetable.')});document.addEventListener('click',event=>{const b=event.target.closest('[data-exam-action]');if(!b)return;const idValue=b.dataset.id;if(b.dataset.examAction==='delete'){if(!confirm('Remove this examination and its linked revision plan?'))return;const previousExams=[...data.exams],previousTasks=[...data.revisionTasks],previousEditingExamId=editingExamId;data.exams=data.exams.filter(item=>item.id!==idValue);data.revisionTasks=data.revisionTasks.filter(task=>task.examId!==idValue);if(editingExamId===idValue)editingExamId='';if(!save()){data.exams=previousExams;data.revisionTasks=previousTasks;editingExamId=previousEditingExamId;render();return}toast('Examination and its revision plan removed.');return}if(b.dataset.examAction==='edit'){editingExamId=idValue;render();document.getElementById('examEntryDetails')?.scrollIntoView({behavior:'smooth',block:'center'})}})
 
 data.revisionTasks=Array.isArray(data.revisionTasks)?data.revisionTasks:[];
 function topicsForExam(exam){
@@ -132,8 +132,8 @@ function generateRevisionPlan(examId){
  work.push({title:'Final active recall and light revision',topic:'Final review',type:'Final review'});
  // Spread tasks evenly over valid study dates; never schedule on exam day.
  const tasks=work.map((item,index)=>({id:uid(),examId:exam.id,courseId:exam.courseId||'',date:dates[Math.min(dates.length-1,Math.floor((index+0.5)*dates.length/work.length))],title:item.title,topic:item.topic,type:item.type,completed:false,createdAt:Date.now()}));
- data.revisionTasks=data.revisionTasks.filter(task=>task.examId!==examId).concat(tasks);
- save();toast(tasks.length+' revision tasks added to your plan.');
+ const previousTasks=data.revisionTasks;data.revisionTasks=data.revisionTasks.filter(task=>task.examId!==examId).concat(tasks);
+ if(!save()){data.revisionTasks=previousTasks;render();return}toast(tasks.length+' revision tasks added to your plan.');
 }
 function renderRevisionPlans(){
  const exams=data.exams.filter(exam=>examDaysLeft(exam)>=0&&data.revisionTasks.some(task=>task.examId===exam.id));
@@ -183,7 +183,7 @@ document.addEventListener('click',event=>{
  const b=event.target.closest('[data-exam-action]');if(!b)return;
  const action=b.dataset.examAction,idValue=b.dataset.id;
  if(action==='build-plan'){generateRevisionPlan(idValue);return}
- if(action==='toggle-task'){const task=data.revisionTasks.find(item=>item.id===idValue);if(task)task.completed=!task.completed;save()}
+ if(action==='toggle-task'){const task=data.revisionTasks.find(item=>item.id===idValue);if(task){const previous=task.completed;task.completed=!task.completed;if(!save()){task.completed=previous;render()}}}
 });
 
 
@@ -222,8 +222,8 @@ async function startMockExam(courseId,count,duration,style){
   const questions=(generated.questions||[]).map((question,index)=>({...question,topic:topics.length?String(topics[index%topics.length]):course.name}));
   if(!questions.length){toast('Add course topics or upload course notes before starting a mock examination.');return}
   const started=Date.now();
-  data.activeMockExam={id:uid(),courseId:course.id,courseName:course.name,startedAt:started,endsAt:started+(Number(duration)||30)*60000,durationMinutes:Number(duration)||30,questions,answers:[],status:'in-progress'};
-  save();setPage('mock-exam');
+  const previousActiveExam=data.activeMockExam;data.activeMockExam={id:uid(),courseId:course.id,courseName:course.name,startedAt:started,endsAt:started+(Number(duration)||30)*60000,durationMinutes:Number(duration)||30,questions,answers:[],status:'in-progress'};
+  if(!save()){data.activeMockExam=previousActiveExam;render();return}setPage('mock-exam');
  }catch(error){toast('Could not prepare the mock paper: '+(error.message||'learning materials unavailable'))}
 }
 function mockClock(milliseconds){
@@ -253,13 +253,13 @@ function finishMockExam(autoSubmitted){
  const active=data.activeMockExam;if(!active||active.status!=='in-progress')return;
  const expired=Number(active.endsAt)<=Date.now();autoSubmitted=!!autoSubmitted||expired;
  if(!autoSubmitted&&!confirm('Submit this mock examination now? You can review your answers afterwards.'))return;
- if(data.mockExamAttempts.some(attempt=>attempt.id===active.id)){data.activeMockExam=null;save();return;}
+ if(data.mockExamAttempts.some(attempt=>attempt.id===active.id)){const previousActiveExam=data.activeMockExam;data.activeMockExam=null;if(!save()){data.activeMockExam=previousActiveExam;render()}return;}
  if(mockExamTicker){clearInterval(mockExamTicker);mockExamTicker=null}
  active.status='submitted';active.submittedAt=Date.now();active.autoSubmitted=!!autoSubmitted;
  active.answers=(active.answers||[]).map(value=>String(value||''));active.answeredCount=active.answers.filter(value=>value.trim()).length;
  active.durationMinutes=Math.max(1,Math.round((active.submittedAt-active.startedAt)/60000));
  data.mockExamAttempts.unshift(active);data.lastMockExam=active;data.activeMockExam=null;
- currentPage='mock-results';location.hash='mock-results';save();
+ currentPage='mock-results';location.hash='mock-results';if(!save())render();
 }
 function renderMockResults(){
  const attempt=data.lastMockExam;
@@ -275,6 +275,7 @@ function renderMockResults(){
 }
 function saveMockReview(){
  const attempt=data.lastMockExam;if(!attempt)return;
+ const previousAttempts=JSON.parse(JSON.stringify(data.mockExamAttempts||[])),previousLastAttempt=JSON.parse(JSON.stringify(attempt)),previousMastery=JSON.parse(JSON.stringify(data.topicMastery||{}));
  const review=attempt.review||[];
  document.querySelectorAll('[data-mock-rating]').forEach(select=>{review[Number(select.dataset.mockRating)]=select.value});
  attempt.review=review;
@@ -286,7 +287,7 @@ function saveMockReview(){
   const key=masteryKey(attempt.courseId,topic);data.topicMastery[key]=data.topicMastery[key]||{};
   data.topicMastery[key].status=review[index]==='confident'?'confident':review[index]==='partial'?'learning':'not-started';
  });
- save();toast('Self-assessment saved. Topics to revisit are reflected in Learning mastery.');
+ if(!save()){data.mockExamAttempts=previousAttempts;data.lastMockExam=previousLastAttempt;data.topicMastery=previousMastery;render();return}toast('Self-assessment saved. Topics to revisit are reflected in Learning mastery.');
 }
 document.addEventListener('submit',async event=>{
  if(event.target.id!=='mockExamSetup')return;

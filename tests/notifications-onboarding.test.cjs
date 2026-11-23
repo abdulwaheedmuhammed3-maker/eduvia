@@ -51,9 +51,9 @@ test('browser and Android permission requests remain behind an explicit user act
 test('returning users retain Settings controls and assets are cache-versioned together',()=>{
  assert.ok(app.includes('Eduvia phone notifications'));
  assert.ok(app.includes('data-action="${pushEnabled?\'disable-notifications\':\'enable-notifications\'}"'));
- assert.ok(index.includes('first-run-alerts-4'));
+ assert.ok(index.includes('first-run-alerts-5'));
  assert.ok(index.includes('first-run-alert-optin-2'));
- assert.ok(worker.includes('eduvia-v97-full-application-audit'));
- assert.ok(worker.includes('first-run-alerts-4'));
+ assert.ok(worker.includes('eduvia-v98-full-application-audit'));
+ assert.ok(worker.includes('first-run-alerts-5'));
  assert.ok(worker.includes('first-run-alert-optin-2'));
 });

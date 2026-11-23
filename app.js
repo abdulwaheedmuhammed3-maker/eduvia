@@ -113,8 +113,9 @@ function loadData(){
     const saved=JSON.parse(storageGet(STORE_KEY));
     if(!saved||typeof saved!=='object'||Array.isArray(saved)||!saved.profile||typeof saved.profile!=='object'||Array.isArray(saved.profile))return defaultData();
     const defaults=defaultData(),loaded={...defaults,...saved,profile:{...defaults.profile,...saved.profile}};
-    const arrays=['courses','events','resources','completed','studyRecords','academicHistory','personalDocuments','exams','revisionTasks','mockExamAttempts','deadlines','flashcards','materials','materialText','pendingCarryovers','askHistory','discoverSavedGuides','discoverReadHistory','playChallengeAttempts','wellnessCheckins','roadmaps'];
+    const arrays=['courses','events','resources','completed','studyRecords','academicHistory','personalDocuments','exams','revisionTasks','mockExamAttempts','deadlines','flashcards','materials','materialText','pendingCarryovers','askHistory','discoverReadHistory','playChallengeAttempts','wellnessCheckins','roadmaps'];
     for(const key of arrays)loaded[key]=Array.isArray(saved[key])?saved[key].filter(item=>item&&typeof item==='object'&&!Array.isArray(item)):defaults[key];
+    loaded.discoverSavedGuides=Array.isArray(saved.discoverSavedGuides)?saved.discoverSavedGuides.filter(item=>typeof item==='string'):[];
     loaded.topicMastery=saved.topicMastery&&typeof saved.topicMastery==='object'&&!Array.isArray(saved.topicMastery)?saved.topicMastery:{};
     loaded.imports=saved.imports&&typeof saved.imports==='object'&&!Array.isArray(saved.imports)?saved.imports:{courses:[],timetable:[]};
     loaded.imports.courses=Array.isArray(loaded.imports.courses)?loaded.imports.courses:[];

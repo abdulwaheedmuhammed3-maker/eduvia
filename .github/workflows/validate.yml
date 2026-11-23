@@ -111,4 +111,5 @@ jobs:
           grep -q 'function storageGet(key)' app.js
           grep -q 'function storageSet(key,value)' app.js
           grep -q 'const storageError=storageSet(STORE_KEY' app.js
-          grep -q "if(!route){currentPage='today'" app.js
+          grep -q 'function resolveHashRoute(hash)' app.js
+          grep -q 'SUPPORTED_PAGE_ROUTES.has(route)?route:' app.js

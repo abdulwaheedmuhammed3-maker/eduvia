@@ -377,7 +377,7 @@ test('material metadata is not kept when its planner save fails',()=>{
  assert.ok(save.includes('if(!save()){'));
  assert.ok(save.includes("data.materials=data.materials.filter(item=>item.id!==m.id)"));
  assert.ok(save.includes("(data.materialText||[]).filter(item=>item.id!==m.id)"));
- assert.ok(save.includes("if(storedInIndexedDb&&!await removeStoredMaterial(meta.id))toast('The lecture was not saved"));
+ assert.ok(save.includes("if(storedInIndexedDb&&!await removeStoredMaterial(m.id))toast('The material was not saved"));
  assert.ok(save.indexOf('if(!save()){')<save.indexOf("toast('Course material saved and indexed')"));
 });
 

@@ -3,6 +3,8 @@ name: Build Eduvia Android APK
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -51,6 +53,7 @@ jobs:
           retention-days: 90
 
       - name: Publish the latest Android beta APK
+        if: github.event_name != 'pull_request'
         uses: softprops/action-gh-release@v3
         with:
           tag_name: android-beta

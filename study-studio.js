@@ -1373,7 +1373,7 @@ function beginSessionCompletion(event,date){
     field('Topics studied','topics','<textarea id="f-topics" name="topics" required placeholder="List the topics you reviewed"></textarea>',true)+
     field('Five key points learned','keyPoints','<textarea id="f-keyPoints" name="keyPoints" required placeholder="Enter five key points, one per line"></textarea>',true)+
     field('Additional reflection (optional)','gained','<textarea id="f-gained" name="gained" placeholder="Anything else you gained from this session"></textarea>',true);
-  openModal('Study reflection',subtitle,body,'Save and start 10-question quiz',fd=>{
+  openModal('Study reflection',subtitle,body,'Save and start 10-question quiz',async fd=>{
     const keyPoints=splitSessionList(String(fd.get('keyPoints')||''));
     if(keyPoints.length!==5){toast('Please enter exactly five key points, one per line.');return}
     const submitButton=document.querySelector('#activeForm button[type="submit"]');if(submitButton)submitButton.disabled=true;

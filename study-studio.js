@@ -816,6 +816,7 @@ function openCarryoverActivation(){
     if(years.some(year=>year===enteredKey)){
       toast('A carryover can only be activated in an academic year after its original year.');return;
     }
+    const previousCourses=(data.courses||[]).map(course=>({...course,topics:[...(course.topics||[])]})),previousCarryovers=(data.pendingCarryovers||[]).map(item=>({...item}));
     let added=0;
     for(const item of pending){
       const exists=data.courses.some(course=>(item.code&&String(course.code||'').toLowerCase()===item.code.toLowerCase())||String(course.name||'').trim().toLowerCase()===item.subject.trim().toLowerCase());
@@ -827,8 +828,8 @@ function openCarryoverActivation(){
       item.activatedAcademicYear=entered;
       item.activatedAt=Date.now();
     }
-    closeModal();save();
-    toast(added?added+' carryover course(s) added for '+entered+'.':'These carryovers are already in the active course list.');
+    if(!save()){data.courses=previousCourses;data.pendingCarryovers=previousCarryovers;render();return}
+    closeModal();toast(added?added+' carryover course(s) added for '+entered+'.':'These carryovers are already in the active course list.');
   });
 }
 
@@ -854,9 +855,10 @@ document.addEventListener('submit',event=>{
     toast('Complete your school, learning stage, programme, level and academic session for a formal education profile.');
     return;
   }
+  const previousProfile={...data.profile};
   for(const key of ['name','email','country','learnerType','learningFocus','institution','stage','department','matricNumber','faculty','specialization','studyMode','studentStatus','level','academicSession','semester','degreeProgramme'])data.profile[key]=String(fd.get(key)||'').trim();
   data.profile.programme=data.profile.degreeProgramme||data.profile.programme||data.profile.learningFocus||'';
-  save();
+  if(!save()){data.profile=previousProfile;render();return}
   toast('Your learning profile has been saved.');
 });
 
@@ -1300,11 +1302,12 @@ function completeSessionRecord(record){
   if(countsAsSession&&!data.completed.some(item=>item.eventId===record.eventId&&item.date===record.date))data.completed.push({id:id(),eventId:record.eventId,date:record.date,courseId:record.courseId,type:record.type,minutes:record.minutes,recordId:record.id});
 }
 function saveCompletedSession(event,date,reflection,complete=true){
+  const previousRecords=[...(data.studyRecords||[])],previousCompleted=[...(data.completed||[])];
   const record={id:id(),eventId:event.id,date,type:event.type,courseId:event.courseId||'',courseName:data.courses.find(item=>item.id===event.courseId)?.name||'',title:event.title||'Study session',minutes:event.duration||data.profile.sessionMinutes,createdAt:Date.now(),reflection,quizQuestions:[],quizAttempts:[]};
   data.studyRecords=Array.isArray(data.studyRecords)?data.studyRecords:[];
   data.studyRecords.unshift(record);
   if(complete)completeSessionRecord(record);
-  closeModal();save();return record;
+  if(!save()){data.studyRecords=previousRecords;data.completed=previousCompleted;return null}closeModal();return record;
 }
 function beginSessionCompletion(event,date){
   const unfinished=(data.studyRecords||[]).find(record=>record.eventId===event.id&&record.date===date&&record.type==='study'&&!record.completedAt);
@@ -1325,7 +1328,7 @@ function beginSessionCompletion(event,date){
       if(attended&&assignment&&!assignmentDue){toast('Add a deadline for the assignment.');return}
       if(attended&&classwork&&!classworkDue){toast('Add a deadline for the classwork.');return}
       const tasks=[];if(attended&&assignment)tasks.push({type:'Assignment',title:assignment,dueDate:assignmentDue});if(attended&&classwork)tasks.push({type:'Classwork',title:classwork,dueDate:classworkDue});
-      saveCompletedSession(event,date,{attendance,topics:attended?String(fd.get('topics')||'').trim():'',learned:attended?learned:[],studyAreas:attended?String(fd.get('studyAreas')||'').trim():'',tasks});
+      const record=saveCompletedSession(event,date,{attendance,topics:attended?String(fd.get('topics')||'').trim():'',learned:attended?learned:[],studyAreas:attended?String(fd.get('studyAreas')||'').trim():'',tasks});if(!record)return;
       toast(attended?'Class reflection saved and class completed':attendance==='postponed'?'Class marked as postponed. It was not counted as attended.':'Class attendance record saved');
     });
     const attendanceSelect=document.getElementById('f-attendance'),reflectionFields=document.getElementById('classReflectionFields');
@@ -1340,7 +1343,7 @@ function beginSessionCompletion(event,date){
   openModal('Study reflection',subtitle,body,'Save and start 10-question quiz',fd=>{
     const keyPoints=splitSessionList(String(fd.get('keyPoints')||''));
     if(keyPoints.length!==5){toast('Please enter exactly five key points, one per line.');return}
-    const record=saveCompletedSession(event,date,{topics:String(fd.get('topics')||'').trim(),keyPoints,gained:String(fd.get('gained')||'').trim()},false);
+    const record=saveCompletedSession(event,date,{topics:String(fd.get('topics')||'').trim(),keyPoints,gained:String(fd.get('gained')||'').trim()},false);if(!record)return;
     toast('Study reflection saved');
     openSessionQuiz(record.id);
   });
@@ -1401,16 +1404,17 @@ async function openSessionQuiz(recordId){
   const record=(data.studyRecords||[]).find(item=>item.id===recordId);if(!record||record.type!=='study')return;
   if(!Array.isArray(record.quizQuestions)||record.quizQuestions.length!==10){
     const sources=await sessionQuizSources(record.courseId);
+    const previousQuestions=record.quizQuestions;
     record.quizQuestions=buildSessionQuiz(record,sources);
     const fallbackPoints=[...splitSessionList(record.reflection?.keyPoints),...splitSessionList(record.reflection?.gained)],fallbackTopics=splitSessionList(record.reflection?.topics);while(record.quizQuestions.length<10){const number=record.quizQuestions.length+1,topic=fallbackTopics[(number-1)%Math.max(1,fallbackTopics.length)]||record.title||'your topic',answer=fallbackPoints[(number-1)%Math.max(1,fallbackPoints.length)]||record.reflection?.gained||topic;record.quizQuestions.push({prompt:'Recall check '+number+': Write one key idea you learned about '+topic+'.',answer,mode:'keywords',source:'Your study reflection'})}
-    save();
+    if(!save()){record.quizQuestions=previousQuestions;return}
   }
   const questions=record.quizQuestions;
   const keyPoints=record.reflection?.keyPoints||[];const content='<p class="session-modal-intro">10 questions · on-device grading checks key terms from your course notes or study reflection. Unlimited retakes are saved.</p>'+(keyPoints.length?'<section class="session-key-points"><h3>Five key points from your session</h3><ol>'+keyPoints.map(point=>'<li>'+safe(point)+'</li>').join('')+'</ol></section>':'')+'<div class="quick-quiz-list">'+questions.map((question,index)=>'<div class="form-field full"><label for="f-quiz-'+index+'">'+String(index+1).padStart(2,'0')+'. '+safe(question.prompt)+'</label><input id="f-quiz-'+index+'" name="answer'+index+'" required autocomplete="off" placeholder="Your short answer"></div>').join('')+'</div>';
   openModal('10-question study quiz',record.title,content,'Grade my quiz',fd=>{
     const responses=questions.map((question,index)=>{const answer=String(fd.get('answer'+index)||'').trim();return {question:question.prompt,answer,key:question.answer,source:question.source,correct:gradeSessionAnswer(question,answer)}});
-    const score=responses.filter(item=>item.correct).length,attempts=record.quizAttempts=Array.isArray(record.quizAttempts)?record.quizAttempts:[];
-    const attempt={number:attempts.length+1,completedAt:Date.now(),score,total:questions.length,responses};attempts.unshift(attempt);completeSessionRecord(record);save();showSessionQuizResult(record.id,attempt);
+    const score=responses.filter(item=>item.correct).length,attempts=record.quizAttempts=Array.isArray(record.quizAttempts)?record.quizAttempts:[],previousAttempts=[...attempts],previousCompleted=[...(data.completed||[])],previousCompletedAt=record.completedAt;
+    const attempt={number:attempts.length+1,completedAt:Date.now(),score,total:questions.length,responses};attempts.unshift(attempt);completeSessionRecord(record);if(!save()){record.quizAttempts=previousAttempts;record.completedAt=previousCompletedAt;data.completed=previousCompleted;render();return}showSessionQuizResult(record.id,attempt);
   });
 }
 function showSessionQuizResult(recordId,attempt){

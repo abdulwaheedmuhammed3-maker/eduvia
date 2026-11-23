@@ -20,5 +20,8 @@ test('weekly study planning ignores expired one-off timetable entries but respec
  assert.equal(check({date:'2026-11-23',end:'09:00'},'2026-11-23',600),false,'an already-ended one-off event today must not block a later plan');
  const start=studio.indexOf('function generatePlan()');
  const end=studio.indexOf('function toTime(',start);
- const generator=studio.slice(start,end);\n assert.ok(generator.includes('const manual=data.events.filter(e=>!e.generated)'),'expired one-off records must remain in the saved timetable');\n assert.ok(generator.includes('blockers=manual.filter(e=>planningEventIsActive(e,planningDate,nowMinutes))'),'only active and future events should block weekly slots');\n assert.ok(generator.includes('data.events=manual.concat('),'the original manual schedule must be preserved when generated sessions are replaced');
+ const generator=studio.slice(start,end);
+ assert.ok(generator.includes('const manual=data.events.filter(e=>!e.generated)'),'expired one-off records must remain in the saved timetable');
+ assert.ok(generator.includes('blockers=manual.filter(e=>planningEventIsActive(e,planningDate,nowMinutes))'),'only active and future events should block weekly slots');
+ assert.ok(generator.includes('data.events=manual.concat('),'the original manual schedule must be preserved when generated sessions are replaced');
 });

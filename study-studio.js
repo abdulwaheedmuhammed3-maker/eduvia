@@ -234,6 +234,10 @@ async function recognizeImage(image){
   }finally{bitmap?.close();await worker.terminate()}
 }
 
+function ensurePdfPageLimit(pageCount){
+  if(Number(pageCount)>250)throw new Error('This PDF has more than 250 pages. Split it into smaller files so Eduvia can process every page.');
+}
+
 async function extractDocument(file,kind=''){
   if(file.size>40*1024*1024)throw new Error('This file is over 40 MB. Try a smaller file or export selected chapters.');
   const ext=file.name.split('.').pop().toLowerCase();
@@ -255,6 +259,7 @@ async function extractDocument(file,kind=''){
     const pdfjs=await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@6.5.438/build/pdf.mjs');
     pdfjs.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@6.5.438/build/pdf.worker.mjs';
     const doc=await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+    ensurePdfPageLimit(doc.numPages);
     const pages=new Array(doc.numPages).fill(''),missingPages=[];
     for(let pageNum=1;pageNum<=Math.min(doc.numPages,250);pageNum++){
       const page=await doc.getPage(pageNum),content=await page.getTextContent();

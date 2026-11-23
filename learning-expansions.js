@@ -76,6 +76,8 @@
   }
   function rateSprintCard(remembered){
     if(!playSprint)return;
+    const previousFlashcards=(data.flashcards||[]).map(card=>({...card})),previousAttempts=(data.playChallengeAttempts||[]).map(item=>({...item})),byId=new Map(previousFlashcards.map(card=>[String(card.id),card]));
+    const previousSprint={...playSprint,cards:playSprint.cards.map(card=>byId.get(String(card.id))||{...card}),answers:playSprint.answers.map(item=>({...item}))};
     const card=playSprint.cards[playSprint.index];
     if(!card)return;
     updateFlashcardSchedule(card,remembered);
@@ -88,11 +90,11 @@
       data.playChallengeAttempts.unshift({id:'play-'+Math.random().toString(36).slice(2,10),remembered:rememberedCount,total:playSprint.cards.length,scorePercent:Math.round(rememberedCount/playSprint.cards.length*100),completedAt:Date.now(),durationSeconds:Math.max(1,Math.round((Date.now()-playSprint.startedAt)/1000)),cardIds:playSprint.answers.map(item=>item.cardId)});
       data.playChallengeAttempts=data.playChallengeAttempts.slice(0,100);
       playSprint=null;
-      save();
+      if(!save()){data.flashcards=previousFlashcards;data.playChallengeAttempts=previousAttempts;playSprint=previousSprint;render();return}
       toast('Recall sprint completed. Your card review dates have been updated.');
       return;
     }
-    save();
+    if(!save()){data.flashcards=previousFlashcards;data.playChallengeAttempts=previousAttempts;playSprint=previousSprint;render();return}
   }
 
   function recentAskHistory(){
@@ -143,10 +145,11 @@
     const selected=matches.slice(0,mode==='summary'?8:6);
     askResult=selected.length?{question,mode,rows:selected}:{missing:searched===0,noMatch:searched>0,message:searched===0?'No saved course materials were found in this search scope. Add files in Learning Studio first.':'Try a phrase from your notes, a key term or a different wording. Eduvia only displays matching excerpts.'};
     if(!askResult.missing&&!askResult.noMatch)askResult.question=question;
+    const previousAskHistory=(data.askHistory||[]).map(item=>({...item}));
     data.askHistory=Array.isArray(data.askHistory)?data.askHistory:[];
     data.askHistory.unshift({id:'ask-'+Math.random().toString(36).slice(2,10),question,scope,scopeLabel:scope==='all'?'All learning areas':courses[0].name,mode,matchCount:selected.length,completedAt:Date.now()});
     data.askHistory=data.askHistory.slice(0,20);
-    save();
+    if(!save()){data.askHistory=previousAskHistory;render();return}
   }
 
   function expandedDiscoverGuides(){
@@ -250,6 +253,7 @@
   }
 
   function saveWellnessCheckin(form){
+    const previousCheckins=(data.wellnessCheckins||[]).map(item=>({...item}));
     const fd=new FormData(form),date=todayISO();
     const record={date,mood:String(fd.get('mood')||'steady'),energy:String(fd.get('energy')||'steady'),workload:String(fd.get('workload')||'balanced'),note:String(fd.get('note')||'').trim(),updatedAt:Date.now()};
     data.wellnessCheckins=Array.isArray(data.wellnessCheckins)?data.wellnessCheckins:[];
@@ -257,7 +261,7 @@
     if(existing)Object.assign(existing,record);else data.wellnessCheckins.unshift(record);
     data.wellnessCheckins.sort((a,b)=>b.date.localeCompare(a.date));
     data.wellnessCheckins=data.wellnessCheckins.slice(0,90);
-    save();
+    if(!save()){data.wellnessCheckins=previousCheckins;render();return}
     toast('Study wellness check-in saved on this device.');
   }
 
@@ -298,9 +302,9 @@
     if(target.closest('[data-expand-discover-saved]')){discoverView={category:'',article:'',query:'',savedOnly:true};render();return}
     if(target.closest('[data-expand-discover-clear]')){discoverView.category='';render();return}
     const saveGuide=target.closest('[data-expand-discover-save]');
-    if(saveGuide){const title=saveGuide.dataset.expandDiscoverSave;data.discoverSavedGuides=Array.isArray(data.discoverSavedGuides)?data.discoverSavedGuides:[];data.discoverSavedGuides=data.discoverSavedGuides.includes(title)?data.discoverSavedGuides.filter(item=>item!==title):[title].concat(data.discoverSavedGuides);save();return}
+    if(saveGuide){const title=saveGuide.dataset.expandDiscoverSave,previousSaved=[...(data.discoverSavedGuides||[])];data.discoverSavedGuides=Array.isArray(data.discoverSavedGuides)?data.discoverSavedGuides:[];data.discoverSavedGuides=data.discoverSavedGuides.includes(title)?data.discoverSavedGuides.filter(item=>item!==title):[title].concat(data.discoverSavedGuides);if(!save()){data.discoverSavedGuides=previousSaved;render()}return}
     const readGuide=target.closest('[data-expand-discover-read]');
-    if(readGuide){const title=readGuide.dataset.expandDiscoverRead;data.discoverReadHistory=Array.isArray(data.discoverReadHistory)?data.discoverReadHistory:[];const old=data.discoverReadHistory.find(item=>item.title===title);if(old)old.readAt=Date.now();else data.discoverReadHistory.unshift({title,readAt:Date.now()});save();toast('Guide marked as read.');return}
+    if(readGuide){const title=readGuide.dataset.expandDiscoverRead,previousHistory=(data.discoverReadHistory||[]).map(item=>({...item}));data.discoverReadHistory=Array.isArray(data.discoverReadHistory)?data.discoverReadHistory:[];const old=data.discoverReadHistory.find(item=>item.title===title);if(old)old.readAt=Date.now();else data.discoverReadHistory.unshift({title,readAt:Date.now()});if(!save()){data.discoverReadHistory=previousHistory;render();return}toast('Guide marked as read.');return}
   });
   const previousSyncNav=window.syncNav;
   if(typeof previousSyncNav==='function'){

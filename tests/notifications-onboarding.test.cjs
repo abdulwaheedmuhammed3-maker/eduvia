@@ -57,3 +57,16 @@ test('returning users retain Settings controls and assets are cache-versioned to
  assert.ok(worker.includes('first-run-alerts-6'));
  assert.ok(worker.includes('first-run-alert-optin-2'));
 });
+
+
+test('Android app resume refreshes pending reminders and a truncated 300-alarm queue is disclosed',()=>{
+ assert.ok(app.includes("window.addEventListener('eduvia-native-resume'"),'the native bridge resume event must trigger an app refresh');
+ const resume=app.slice(app.indexOf("window.addEventListener('eduvia-native-resume'"),app.indexOf('function updateSidebarGoal'));
+ assert.ok(resume.includes('schedulePushSync()'),'resume must repopulate future native reminders');
+ assert.ok(resume.includes('scheduleEventAlert()'));
+ assert.ok(app.includes('function notifyNativeReminderCapacity(result)'));
+ assert.ok(app.includes('result.truncated'),'partial native reminder queues must be detected');
+ assert.ok(app.includes('Android has a 300-reminder queue limit'));
+ assert.ok(app.includes('Only the next 300 upcoming reminders are queued'));
+ assert.ok(app.includes('NATIVE_REMINDER_LIMIT_NOTICE_KEY'));
+});

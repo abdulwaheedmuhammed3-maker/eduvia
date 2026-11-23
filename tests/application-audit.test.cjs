@@ -263,9 +263,11 @@ test('deleting a course keeps linked learner content and clears only timetable e
  const remove=app.slice(start,end);
  assert.ok(remove.includes("data.events=data.events.filter(event=>String(event.courseId||'')!==String(courseId))"));
  assert.ok(remove.includes('record.courseName=record.courseName||course.name'));
- for(const name of ['data.resources','data.deadlines','data.personalDocuments','data.materials','data.materialText','data.studyRecords','data.flashcards','data.exams','data.revisionTasks','data.roadmaps']){
-  assert.ok(remove.includes(name),'linked records must be preserved and unlinked: '+name);
+ for(const name of ['resources','deadlines','personalDocuments','materials','materialText','studyRecords','completed','flashcards','exams','revisionTasks','roadmaps']){
+  assert.ok(remove.includes("'"+name+"'"),'linked records must be preserved and unlinked: '+name);
  }
+ assert.ok(remove.includes('for(const name of collectionNames)'));
+ assert.ok(remove.includes('previousCollections'));
  assert.ok(remove.includes('data.courses=data.courses.filter'));
  assert.ok(remove.includes("data.courses=data.courses.filter")||remove.includes("data.courses = data.courses.filter"));
  assert.ok(remove.includes("location.hash='courses'"));
@@ -330,7 +332,7 @@ test('deleting a course unlinks completed-session history instead of leaving sta
  const start=app.indexOf('function deleteCourse(courseId)');
  const end=app.indexOf('function deleteEvent(eventId)',start);
  const remove=app.slice(start,end);
- assert.ok(remove.includes('data.completed'));
+ assert.ok(remove.includes("'completed'"));
  assert.ok(remove.includes('record.courseName=record.courseName||course.name'));
  assert.ok(remove.includes("record.courseId=''"));
 });
@@ -375,17 +377,20 @@ test('material metadata is not kept when its planner save fails',()=>{
  assert.ok(save.includes('if(!save()){'));
  assert.ok(save.includes("data.materials=data.materials.filter(item=>item.id!==m.id)"));
  assert.ok(save.includes("(data.materialText||[]).filter(item=>item.id!==m.id)"));
- assert.ok(save.includes('if(storedInIndexedDb)await removeStoredMaterial(m.id)'));
+ assert.ok(save.includes("if(storedInIndexedDb&&!await removeStoredMaterial(m.id))toast('The material was not saved"));
  assert.ok(save.indexOf('if(!save()){')<save.indexOf("toast('Course material saved and indexed')"));
 });
 
-test('personal documents are removed from metadata before deleting the IndexedDB blob',()=>{
+test('personal document deletion removes the blob first and restores it if metadata persistence fails',()=>{
  const studio=read('study-studio.js');
  const start=studio.indexOf('async function deletePersonalDocument(documentId)');
  const end=studio.indexOf('async function listStudioRecords',start);
  const remove=studio.slice(start,end);
- assert.ok(remove.indexOf('if(!save())')<remove.indexOf("deleteStudioRecord('personalDocuments',documentId)"));
- assert.ok(remove.includes('data.personalDocuments=previous'));
+ assert.ok(remove.includes("storedRecord=await getStudioRecord('personalDocuments',documentId)"));
+ assert.ok(remove.indexOf("await deleteStudioRecord('personalDocuments',documentId)")<remove.indexOf('data.personalDocuments=previous.filter'));
+ assert.ok(remove.indexOf("await deleteStudioRecord('personalDocuments',documentId)")<remove.indexOf('if(!save())'));
+ assert.ok(remove.includes('if(!save()){\n    data.personalDocuments=previous;'));
+ assert.ok(remove.includes("await putStudioRecord('personalDocuments',storedRecord)"));
 });
 
 test('new personal documents roll back their stored blob when planner metadata cannot be saved',()=>{

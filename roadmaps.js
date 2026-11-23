@@ -35,13 +35,14 @@
       const targetDate=String(fd.get('targetDate')||'');
       if(targetDate&&!core.validDate(targetDate)){toast('Choose a valid target date.');return}
       const values={title,description:String(fd.get('description')||'').trim(),category:String(fd.get('category')||'Personal skill'),courseId:String(fd.get('courseId')||''),targetDate};
+      const previousRoadmaps=[...data.roadmaps],previousRoadmap=editing?{...roadmap}:null;
       if(editing){
         Object.assign(roadmap,values,{updatedAt:Date.now()});
         if(roadmap.status==='completed'&&roadmap.milestones.some(m=>!m.completed))roadmap.status='active';
       }else{
         data.roadmaps.unshift(core.normalizeRoadmap({...values,id:uid(),status:'active',milestones:[],createdAt:Date.now(),updatedAt:Date.now()}));
       }
-      closeModal();save();toast(editing?'Roadmap updated.':'Your roadmap is ready. Add the first milestone.');
+      if(!save()){if(editing)Object.assign(roadmap,previousRoadmap);else data.roadmaps=previousRoadmaps;render();return}closeModal();toast(editing?'Roadmap updated.':'Your roadmap is ready. Add the first milestone.');
     });
   }
   function openMilestoneEditor(roadmap){
@@ -53,9 +54,10 @@
       const title=String(fd.get('title')||'').trim(),dueDate=String(fd.get('dueDate')||'');
       if(!title){toast('Enter a milestone name.');return}
       if(dueDate&&!core.validDate(dueDate)){toast('Choose a valid milestone date.');return}
+      const previousMilestones=[...roadmap.milestones],previousStatus=roadmap.status,previousUpdatedAt=roadmap.updatedAt;
       roadmap.milestones.push({id:uid(),title,dueDate,completed:false,completedAt:''});
       roadmap.status='active';roadmap.updatedAt=Date.now();
-      closeModal();save();toast('Milestone added.');
+      if(!save()){roadmap.milestones=previousMilestones;roadmap.status=previousStatus;roadmap.updatedAt=previousUpdatedAt;render();return}closeModal();toast('Milestone added.');
     });
   }
   function renderMilestone(roadmap,milestone){
@@ -118,22 +120,25 @@ function renderRoadmap(roadmap){
     if(action==='delete'){
       if(!roadmap)return;
       if(!confirm('Delete “'+roadmap.title+'” and all its milestones?'))return;
+      const previousFlashcards=data.flashcards.map(card=>({...card})),previousRoadmaps=[...data.roadmaps];
       data.flashcards.forEach(card=>{if(String(card.roadmapId||'')===String(roadmap.id)){delete card.roadmapId;delete card.milestoneId}});
-      data.roadmaps=data.roadmaps.filter(item=>item.id!==roadmap.id);save();toast('Roadmap deleted. Its flashcards were kept in your general review list.');return;
+      data.roadmaps=data.roadmaps.filter(item=>item.id!==roadmap.id);if(!save()){data.flashcards=previousFlashcards;data.roadmaps=previousRoadmaps;render();return}toast('Roadmap deleted. Its flashcards were kept in your general review list.');return;
     }
     if(action==='toggle-milestone'&&roadmap){
       const milestone=roadmap.milestones.find(item=>String(item.id)===String(button.dataset.milestoneId));
       if(!milestone)return;
+      const previousMilestone={...milestone},previousStatus=roadmap.status,previousUpdatedAt=roadmap.updatedAt;
       milestone.completed=!milestone.completed;milestone.completedAt=milestone.completed?new Date().toISOString():'';
       const allDone=roadmap.milestones.length>0&&roadmap.milestones.every(item=>item.completed);
-      roadmap.status=allDone?'completed':'active';roadmap.updatedAt=Date.now();save();
+      roadmap.status=allDone?'completed':'active';roadmap.updatedAt=Date.now();if(!save()){Object.assign(milestone,previousMilestone);roadmap.status=previousStatus;roadmap.updatedAt=previousUpdatedAt;render();return}
       toast(allDone?'Roadmap completed. Well done.':milestone.completed?'Milestone completed.':'Milestone reopened.');return;
     }
     if(action==='delete-milestone'&&roadmap){
+      const previousFlashcards=data.flashcards.map(card=>({...card})),previousMilestones=[...roadmap.milestones],previousStatus=roadmap.status,previousUpdatedAt=roadmap.updatedAt;
       data.flashcards.forEach(card=>{if(String(card.roadmapId||'')===String(roadmap.id)&&String(card.milestoneId||'')===String(button.dataset.milestoneId)){delete card.roadmapId;delete card.milestoneId}});
       roadmap.milestones=roadmap.milestones.filter(item=>String(item.id)!==String(button.dataset.milestoneId));
       if(roadmap.status==='completed')roadmap.status='active';
-      roadmap.updatedAt=Date.now();save();toast('Milestone removed.');
+      roadmap.updatedAt=Date.now();if(!save()){data.flashcards=previousFlashcards;roadmap.milestones=previousMilestones;roadmap.status=previousStatus;roadmap.updatedAt=previousUpdatedAt;render();return}toast('Milestone removed.');
     }
   });
   const previousSyncNav=window.syncNav;

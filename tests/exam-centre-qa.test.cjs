@@ -54,3 +54,35 @@ test('examination centre routes to the Play tab instead of More tools',()=>{
  assert.ok(nav.includes("exams:'play'"));
  assert.ok(!nav.includes("exams:'more'"));
 });
+
+
+test('exam creation, editing and deletion roll back when local persistence fails',()=>{
+ const submit=source.slice(source.indexOf("document.addEventListener('submit',event=>{if(event.target.id!=='examForm'"),source.indexOf('\ndata.revisionTasks=',source.indexOf("document.addEventListener('submit',event=>{if(event.target.id!=='examForm'")));
+ assert.ok(submit.includes('const previousExams=[...data.exams]'));
+ assert.ok(submit.includes('if(!save()){data.exams=previousExams;editingExamId=previousEditingExamId;render();return}'));
+ assert.ok(submit.includes('if(!save()){data.exams=previousExams;data.revisionTasks=previousTasks;editingExamId=previousEditingExamId;render();return}'));
+ assert.ok(submit.indexOf('if(!save())')<submit.indexOf("toast('Examination saved to your timetable.')"));
+});
+
+test('revision plans and checklist changes are rolled back when persistence fails',()=>{
+ const start=source.indexOf('function generateRevisionPlan(');
+ const end=source.indexOf('function renderRevisionPlans(',start);
+ const planner=source.slice(start,end);
+ assert.ok(planner.includes('const previousTasks=data.revisionTasks'));
+ assert.ok(planner.includes('if(!save()){data.revisionTasks=previousTasks;render();return}'));
+ const toggle=source.slice(source.indexOf("if(action==='toggle-task')"),source.indexOf("\n });",source.indexOf("if(action==='toggle-task')")));
+ assert.ok(toggle.includes('const previous=task.completed'));
+ assert.ok(toggle.includes('if(!save()){task.completed=previous;render()}'));
+});
+
+test('mock exam start, submission and review handle local persistence failures',()=>{
+ const start=source.slice(source.indexOf('async function startMockExam('),source.indexOf('function mockClock(',source.indexOf('async function startMockExam(')));
+ assert.ok(start.includes('const previousActiveExam=data.activeMockExam'));
+ assert.ok(start.includes('if(!save()){data.activeMockExam=previousActiveExam;render();return}'));
+ const finish=source.slice(source.indexOf('function finishMockExam('),source.indexOf('function renderMockResults(',source.indexOf('function finishMockExam(')));
+ assert.ok(finish.includes('if(!save())render()'),'a completed result should remain visible with the storage error, not be presented as persisted');
+ const review=source.slice(source.indexOf('function saveMockReview('),source.indexOf("document.addEventListener('submit',async event=>",source.indexOf('function saveMockReview(')));
+ assert.ok(review.includes('previousAttempts=JSON.parse(JSON.stringify(data.mockExamAttempts||[]))'));
+ assert.ok(review.includes('data.mockExamAttempts=previousAttempts;data.lastMockExam=previousLastAttempt;data.topicMastery=previousMastery;render();return'));
+ assert.ok(review.indexOf('if(!save())')<review.indexOf("toast('Self-assessment saved."));
+});

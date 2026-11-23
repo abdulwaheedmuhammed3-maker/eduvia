@@ -456,3 +456,6 @@ html[data-theme="dark"] .exp-ask-prompt-grid>button:hover{
   .exp-ask-prompt-grid{gap:7px}
   .exp-ask-prompt-grid>button{font-size:10px;padding:8px 6px}
 }
+
+.timetable-heading-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+@media(max-width:760px){.timetable-heading-actions{width:100%;display:grid;grid-template-columns:1fr}.timetable-heading-actions .primary-btn,.timetable-heading-actions .secondary-btn{width:100%;justify-content:center}}

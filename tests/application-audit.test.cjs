@@ -92,7 +92,8 @@ test('changed assets are versioned identically in HTML and the new offline cache
   if(asset!=='styles.css'&&asset!=='experience.css')assert.ok(sw.includes('./'+url));
  }
  assert.ok(html.includes('styles.css?v=entry-flow-4&rev=application-audit-1'));
- assert.ok(html.includes('first-run-alerts-4'));
+ assert.ok(html.includes('first-run-alerts-6'));
+ assert.ok(sw.includes('first-run-alerts-6'));
  assert.ok(html.includes('first-run-alert-optin-2'));
  assert.ok(sw.includes('first-run-alerts-4'));
  assert.ok(sw.includes('first-run-alert-optin-2'));
@@ -312,4 +313,24 @@ test('loadData normalizes every current feature store before renderers consume p
  assert.ok(loader.includes('loaded.profile.studyDays=Array.isArray(loaded.profile.studyDays)?loaded.profile.studyDays:[1,2,3,4,5,6]'));
  assert.ok(loader.includes('loaded.topicMastery=saved.topicMastery&&typeof saved.topicMastery'));
  assert.ok(loader.includes('loaded.activeMockExam=saved.activeMockExam&&typeof saved.activeMockExam'));
+});
+
+test('editing a document preserves its existing expiry reminder lead time',()=>{
+ const feature=read('feature-hub.js');
+ const start=feature.indexOf("if(action==='edit-document-meta')");
+ const end=feature.indexOf("if(action==='export-backup')",start);
+ const editor=feature.slice(start,end);
+ assert.ok(editor.includes("const remindDays=[30,14,7,1].includes(Number(doc.remindDays))?Number(doc.remindDays):14"));
+ assert.ok(editor.includes("(remindDays===days?'selected':'')"));
+ assert.ok(editor.includes("doc.remindDays=Number(fd.get('remindDays')||14)"));
+});
+
+test('deleting a course unlinks completed-session history instead of leaving stale course IDs',()=>{
+ const app=read('app.js');
+ const start=app.indexOf('function deleteCourse(courseId)');
+ const end=app.indexOf('function deleteEvent(eventId)',start);
+ const remove=app.slice(start,end);
+ assert.ok(remove.includes('data.completed'));
+ assert.ok(remove.includes('record.courseName=record.courseName||course.name'));
+ assert.ok(remove.includes("record.courseId=''"));
 });

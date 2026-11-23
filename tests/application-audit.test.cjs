@@ -212,3 +212,14 @@ test('a changed notification schedule removes sent and failed rows before insert
  assert.ok(!schedule.includes("status IN ('pending', 'sending')"));
  assert.ok(schedule.indexOf('DELETE FROM reminders')<schedule.indexOf('await env.DB.batch(statements)'));
 });
+
+test('app reminder schedules deduplicate IDs before syncing to D1',()=>{
+ const feature=read('feature-hub.js');
+ assert.ok(feature.includes('const unique=new Map();for(const reminder of reminders)unique.set(String(reminder.id),reminder)'));
+});
+test('notification Worker rejects duplicate reminder IDs before writing schedule rows',()=>{
+ const worker=read('notifications-worker/src/index.js');
+ assert.ok(worker.includes('const reminderIds = new Set()'));
+ assert.ok(worker.includes("The schedule contains duplicate reminder IDs."));
+ assert.ok(worker.indexOf('reminderIds.has(reminder.id)')<worker.indexOf('await env.DB.prepare(\'INSERT INTO devices'));
+});

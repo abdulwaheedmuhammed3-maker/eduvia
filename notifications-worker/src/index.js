@@ -150,6 +150,11 @@ async function handleFetch(request, env) {
     const now = Date.now();
     const reminders = body.reminders.map(item => normalizeReminder(item, now));
     if (reminders.some(item => !item)) return json({ error: 'One or more reminder times or labels are invalid.' }, 400, headers);
+    const reminderIds = new Set();
+    for (const reminder of reminders) {
+      if (reminderIds.has(reminder.id)) return json({ error: 'The schedule contains duplicate reminder IDs.' }, 400, headers);
+      reminderIds.add(reminder.id);
+    }
     reminders.sort((a, b) => a.id.localeCompare(b.id));
     const hash = await digestSchedule(reminders);
     const subscriptionJson = JSON.stringify(body.subscription);

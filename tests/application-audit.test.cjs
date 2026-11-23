@@ -237,7 +237,7 @@ test('Clear planner data waits for all IndexedDB file stores to clear before rep
  const start=studio.indexOf('async function clearAllStudioRecords()');
  const end=studio.indexOf('document.addEventListener(\'change\',e=>{',start);
  const block=studio.slice(start,end);
- assert.ok(block.includes("stores=[STUDIO_STORE,'academicRecords','personalDocuments']"));
+ assert.ok(block.includes("stores=[STUDIO_STORE,'academicRecords','personalDocuments','classAudio']"));
  assert.ok(block.includes("db.transaction(stores,'readwrite')"));
  assert.ok(block.includes("tx.objectStore(storeName).clear()"));
  assert.ok(block.includes('tx.oncomplete=()=>finish()'));

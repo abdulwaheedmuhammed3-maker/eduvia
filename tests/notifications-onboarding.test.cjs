@@ -53,7 +53,7 @@ test('returning users retain Settings controls and assets are cache-versioned to
  assert.ok(app.includes('data-action="${pushEnabled?\'disable-notifications\':\'enable-notifications\'}"'));
  assert.ok(index.includes('first-run-alerts-6'));
  assert.ok(index.includes('first-run-alert-optin-2'));
- assert.ok(worker.includes('eduvia-v104-eduvia-recall'));
+ assert.ok(worker.includes('eduvia-v105-voice-class-reflections'));
  assert.ok(worker.includes('first-run-alerts-6'));
  assert.ok(worker.includes('first-run-alert-optin-2'));
 });

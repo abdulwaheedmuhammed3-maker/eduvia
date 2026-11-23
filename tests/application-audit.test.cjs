@@ -223,3 +223,10 @@ test('notification Worker rejects duplicate reminder IDs before writing schedule
  assert.ok(worker.includes("The schedule contains duplicate reminder IDs."));
  assert.ok(worker.indexOf('reminderIds.has(reminder.id)')<worker.indexOf('await env.DB.prepare(\'INSERT INTO devices'));
 });
+
+test('notification Worker returns generic server errors instead of exposing internal exception messages',()=>{
+ const worker=read('notifications-worker/src/index.js');
+ assert.ok(worker.includes('const expected = error instanceof RequestError'));
+ assert.ok(worker.includes("expected ? error.message : 'The notification service could not complete that request.'"));
+ assert.ok(!worker.includes("{ error: error?.message || 'The notification service could not complete that request.' }"));
+});

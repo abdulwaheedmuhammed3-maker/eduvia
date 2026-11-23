@@ -270,3 +270,25 @@ test('deleting a course keeps linked learner content and clears only timetable e
  assert.ok(remove.includes("location.hash='courses'"));
  assert.ok(remove.includes('kept and unlinked'));
 });
+
+test('term archives capture and reset period-specific planners while preserving reusable assets',()=>{
+ const studio=read('study-studio.js');
+ const start=studio.indexOf('function archiveCurrentTerm()');
+ const end=studio.indexOf('async function viewAcademicRecord',start);
+ const archive=studio.slice(start,end);
+ for(const field of ['deadlines','exams','revisionTasks','mockExamAttempts','activeMockExam','lastMockExam','flashcards','topicMastery','imports']){
+  assert.ok(archive.includes(field+':JSON.parse(JSON.stringify(data.'+field),'archive captures '+field);
+ }
+ for(const reset of ['data.deadlines=[]','data.exams=[]','data.revisionTasks=[]','data.mockExamAttempts=[]','data.activeMockExam=null','data.lastMockExam=null','data.topicMastery={}','data.studyRecords=[]']){
+  assert.ok(archive.includes(reset),'term rollover resets '+reset);
+ }
+ assert.ok(archive.includes("for(const collection of [data.resources,data.materials,data.materialText,data.personalDocuments,data.flashcards,data.roadmaps]"));
+ assert.ok(archive.includes("item.courseId=''"),'reusable records must be detached from previous term courses');
+ assert.ok(archive.includes('const previousData=JSON.parse(JSON.stringify(data))'));
+ assert.ok(archive.includes('if(!save()){'));
+ assert.ok(archive.includes("await deleteStudioRecord('academicRecords',archiveId)"));
+ assert.ok(archive.includes('archivedDeadlines'));
+ assert.ok(archive.includes('archivedExams'));
+ assert.ok(archive.includes('archivedRevision'));
+ assert.ok(archive.includes('archivedMocks'));
+});

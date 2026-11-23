@@ -20,6 +20,7 @@ test('course and timetable create/edit flows restore prior state on a failed sav
 test('session completion, focus completion and session-mark removal roll back on failed persistence',()=>{
  assert.ok(app.includes("if(!save()){data.completed=previousCompleted;return}toast('Session mark removed')"));
  assert.ok(app.includes("if(!save()){data.completed=data.completed.filter(item=>item.id!==completion.id);return}toast('Nice work — session complete!')"));
+ assert.ok(app.includes("focusRunning=previousFocus.focusRunning;focusCompleted=previousFocus.focusCompleted"));
  assert.ok(app.includes("if(!save()){data.completed=data.completed.filter(item=>item.id!==completion.id);return}toast('Focus session complete. You did it!')"));
 });
 

@@ -1209,12 +1209,12 @@ function renderStudyRecords(){
   const records=(data.studyRecords||[]).slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
   const cards=records.map(record=>{
     const attempts=record.quizAttempts||[],course=data.courses.find(item=>item.id===record.courseId);
-    const attendanceLabels={attended:'Attended',student_absent:'I was absent',lecturer_absent:'Lecturer was absent'};
+    const attendanceLabels={attended:'Attended',student_absent:'I was absent',lecturer_absent:'Lecturer was absent',postponed:'Class postponed'};
     const attendance=record.type==='class'?attendanceLabels[record.reflection?.attendance||'attended']:'';
     const kind=record.type==='class'?'Class reflection':'Study session';
     const last=attempts[0];
     const score=last?' · Latest quiz '+last.score+'/'+last.total:'';
-    return '<article class="course-card session-record-card"><div class="course-card-head"><span class="habit-badge">'+(record.type==='class'?'▤':'✓')+'</span><div><h3>'+safe(record.title||course?.name||kind)+'</h3><span class="course-code">'+kind+' · '+safe(record.date||'')+(attendance?' · '+attendance:'')+'</span></div></div><p class="course-desc">'+safe(record.reflection?.topics||(attendance?'Attendance recorded':'Session reflection saved'))+score+'</p><div class="course-card-foot"><span>'+attempts.length+' quiz attempt'+(attempts.length===1?'':'s')+'</span><button class="secondary-btn" data-action="view-session-record" data-record-id="'+safe(record.id)+'">Open record</button></div></article>'
+    return '<article class="course-card session-record-card"><div class="course-card-head"><span class="habit-badge">'+(record.type==='class'?'▤':'✓')+'</span><div><h3>'+safe(record.title||course?.name||kind)+'</h3><span class="course-code">'+kind+' · '+safe(record.date||'')+(attendance?' · '+attendance:'')+'</span></div></div><p class="course-desc">'+safe(record.reflection?.topics||(attendance==='Class postponed'?'No lecture took place on this date.':attendance?'Attendance recorded':'Session reflection saved'))+score+'</p><div class="course-card-foot"><span>'+attempts.length+' quiz attempt'+(attempts.length===1?'':'s')+'</span><button class="secondary-btn" data-action="view-session-record" data-record-id="'+safe(record.id)+'">Open record</button></div></article>'
   }).join('');
   return pageHead('YOUR LEARNING HISTORY','Session records','Keep class reflections, assignments, study notes, quiz scores, and retake counts together.','')+(records.length?'<div class="course-grid session-record-grid">'+cards+'</div>':emptyState('▤','Your session records will appear here','Complete a class or study session from your plan to start building your learning record.','',''));
 }
@@ -1237,8 +1237,8 @@ function beginSessionCompletion(event,date){
   if(unfinished){openSessionQuiz(unfinished.id);return}
   const course=data.courses.find(item=>item.id===event.courseId),subtitle=(course?.code?course.code+' · ':'')+(event.title||'Planned session');
   if(event.type==='class'){
-    const body='<p class="session-modal-intro">Record whether the class took place and whether you attended.</p>'+
-      field('Attendance','attendance','<select id="f-attendance" name="attendance"><option value="attended">I attended</option><option value="student_absent">I was absent</option><option value="lecturer_absent">Lecturer was absent</option></select>',true)+
+    const body='<p class="session-modal-intro">Record whether the lecture held, was postponed, or you were absent.</p>'+
+      field('Attendance','attendance','<select id="f-attendance" name="attendance"><option value="attended">I attended</option><option value="student_absent">I was absent</option><option value="lecturer_absent">Lecturer was absent</option><option value="postponed">Class postponed</option></select>',true)+
       '<div id="classReflectionFields">'+
       field('Topics covered','topics','<textarea id="f-topics" name="topics" required placeholder="List the lecture topics"></textarea>',true)+
       field('Five things you learned','learned','<textarea id="f-learned" name="learned" required placeholder="Write exactly five items, one per line"></textarea>',true)+
@@ -1252,7 +1252,7 @@ function beginSessionCompletion(event,date){
       if(attended&&classwork&&!classworkDue){toast('Add a deadline for the classwork.');return}
       const tasks=[];if(attended&&assignment)tasks.push({type:'Assignment',title:assignment,dueDate:assignmentDue});if(attended&&classwork)tasks.push({type:'Classwork',title:classwork,dueDate:classworkDue});
       saveCompletedSession(event,date,{attendance,topics:attended?String(fd.get('topics')||'').trim():'',learned:attended?learned:[],studyAreas:attended?String(fd.get('studyAreas')||'').trim():'',tasks});
-      toast(attended?'Class reflection saved and class completed':'Class attendance record saved');
+      toast(attended?'Class reflection saved and class completed':attendance==='postponed'?'Class marked as postponed. It was not counted as attended.':'Class attendance record saved');
     });
     const attendanceSelect=document.getElementById('f-attendance'),reflectionFields=document.getElementById('classReflectionFields');
     const syncAttendanceFields=()=>{const attended=attendanceSelect.value==='attended';reflectionFields.style.display=attended?'grid':'none';reflectionFields.querySelectorAll('input,textarea,select').forEach(control=>{control.disabled=!attended})};
@@ -1357,12 +1357,12 @@ function showSessionRecord(recordId){
   const when=record.date?formatDate(parseISO(record.date),{weekday:'long',month:'long',day:'numeric',year:'numeric'}):'Session record';
   let body='<div class="session-record-detail"><p><strong>'+safe(when)+'</strong> · '+safe(course?.name||record.courseName||'Course')+'</p>';
   if(record.type==='class'){
-    const attendanceLabels={attended:'Attended',student_absent:'I was absent',lecturer_absent:'Lecturer was absent'},attendance=reflection.attendance||'attended';
+    const attendanceLabels={attended:'Attended',student_absent:'I was absent',lecturer_absent:'Lecturer was absent',postponed:'Class postponed'},attendance=reflection.attendance||'attended';
     body+='<h3>Attendance</h3><p>'+safe(attendanceLabels[attendance]||attendanceLabels.attended)+'</p>';
     if(attendance==='attended'){
       body+='<h3>Topics</h3><p>'+safe(reflection.topics||'None saved')+'</p><h3>Five things learned</h3><ol>'+(reflection.learned||[]).map(item=>'<li>'+safe(item)+'</li>').join('')+'</ol><h3>Study areas to revisit</h3><p>'+safe(reflection.studyAreas||'None listed')+'</p>';
       const tasks=reflection.tasks||[];body+='<h3>Assignments and classwork</h3>'+(tasks.length?'<ul>'+tasks.map(task=>'<li><strong>'+safe(task.type)+':</strong> '+safe(task.title)+' · due '+safe(task.dueDate)+'</li>').join('')+'</ul>':'<p>No assignments or classwork recorded.</p>');
-    }else body+='<p>Learning details were skipped for this attendance record.</p>';
+    }else body+=(attendance==='postponed'?'<p>No lecture took place on this date, so no learning reflection is required.</p>':'<p>Learning details were skipped for this attendance record.</p>');
   }else{
     body+='<h3>Topics</h3><p>'+safe(reflection.topics||'None saved')+'</p><h3>Five key points</h3>'+(reflection.keyPoints?.length?'<ol>'+reflection.keyPoints.map(point=>'<li>'+safe(point)+'</li>').join('')+'</ol>':'<p>'+safe(reflection.gained||'None saved')+'</p>')+'<h3>Quiz performance</h3><p>'+attempts.length+' attempt'+(attempts.length===1?'':'s')+' · unlimited retakes</p>';
     const stats=sessionQuizStats(attempts);if(stats.latest)body+='<div class="quiz-performance-summary"><div><span>First</span><strong>'+stats.first.score+'/'+stats.first.total+'</strong></div><div><span>Latest</span><strong>'+stats.latest.score+'/'+stats.latest.total+'</strong></div><div><span>Best</span><strong>'+stats.best.score+'/'+stats.best.total+'</strong></div></div>';

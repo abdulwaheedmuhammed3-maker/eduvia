@@ -1,10 +1,12 @@
 # Eduvia Production Audit Report
 
-**Status:** Draft review; changes are not merged  
+**Status:** Reconciled against current main; replacement PR pending validation  
 **Repository:** `abdulwaheedmuhammed3-maker/eduvia`  
-**Audit baseline:** `main` at `5d441ba4b2eebe882da27bf90d8751fdd44b4059`  
-**Audit branch:** `audit/full-application-production-2026-11-23`  
-**Pull request:** [#41 — Full production audit fixes](https://github.com/abdulwaheedmuhammed3-maker/eduvia/pull/41)
+**Audit baseline:** `main` at `921bcf2dee55be278b1d5c42b1eeecdff39e66f1`  
+**Original audit branch:** `audit/full-application-production-2026-11-23`  
+**Reconciled branch:** `audit/reconcile-production-audit-main-2026-11-23`  
+**Original pull request:** [#41 — Full production audit fixes](https://github.com/abdulwaheedmuhammed3-maker/eduvia/pull/41)  
+**Replacement pull request:** Pending current-head validation.
 
 ## Scope reviewed
 
@@ -106,7 +108,7 @@ The Worker’s Cloudflare Builds settings had Preview builds enabled. The Previe
 
 The repository CI pipeline checks JavaScript syntax, runs the Node test suite, builds the production web bundle and verifies that assets are loaded/cached consistently. Android CI prepares the Capacitor project and builds the installable APK.
 
-Earlier audit-branch validation runs have passed with **138 tests, 0 failures**, plus the production web bundle and asset/cache checks. The latest personal-document deletion and its updated regression test were added after that passing run; their newest validation and APK runs must finish before this PR is ready for merge.
+The original audit branch passed historical CI, but those runs predate the current `main`. The reconciled branch must pass the current full validation suite and Android APK build before it is ready for merge.
 
 ## Not verified in this environment
 
@@ -117,4 +119,4 @@ Earlier audit-branch validation runs have passed with **138 tests, 0 failures**,
 
 ## Release recommendation
 
-Keep this PR in draft until the current-head CI and APK build pass. Then review the diff and perform a short real-device acceptance pass for onboarding, course/timetable editing, class notifications, OCR/recorded lectures, portable backup/restore, document deletion, Exam Centre and study-plan generation. Do not merge until that review is complete.
+Keep the replacement PR in draft until its current-head CI and APK build pass. Then review the diff and perform a short real-device acceptance pass for onboarding, course/timetable editing, class notifications, OCR/recorded lectures, portable backup/restore, document deletion, Exam Centre and study-plan generation. Do not merge until that review is complete.

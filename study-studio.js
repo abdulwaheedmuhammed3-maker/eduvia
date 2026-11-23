@@ -441,8 +441,8 @@ function localPractice(course,sources,count,style){
   const questions=[];
   for(let offset=0;offset+3<candidates.length&&questions.length<count;offset+=4){
    const group=candidates.slice(offset,offset+4),correct=group[0];
-   const options=group.map(item=>item.text);
-   const correctOption=options.indexOf(correct.text);
+   const options=group.map(item=>item.text),correctOption=questions.length%group.length;
+   [options[0],options[correctOption]]=[options[correctOption],options[0]];
    questions.push({
     question:'Which statement is found in the selected course passage?',
     answer:correct.text,

@@ -9,6 +9,8 @@ const hub=read('feature-hub.js');
 const roadmaps=read('roadmaps.js');
 const index=read('index.html');
 const polish=read('ui-polish.css');
+const experience=read('experience.js');
+const exp=read('learning-expansions.js');
 
 test('Play uses one grouped toolkit and the Exam Centre opens its real screen',()=>{
  const play=experience.match(/function play\(\)\{([\s\S]*?)\n\}/)?.[1]||'';
@@ -52,4 +54,14 @@ test('service worker caches the new stylesheet and updated screen modules',()=>{
  assert.ok(sw.includes('eduvia-v90-ui-structure'));
  assert.ok(sw.includes('play-screen-cleanup-1'));
  assert.ok(sw.includes('primary-nav-map-1'));
+});
+
+test('Create and View actions stay anchored at the bottom of their cards',()=>{
+ const view=experience.match(/<section class="exp-inline-cta exp-inline-cta-action-bottom">([\\s\\S]*?)<\\/section>/)?.[1]||'';
+ const create=exp.match(/<div class="exp-empty exp-empty-action-bottom">([\\s\\S]*?)<\\/div>/)?.[1]||'';
+ assert.ok(view.includes('data-page="progress"'),'View learning progress remains a real action');
+ assert.ok(create.includes('data-page="flashcards"'),'Create flashcards remains a real action');
+ assert.ok(polish.includes('.exp-inline-cta-action-bottom>button'));
+ assert.ok(polish.includes('.exp-play-challenge .exp-empty-action-bottom>button'));
+ assert.ok(polish.includes('.exp-academic-grid button small{margin-top:auto}'));
 });

@@ -88,13 +88,13 @@ test('changed assets are versioned identically in HTML and the new offline cache
  const sw=read('service-worker.js');
  for(const asset of ['styles.css','experience.css','study-studio.js','feature-hub.js','learning-expansions.js']){
   const url=html.match(new RegExp('(?:src|href)="([^"]*'+asset+'[^"]*)"'))?.[1];
-  assert.ok(url&&url.includes('audit=1')||asset==='styles.css'||asset==='experience.css','the changed asset must have a cache-busting revision: '+asset);
+  assert.ok(url&&/[?&]audit=\\d+/.test(url)||asset==='styles.css'||asset==='experience.css','the changed asset must have a cache-busting revision: '+asset);
   if(asset!=='styles.css'&&asset!=='experience.css')assert.ok(sw.includes('./'+url));
  }
  assert.ok(html.includes('styles.css?v=entry-flow-4&rev=application-audit-1'));
- assert.ok(html.includes('first-run-alerts-3'));
+ assert.ok(html.includes('first-run-alerts-4'));
  assert.ok(html.includes('first-run-alert-optin-2'));
- assert.ok(sw.includes('first-run-alerts-3'));
+ assert.ok(sw.includes('first-run-alerts-4'));
  assert.ok(sw.includes('first-run-alert-optin-2'));
  assert.ok(sw.includes('./styles.css?v=entry-flow-4&rev=application-audit-1'));
  assert.ok(workerCacheVersion(sw)==='eduvia-v97-full-application-audit');
@@ -287,8 +287,12 @@ test('term archives capture and reset period-specific planners while preserving 
  assert.ok(archive.includes('const previousData=JSON.parse(JSON.stringify(data))'));
  assert.ok(archive.includes('if(!save()){'));
  assert.ok(archive.includes("await deleteStudioRecord('academicRecords',archiveId)"));
- assert.ok(archive.includes('archivedDeadlines'));
- assert.ok(archive.includes('archivedExams'));
- assert.ok(archive.includes('archivedRevision'));
- assert.ok(archive.includes('archivedMocks'));
+ const viewerStart=studio.indexOf('async function viewAcademicRecord');
+ const viewerEnd=studio.indexOf('function formatFileSize',viewerStart);
+ const viewer=studio.slice(viewerStart,viewerEnd);
+ assert.ok(viewer.includes('archivedDeadlines'));
+ assert.ok(viewer.includes('archivedExams'));
+ assert.ok(viewer.includes('archivedRevision'));
+ assert.ok(viewer.includes('archivedMocks'));
+ assert.ok(viewer.includes('archivedMastery'));
 });

@@ -97,7 +97,7 @@ test('changed assets are versioned identically in HTML and the new offline cache
  assert.ok(sw.includes('first-run-alerts-4'));
  assert.ok(sw.includes('first-run-alert-optin-2'));
  assert.ok(sw.includes('./styles.css?v=entry-flow-4&rev=application-audit-1'));
- assert.ok(workerCacheVersion(sw)==='eduvia-v97-full-application-audit');
+ assert.ok(workerCacheVersion(sw)==='eduvia-v98-full-application-audit');
 });
 function workerCacheVersion(source){return source.match(/const CACHE = '([^']+)'/)?.[1]||''}
 
@@ -295,4 +295,20 @@ test('term archives capture and reset period-specific planners while preserving 
  assert.ok(viewer.includes('archivedRevision'));
  assert.ok(viewer.includes('archivedMocks'));
  assert.ok(viewer.includes('archivedMastery'));
+});
+
+test('loadData normalizes every current feature store before renderers consume persisted data',()=>{
+ const app=read('app.js');
+ const start=app.indexOf('function loadData()');
+ const end=app.indexOf('function learnerTypeOf',start);
+ const loader=app.slice(start,end);
+ assert.ok(loader.includes("Array.isArray(saved[key])?saved[key].filter(item=>item&&typeof item==='object'&&!Array.isArray(item))"));
+ for(const key of ['deadlines','flashcards','materials','materialText','pendingCarryovers','askHistory','discoverSavedGuides','discoverReadHistory','playChallengeAttempts','wellnessCheckins','roadmaps']){
+  assert.ok(loader.includes("'"+key+"'"),'loadData must normalise '+key);
+ }
+ assert.ok(loader.includes('loaded.imports.courses=Array.isArray(loaded.imports.courses)?loaded.imports.courses:[]'));
+ assert.ok(loader.includes('loaded.imports.timetable=Array.isArray(loaded.imports.timetable)?loaded.imports.timetable:[]'));
+ assert.ok(loader.includes('loaded.profile.studyDays=Array.isArray(loaded.profile.studyDays)?loaded.profile.studyDays:[1,2,3,4,5,6]'));
+ assert.ok(loader.includes('loaded.topicMastery=saved.topicMastery&&typeof saved.topicMastery'));
+ assert.ok(loader.includes('loaded.activeMockExam=saved.activeMockExam&&typeof saved.activeMockExam'));
 });

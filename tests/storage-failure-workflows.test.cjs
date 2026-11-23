@@ -51,3 +51,15 @@ test('education results update local IndexedDB and planner summaries with rollba
  assert.ok(studio.includes('async function deleteAcademicRecord(recordId)'));
  assert.ok(studio.includes('if(!save()){data.academicHistory=previousHistory;data.pendingCarryovers=previousCarryovers;if(storedRecord)await putStudioRecord'));
 });
+
+
+test('material deletion waits for IndexedDB removal and restores the file if planner persistence fails',()=>{
+ assert.ok(studio.includes('async function removeStoredMaterial(materialId)'));
+ assert.ok(studio.includes('return true}catch{return false}finally{db?.close()}'));
+ const action=studio.slice(studio.indexOf("case'delete-material':{"),studio.indexOf("break}",studio.indexOf("case'delete-material':{"))+6);
+ assert.ok(action.includes('stored=await getStudioRecord(STUDIO_STORE,materialId)'));
+ assert.ok(action.includes('if(!await removeStoredMaterial(materialId))'));
+ assert.ok(action.indexOf('await removeStoredMaterial(materialId)')<action.indexOf('data.materials=data.materials.filter'));
+ assert.ok(action.includes('if(!save()){data.materials=previousMaterials;data.materialText=previousText'));
+ assert.ok(action.includes('await putStudioRecord(STUDIO_STORE,stored)'));
+});

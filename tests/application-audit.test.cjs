@@ -86,7 +86,7 @@ test('notification schedules are marked complete only after all reminder batches
 test('changed assets are versioned identically in HTML and the new offline cache',()=>{
  const html=read('index.html');
  const sw=read('service-worker.js');
- for(const asset of ['styles.css','experience.css','study-studio.js','feature-hub.js','learning-expansions.js']){
+ for(const asset of ['styles.css','experience.css','app.js','study-studio.js','feature-hub.js','learning-expansions.js']){
   const url=html.match(new RegExp('(?:src|href)="([^"]*'+asset+'[^"]*)"'))?.[1];
   assert.ok(url&&/[?&]audit=\d+/.test(url)||asset==='styles.css'||asset==='experience.css','the changed asset must have a cache-busting revision: '+asset);
   if(asset!=='styles.css'&&asset!=='experience.css')assert.ok(sw.includes('./'+url));
@@ -98,7 +98,7 @@ test('changed assets are versioned identically in HTML and the new offline cache
  assert.ok(sw.includes('first-run-alerts-6'));
  assert.ok(sw.includes('first-run-alert-optin-2'));
  assert.ok(sw.includes('./styles.css?v=entry-flow-4&rev=application-audit-1'));
- assert.ok(workerCacheVersion(sw)==='eduvia-v99-full-application-audit');
+ assert.ok(workerCacheVersion(sw)==='eduvia-v100-full-application-audit');
 });
 function workerCacheVersion(source){return source.match(/const CACHE = '([^']+)'/)?.[1]||''}
 

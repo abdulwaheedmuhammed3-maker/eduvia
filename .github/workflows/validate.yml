@@ -35,6 +35,7 @@ jobs:
           node --check native-bridge-src.js
           node --check scripts/build-web.mjs
           node --check scripts/prepare-android.mjs
+          node --check scripts/configure-android-signing.mjs
           node --check service-worker.js
           node --check notifications-worker/src/index.js
       - name: Build the production web bundle
@@ -115,6 +116,12 @@ jobs:
           grep -q 'voice-reflection.css' index.html
           grep -q 'voice-reflection.css' service-worker.js
           grep -q 'voice-reflection.css' scripts/build-web.mjs
+          grep -q 'scripts/configure-android-signing.mjs' .github/workflows/build-android.yml
+          grep -q 'EDUVIA_ANDROID_KEYSTORE_BASE64' .github/workflows/build-android.yml
+          grep -q 'EDUVIA_ANDROID_KEYSTORE_PASSWORD' .github/workflows/build-android.yml
+          grep -q 'EDUVIA_ANDROID_KEY_ALIAS' .github/workflows/build-android.yml
+          grep -q 'EDUVIA_ANDROID_KEY_PASSWORD' .github/workflows/build-android.yml
+          grep -q "if: github.event_name != 'pull_request'" .github/workflows/build-android.yml
           grep -q 'experience.css' service-worker.js
           grep -q 'entry-flow.js' scripts/build-web.mjs
           grep -q 'feature-hub.js' scripts/build-web.mjs

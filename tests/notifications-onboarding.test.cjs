@@ -27,6 +27,8 @@ test('first-run invitation is shown once and has a user-controlled enable action
  assert.ok(app.includes("openModal(\n  'Enable Eduvia alerts'"));
  assert.ok(app.includes("'Enable alerts'"));
  assert.ok(app.includes('()=>{closeModal();enableNotifications()}'));
+ const prompt=app.slice(app.indexOf('function promptFirstLaunchNotifications()'),app.indexOf('window.eduPromptFirstLaunchNotifications'));
+ assert.ok(!prompt.includes('Notification.requestPermission()'),'permission must not be requested until the learner taps Enable alerts');
  assert.ok(app.includes("case'enable-notifications':enableNotifications();break;"),'existing Settings toggle remains available');
 });
 

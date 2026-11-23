@@ -24,11 +24,11 @@ test('Recall respects daily frequency, selected days, quiet hours and the two-pe
   for (const count of hourly.values()) assert.ok(count <= 2);
 });
 
-test('Recall avoids scheduled class blocks and does not repeat a question in its seven-day queue', () => {
+test('Recall respects scheduled class blocks and does not repeat a question twice on one day', () => {
   const questions = Array.from({ length: 40 }, (_, index) => ({ id: 'q-' + index, prompt: 'Question ' + index + '?', answer: 'Answer', nextReview: '2026-11-23' }));
   const blockedByDate = { '2026-11-23': [{ start: '09:00', end: '12:00', bufferMinutes: 10 }] };
   const schedule = recall.createSchedule({ questions, now: new Date(2026, 10, 23, 7, 0), frequency: 'balanced', activeStart: '09:00', activeEnd: '21:00', quietStart: '21:00', quietEnd: '08:00', days: [1, 2, 3, 4, 5], blockedByDate, seed: 'class-block' });
-  const ids = schedule.map(item => item.questionId);
+  const ids = schedule.map(item => item.date + ':' + item.questionId);
   assert.equal(new Set(ids).size, ids.length);
   for (const item of schedule.filter(item => item.date === '2026-11-23')) {
     const time = new Date(item.fireAt);
@@ -41,4 +41,15 @@ test('Recall review intervals lengthen when remembered and reset after a missed 
   assert.deepEqual(recall.reviewResult(1, true, '2026-11-23'), { level: 2, days: 3, nextReview: '2026-11-26' });
   assert.deepEqual(recall.reviewResult(4, true, '2026-11-23'), { level: 5, days: 30, nextReview: '2026-12-23' });
   assert.deepEqual(recall.reviewResult(4, false, '2026-11-23'), { level: 0, days: 1, nextReview: '2026-11-24' });
+});
+
+test('an unanswered question is scheduled again on each following active day', () => {
+  const schedule = recall.createSchedule({
+    questions: [{ id: 'q-single', prompt: 'What did you learn?', answer: 'The answer', nextReview: '2026-11-23' }],
+    now: new Date(2026, 10, 23, 7, 0), frequency: 'balanced',
+    activeStart: '09:00', activeEnd: '21:00', quietStart: '21:00', quietEnd: '08:00',
+    days: [1, 2, 3, 4, 5], seed: 'repeat-unanswered'
+  });
+  assert.deepEqual(schedule.map(item => item.date), ['2026-11-23', '2026-11-24', '2026-11-25', '2026-11-26', '2026-11-27']);
+  assert.ok(schedule.every(item => item.questionId === 'q-single'));
 });

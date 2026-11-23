@@ -71,7 +71,7 @@
     const quietStart = parseClock(settings.quietStart, '21:00');
     const quietEnd = parseClock(settings.quietEnd, '08:00');
     const activeDays = new Set((Array.isArray(settings.days) ? settings.days : [1, 2, 3, 4, 5]).map(Number));
-    const usedQuestions = new Set(), output = [];
+    const output = [];
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     if (activeStart === null || activeEnd === null || activeStart === activeEnd) return output;
     for (let offset = 0; offset < 7; offset++) {
@@ -88,7 +88,7 @@
         if (fireAt.getTime() <= now.getTime() + 60000) continue;
         candidates.push({ minute, fireAt: fireAt.getTime() });
       }
-      const due = questions.filter(question => question && question.id && !usedQuestions.has(String(question.id)) &&
+      const due = questions.filter(question => question && question.id &&
         (!question.nextReview || String(question.nextReview) <= date) &&
         String(question.prompt || '').trim() && String(question.answer || '').trim());
       const random = randomFor(String(settings.seed || 'eduvia-recall') + ':' + date);
@@ -110,7 +110,7 @@
       const ordered = shuffle(orderedQuestions, random);
       const count = Math.min(pickedTimes.length, ordered.length, dailyLimit);
       for (let index = 0; index < count; index++) {
-        const question = ordered[index]; usedQuestions.add(String(question.id));
+        const question = ordered[index];
         output.push({ id: 'recall:' + date + ':' + String(question.id), questionId: String(question.id), date, fireAt: pickedTimes[index].fireAt });
       }
     }

@@ -242,7 +242,14 @@ async function sendDueReminders(env) {
 export default {
   async fetch(request, env) {
     try { return await handleFetch(request, env); }
-    catch (error) { return json({ error: error?.message || 'The notification service could not complete that request.' }, error?.status || 500, corsHeaders(request, env) || {}); }
+    catch (error) {
+      const expected = error instanceof RequestError;
+      return json(
+        { error: expected ? error.message : 'The notification service could not complete that request.' },
+        expected ? error.status : 500,
+        corsHeaders(request, env) || {}
+      );
+    }
   },
   async scheduled(_event, env, ctx) {
     ctx.waitUntil(sendDueReminders(env));

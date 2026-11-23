@@ -154,7 +154,7 @@
       return {...doc,score,matchedTerms:matched,matchRatio:matched/queryTokens.length};
     }).filter(doc=>doc.score>0&&doc.matchedTerms>0);
     scored.sort((a,b)=>b.score-a.score||a.ordinal-b.ordinal);
-    const selected=scored.slice(0,Math.max(1,Math.min(100,Math.floor(Number(limit)||5)));
+    const selected=scored.slice(0,Math.max(1,Math.min(100,Math.floor(Number(limit)||5))));
     return selected.map(item=>({
       ...item,
       location:locationLabel(item),

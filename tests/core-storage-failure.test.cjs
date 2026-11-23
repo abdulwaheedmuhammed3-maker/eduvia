@@ -21,7 +21,7 @@ test('session completion, focus completion and session-mark removal roll back on
  assert.ok(app.includes("if(!save()){data.completed=previousCompleted;return}toast('Session mark removed')"));
  assert.ok(app.includes("if(!save()){data.completed=data.completed.filter(item=>item.id!==completion.id);return}toast('Nice work — session complete!')"));
  assert.ok(app.includes("focusRunning=previousFocus.focusRunning;focusCompleted=previousFocus.focusCompleted"));
- assert.ok(app.includes("if(!save()){data.completed=data.completed.filter(item=>item.id!==completion.id);return}toast('Focus session complete. You did it!')"));
+ assert.ok(app.includes("if(!save()){data.completed=data.completed.filter(item=>item.id!==completion.id);focusRunning=previousFocus.focusRunning;focusCompleted=previousFocus.focusCompleted;focusRemaining=previousFocus.focusRemaining;focusEndAt=previousFocus.focusEndAt;render();return}toast('Focus session complete. You did it!')"));
 });
 
 test('settings and course deletion restore prior saved state after a storage failure',()=>{

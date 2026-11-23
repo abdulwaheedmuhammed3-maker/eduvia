@@ -342,7 +342,11 @@ test('event and document reminders are marked delivered only after display succe
  assert.ok(app.includes('const shown=await showStudyNotification('));
  assert.ok(app.includes("if(!shown){\n        eventAlertTimer=setTimeout(()=>scheduleEventAlert(),60_000);"));
  assert.ok(app.includes("storageSet(key,'1');\n    }\n    scheduleEventAlert();"));
- assert.ok(app.includes('return true}if(\'Notification\' in window'));
+ const notifierStart=app.indexOf('async function showStudyNotification');
+ const notifierEnd=app.indexOf('async function enableNotifications',notifierStart);
+ const notifier=app.slice(notifierStart,notifierEnd);
+ assert.ok(notifier.includes('return true'));
+ assert.ok(notifier.includes('return false'));
  assert.ok(feature.includes('async function notifyExpiringDocuments()'));
  assert.ok(feature.includes('if(shown)storageSet(key,\'1\')'));
 });

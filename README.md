@@ -40,6 +40,8 @@ Uploaded files are read in the browser. Extracted text and planner details stay 
 
 In the browser and installed PWA, Eduvia schedules class and learning-session alerts for their scheduled start time, plus a daily learning reminder, through its own phone notification service. Browser push can arrive late because a scheduled Worker checks once per minute and sends up to ten due reminders per run. The free service uses Cloudflare Workers and D1; it does not use Google Calendar. Phone notification permissions and sound settings still apply. iPhone and iPad require Eduvia to be added to the Home Screen (iOS/iPadOS 16.4 or later).
 
+On first-time profile setup, Eduvia offers a one-time invitation to enable class, learning-session and daily reminder alerts. The operating-system or browser permission request appears only after the learner taps **Enable alerts**. Dismissing the invitation does not make it appear again when an existing learner reopens Eduvia; notification controls remain available in **Settings**.
+
 The browser notification service stores a device subscription and scheduled reminder titles and times so it can deliver alerts while the PWA is closed. In the Android app, alarms are scheduled locally on the phone instead; Android asks for notification access and exact-alarm access, and Eduvia asks for camera access only when the learner taps **Take a photo**. Courses, results, uploaded materials, and personal documents remain on the device.
 
 To deploy the free service, follow `notifications-worker/README.md`, then set its Worker URL in `push-config.js`.
@@ -51,7 +53,7 @@ The same HTML/CSS/JavaScript entry flow is included in the website and the Capac
 
 ## Android APK
 
-GitHub Actions builds an installable Android beta APK from the main branch and publishes it on the Eduvia Android beta release page. It is debug-signed for direct installation and is not a Google Play release. On the first run, open **Settings → Eduvia phone notifications** and allow notification and exact-alarm access. To take a document photo, use a **Take a photo** button in the study studio or document cabinet.
+GitHub Actions builds an installable Android beta APK from the main branch and publishes it on the Eduvia Android beta release page. It is debug-signed for direct installation and is not a Google Play release. On first-time profile setup, choose **Enable alerts** on the one-time notification invitation. The operating system then asks for notification and exact-alarm access. If you dismiss the invitation or want to change this later, use **Settings → Eduvia phone notifications**. To take a document photo, use a **Take a photo** button in the study studio or document cabinet.
 
 ## Install the web app on iPhone
 

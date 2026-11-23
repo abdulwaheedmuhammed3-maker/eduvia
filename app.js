@@ -4,6 +4,7 @@ const PUSH_TOKEN_KEY = 'eduvia-push-device-v1';
 const PUSH_ENABLED_KEY = 'eduvia-push-enabled-v1';
 const PUSH_DISABLED_KEY = 'eduvia-push-disabled-v1';
 const NATIVE_ALERTS_ENABLED_KEY = 'eduvia-native-alerts-enabled-v1';
+const FIRST_LAUNCH_ALERT_PROMPT_KEY = 'eduvia-first-launch-alert-prompt-v1';
 const COLORS = ['#7ba883','#e5a477','#9f8bc2','#7da9be','#d38887','#c4a955'];
 const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const SHORT_DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -35,6 +36,10 @@ function storageSet(key,value){
 }
 function storageRemove(key){
   try{window.localStorage.removeItem(key);return null}catch(error){return error}
+}
+// Existing local planner data identifies a returning user; never show first-run permission onboarding to them.
+if(storageGet(STORE_KEY)!==null&&storageGet(FIRST_LAUNCH_ALERT_PROMPT_KEY)===null){
+  storageSet(FIRST_LAUNCH_ALERT_PROMPT_KEY,'1');
 }
 function chooseEntryMotivationQuote(){let previous=-1;try{const value=storageGet('eduvia-entry-quote-v1'),saved=value===null?-1:Number(value);if(Number.isInteger(saved))previous=saved}catch{}const choices=MOTIVATION_QUOTES.map((_,index)=>index).filter(index=>index!==previous);const selected=choices[Math.floor(Math.random()*choices.length)];try{storageSet('eduvia-entry-quote-v1',String(selected))}catch{}return MOTIVATION_QUOTES[selected]}
 const entryMotivationQuote = chooseEntryMotivationQuote();
@@ -339,6 +344,26 @@ function schedulePushSync(){clearTimeout(pushSyncTimer);if(window.EduviaNative?.
 function updatePhoneNotificationButton(active){const button=document.querySelector('[data-action="enable-notifications"],[data-action="disable-notifications"]');if(!button)return;button.dataset.action=active?'disable-notifications':'enable-notifications';button.textContent=active?'Turn off':(window.EduviaNative?.isNative?'Enable alarms & notifications':'Enable & send test');}
 async function showStudyNotification(title,body){try{if('serviceWorker'in navigator){const registration=await navigator.serviceWorker.ready;await registration.showNotification(title,{body,icon:'./icon.svg',badge:'./icon.svg'});return}if('Notification'in window&&Notification.permission==='granted')new Notification(title,{body,icon:'./icon.svg'})}catch{}}
 async function enableNotifications(){if(window.EduviaNative?.isNative){try{const result=await window.EduviaNative.enableAlerts(buildPushReminders());if(!result.enabled){toast(result.reason==='exact-alarm'?'Allow Eduvia to schedule exact alarms in the phone settings, then try again.':'Allow Eduvia notifications in the phone settings, then try again.');return}storageSet(NATIVE_ALERTS_ENABLED_KEY,'1');storageRemove(PUSH_DISABLED_KEY);updatePhoneNotificationButton(true);scheduleReminder();scheduleEventAlert();toast(`Eduvia alerts are on. ${result.scheduled} class and study reminders are scheduled on this phone.`)}catch(error){toast(error.message||'Eduvia could not set up phone alarms.')}return}if(!PUSH_API_URL){toast('Eduvia’s free phone notification service is not connected yet.');return}if(!window.isSecureContext||!('Notification'in window)||!('PushManager'in window)||!('serviceWorker'in navigator)){toast('Phone push notifications are not supported by this browser.');return}if(isIosDevice()&&!isStandaloneApp()){openModal('Add Eduvia to your Home Screen','iPhone and iPad web apps can receive Eduvia alerts after they are added to the Home Screen.','<ol><li>Open Eduvia in Safari.</li><li>Tap Share.</li><li>Choose “Add to Home Screen”, then open the new Eduvia icon.</li><li>Return to Settings and enable phone notifications.</li></ol>','Got it',()=>closeModal());return}try{let permission=Notification.permission;if(permission==='default')permission=await Notification.requestPermission();if(permission!=='granted'){toast('Allow notifications in your phone settings, then try again.');return}const config=await pushApi('/v1/config');if(!config.publicKey)throw new Error('Eduvia could not prepare its notification keys.');const registration=await navigator.serviceWorker.ready;let subscription=await registration.pushManager.getSubscription();if(subscription){const savedKey=subscription.options?.applicationServerKey;if(savedKey&&btoa(String.fromCharCode(...new Uint8Array(savedKey))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')!==config.publicKey){await subscription.unsubscribe();subscription=null}}if(!subscription)subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:pushKeyBytes(config.publicKey)});const token=pushDeviceToken();await pushApi('/v1/schedule',{method:'POST',body:JSON.stringify({subscription:subscription.toJSON(),reminders:buildPushReminders()})},token);storageSet(PUSH_ENABLED_KEY,'1');storageRemove(PUSH_DISABLED_KEY);updatePhoneNotificationButton(true);try{await pushApi('/v1/test',{method:'POST'},token);toast('Eduvia notifications are on. A test alert is on its way.')}catch{toast('Eduvia notifications are on, but the test alert could not be sent.')}scheduleReminder();scheduleEventAlert()}catch(error){storageRemove(PUSH_ENABLED_KEY);toast(error.message||'Eduvia could not enable phone notifications.')}}
+function promptFirstLaunchNotifications(){
+ if(storageGet(FIRST_LAUNCH_ALERT_PROMPT_KEY)==='1')return;
+ const native=Boolean(window.EduviaNative?.isNative);
+ const alreadyEnabled=native?nativeAlertsAreActive():pushIsActive();
+ if(alreadyEnabled){storageSet(FIRST_LAUNCH_ALERT_PROMPT_KEY,'1');return}
+ const browserCanRequest=!native&&PUSH_API_URL&&window.isSecureContext&&('Notification'in window)&&('PushManager'in window)&&('serviceWorker'in navigator);
+ if(!native&&!browserCanRequest){storageSet(FIRST_LAUNCH_ALERT_PROMPT_KEY,'1');return}
+ if(!native&&Notification.permission==='denied'){storageSet(FIRST_LAUNCH_ALERT_PROMPT_KEY,'1');return}
+ // Record the invitation before showing it so dismissing or reopening the app never repeats it.
+ storageSet(FIRST_LAUNCH_ALERT_PROMPT_KEY,'1');
+ openModal(
+  'Enable Eduvia alerts',
+  'Would you like Eduvia to remind you about classes and learning sessions?',
+  '<p>Allow notifications and, on Android, exact-alarm access so your planned reminders can reach you even when Eduvia is closed. You can change this later in Settings.</p>',
+  'Enable alerts',
+  ()=>{closeModal();enableNotifications()}
+ );
+}
+window.eduPromptFirstLaunchNotifications=promptFirstLaunchNotifications;
+
 async function disableNotifications(){if(window.EduviaNative?.isNative){try{await window.EduviaNative.disableAlerts();storageRemove(NATIVE_ALERTS_ENABLED_KEY);updatePhoneNotificationButton(false);clearTimeout(eventAlertTimer);clearTimeout(window.daymarkReminder);render();toast('Eduvia alarms and notifications are off on this phone.')}catch(error){toast(error.message||'Eduvia could not turn off phone alerts.')}return}const token=storageGet(PUSH_TOKEN_KEY);try{if(token)await pushApi('/v1/unsubscribe',{method:'POST'},token);if('serviceWorker'in navigator){const registration=await navigator.serviceWorker.ready,subscription=await registration.pushManager.getSubscription();if(subscription)await subscription.unsubscribe()}storageRemove(PUSH_TOKEN_KEY);storageRemove(PUSH_ENABLED_KEY);storageSet(PUSH_DISABLED_KEY,'1');updatePhoneNotificationButton(false);clearTimeout(eventAlertTimer);clearTimeout(window.daymarkReminder);render();toast('Eduvia phone notifications are off.')}catch(error){toast(error.message||'Could not turn off phone notifications. Try again when online.')}}
 function deleteCourse(courseId){if(!confirm('Remove this course and its linked timetable items?'))return;data.courses=data.courses.filter(c=>c.id!==courseId);data.events=data.events.filter(e=>e.courseId!==courseId);data.resources=data.resources.filter(r=>r.courseId!==courseId);save();toast('Course removed')}
 function deleteEvent(eventId){data.events=data.events.filter(e=>e.id!==eventId);save();toast('Timetable item removed')}

@@ -362,3 +362,34 @@ test('web push schedules stay within the notification Worker 600-reminder limit'
  const feature=read('feature-hub.js');
  assert.ok(feature.includes("return [...unique.values()].sort((a,b)=>a.fireAt-b.fireAt).slice(0,600)"));
 });
+
+test('material metadata is not kept when its planner save fails',()=>{
+ const studio=read('study-studio.js');
+ const start=studio.indexOf('async function previewMaterial(');
+ const end=studio.indexOf('function downloadCsv(',start);
+ const save=studio.slice(start,end);
+ assert.ok(save.includes('if(!save()){'));
+ assert.ok(save.includes("data.materials=data.materials.filter(item=>item.id!==m.id)"));
+ assert.ok(save.includes("(data.materialText||[]).filter(item=>item.id!==m.id)"));
+ assert.ok(save.includes('if(storedInIndexedDb)await removeStoredMaterial(m.id)'));
+ assert.ok(save.indexOf('if(!save()){')<save.indexOf("toast('Course material saved and indexed')"));
+});
+
+test('personal documents are removed from metadata before deleting the IndexedDB blob',()=>{
+ const studio=read('study-studio.js');
+ const start=studio.indexOf('async function deletePersonalDocument(documentId)');
+ const end=studio.indexOf('async function listStudioRecords',start);
+ const remove=studio.slice(start,end);
+ assert.ok(remove.indexOf('if(!save())')<remove.indexOf("deleteStudioRecord('personalDocuments',documentId)"));
+ assert.ok(remove.includes('data.personalDocuments=previous'));
+});
+
+test('new personal documents roll back their stored blob when planner metadata cannot be saved',()=>{
+ const studio=read('study-studio.js');
+ const start=studio.indexOf('function addPersonalDocument(file');
+ const end=studio.indexOf('async function openPersonalDocument',start);
+ const add=studio.slice(start,end);
+ assert.ok(add.includes('if(!save()){'));
+ assert.ok(add.includes("deleteStudioRecord('personalDocuments',documentId)"));
+ assert.ok(add.indexOf('if(!save()){')<add.indexOf("toast('Document saved on this device')"));
+});

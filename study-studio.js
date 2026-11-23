@@ -1115,11 +1115,37 @@ async function importPortableBackup(file){
     toast('Portable backup restored on this device.');
   }catch(error){toast('Could not import this backup: '+(error.message||'file is invalid'))}
 }
-function clearData(){
+async function clearAllStudioRecords(){
+  if(!('indexedDB' in window))return;
+  const db=await studioDb(),stores=[STUDIO_STORE,'academicRecords','personalDocuments'];
+  await new Promise((resolve,reject)=>{
+    let settled=false;
+    const finish=(error)=>{
+      if(settled)return;settled=true;db.close();
+      if(error)reject(error);else resolve();
+    };
+    let tx;
+    try{
+      tx=db.transaction(stores,'readwrite');
+      for(const storeName of stores)tx.objectStore(storeName).clear();
+    }catch(error){finish(error);return}
+    tx.oncomplete=()=>finish();
+    tx.onerror=()=>finish(tx.error||new Error('The device could not clear uploaded files.'));
+    tx.onabort=()=>finish(tx.error||new Error('The device cancelled the file-storage clear operation.'));
+  });
+}
+async function clearData(){
   if(!confirm('This will remove your courses, class and study schedule, notes, education history, personal documents, progress, profile, and uploaded material from this device. Continue?'))return;
+  const previousData=data;
   data=defaultData();data.imports={courses:[],timetable:[]};data.materials=[];
-  try{indexedDB.deleteDatabase(STUDIO_DB)}catch{}
-  studioLesson=null;studioPractice=[];studioNotice='';currentPage='setup';save();toast('Planner data and uploaded material cleared');
+  studioLesson=null;studioPractice=[];studioNotice='';currentPage='setup';
+  if(!save()){data=previousData;render();return}
+  try{
+    await clearAllStudioRecords();
+    toast('Planner data and uploaded material cleared');
+  }catch(error){
+    toast('Planner data was cleared, but Eduvia could not clear uploaded file storage: '+(error.message||'storage is unavailable')+'. Try again or clear this site’s storage.');
+  }
 }
 document.addEventListener('change',e=>{
   if(e.target.id==='setupBackupFile'){const file=e.target.files?.[0];e.target.value='';if(file){if(file.type==='application/zip'||file.name.toLowerCase().endsWith('.zip'))importPortableBackup(file);else importPlannerJsonBackup(file)}}

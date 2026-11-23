@@ -88,7 +88,7 @@ test('changed assets are versioned identically in HTML and the new offline cache
  const sw=read('service-worker.js');
  for(const asset of ['styles.css','experience.css','study-studio.js','feature-hub.js','learning-expansions.js']){
   const url=html.match(new RegExp('(?:src|href)="([^"]*'+asset+'[^"]*)"'))?.[1];
-  assert.ok(url&&/[?&]audit=\\d+/.test(url)||asset==='styles.css'||asset==='experience.css','the changed asset must have a cache-busting revision: '+asset);
+  assert.ok(url&&/[?&]audit=\d+/.test(url)||asset==='styles.css'||asset==='experience.css','the changed asset must have a cache-busting revision: '+asset);
   if(asset!=='styles.css'&&asset!=='experience.css')assert.ok(sw.includes('./'+url));
  }
  assert.ok(html.includes('styles.css?v=entry-flow-4&rev=application-audit-1'));
@@ -304,7 +304,7 @@ test('loadData normalizes every current feature store before renderers consume p
  const loader=app.slice(start,end);
  assert.ok(loader.includes("Array.isArray(saved[key])?saved[key].filter(item=>item&&typeof item==='object'&&!Array.isArray(item))"));
  assert.ok(loader.includes("loaded.discoverSavedGuides=Array.isArray(saved.discoverSavedGuides)?saved.discoverSavedGuides.filter(item=>typeof item==='string'):[]"));
- for(const key of ['deadlines','flashcards','materials','materialText','pendingCarryovers','askHistory','discoverSavedGuides','discoverReadHistory','playChallengeAttempts','wellnessCheckins','roadmaps']){
+ for(const key of ['deadlines','flashcards','materials','materialText','pendingCarryovers','askHistory','discoverReadHistory','playChallengeAttempts','wellnessCheckins','roadmaps']){
   assert.ok(loader.includes("'"+key+"'"),'loadData must normalise '+key);
  }
  assert.ok(loader.includes('loaded.imports.courses=Array.isArray(loaded.imports.courses)?loaded.imports.courses:[]'));

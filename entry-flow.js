@@ -393,7 +393,12 @@
     else if (typeof render === 'function') render();
     root.classList.add('is-leaving');
     if (typeof toast === 'function') toast('Your learning profile is ready. Welcome to Eduvia.');
-    window.setTimeout(() => root.remove(), 430);
+    window.setTimeout(() => {
+      root.remove();
+      if (typeof window.eduPromptFirstLaunchNotifications === 'function') {
+        window.eduPromptFirstLaunchNotifications();
+      }
+    }, 430);
   }
 
   function dismissExistingUserSplash() {

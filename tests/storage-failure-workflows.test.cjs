@@ -97,3 +97,15 @@ test('learning profile editor restores all saved profile fields when storage fai
  assert.ok(editor.includes('const previousProfile={...data.profile}'));
  assert.ok(editor.includes("if(!save()){data.profile=previousProfile;render();return}closeModal();toast('Learning profile updated')"));
 });
+
+
+test('personal document deletion removes the file first and restores it if planner persistence fails',()=>{
+ const start=studio.indexOf('async function deletePersonalDocument(documentId)');
+ const end=studio.indexOf('\nasync function listStudioRecords',start);
+ const remove=studio.slice(start,end);
+ assert.ok(remove.includes("storedRecord=await getStudioRecord('personalDocuments',documentId)"));
+ assert.ok(remove.indexOf("await deleteStudioRecord('personalDocuments',documentId)")<remove.indexOf('data.personalDocuments=previous.filter'));
+ assert.ok(remove.includes('if(!save()){'));
+ assert.ok(remove.includes("await putStudioRecord('personalDocuments',storedRecord)"));
+ assert.ok(remove.includes('data.personalDocuments=previous'));
+});

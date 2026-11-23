@@ -23,9 +23,12 @@ test('Recall question bank is built from local course materials and flashcards',
   assert.ok(recall.includes('window.eduRecallBuildReminders'));
   assert.ok(app.includes('window.eduRecallBuildReminders(now)'));
 });
-test('Recall scheduling is bounded and notifications contain the prompt, not the answer', () => {
-  assert.ok(core.includes("const LIMITS = { light: 2, balanced: 4, intensive: 6 }"));
-  assert.ok(core.includes('(hourCounts.get(hour) || 0) >= 2'));
+test('Recall schedules the selected hourly rate and never includes the saved answer in a notification', () => {
+  assert.ok(core.includes("const LIMITS = { light: 1, balanced: 2, intensive: 3 }"));
+  assert.ok(core.includes('(hourCounts.get(hour) || 0) >= hourlyLimit'));
+  assert.ok(recall.includes('Light · 1 per hour'));
+  assert.ok(recall.includes('Balanced · 2 per hour'));
+  assert.ok(recall.includes('Intensive · 3 per hour'));
   assert.ok(recall.includes('body: question.prompt'));
   assert.ok(recall.includes("url: './#recall/'"));
   assert.ok(!recall.includes('body: question.answer'));
@@ -50,45 +53,39 @@ test('Recall assets are loaded, cached, copied into the web build and syntax-che
   assert.ok(workflow.includes('node --check recall.js'));
 });
 
-
 test('class voice reflections record locally, attach transcripts and preserve audio in portable backups', () => {
- const studio=read('study-studio.js');
- const voice=read('voice-reflection.js');
- assert.ok(studio.includes("indexedDB.open(STUDIO_DB,3)"));
- assert.ok(studio.includes("createObjectStore('classAudio',{keyPath:'id'})"));
- assert.ok(studio.includes("putStudioRecord('classAudio'"));
- assert.ok(studio.includes("getStudioRecord('classAudio',clip.id)"));
- assert.ok(studio.includes("classAudio:classAudioRecords"));
- assert.ok(studio.includes("classAudio=zip.folder('class-audio')"));
- assert.ok(studio.includes("stores=[STUDIO_STORE,'academicRecords','personalDocuments','classAudio']"));
- assert.ok(voice.includes('navigator.mediaDevices.getUserMedia'));
- assert.ok(voice.includes('new MediaRecorder'));
- assert.ok(voice.includes('window.SpeechRecognition || window.webkitSpeechRecognition'));
- assert.ok(voice.includes('getPending:'));
- assert.ok(voice.includes('function cancel()'));
- assert.ok(read('app.js').includes('EduviaVoiceReflection?.cancel?.()'));
- assert.ok(voice.includes('attachSavedAudio'));
- assert.ok(studio.includes("field('Five things you learned'"));
- assert.ok(studio.includes('if(!record)return;'));
+  const studio = read('study-studio.js'), voice = read('voice-reflection.js');
+  assert.ok(studio.includes("indexedDB.open(STUDIO_DB,3)"));
+  assert.ok(studio.includes("createObjectStore('classAudio',{keyPath:'id'})"));
+  assert.ok(studio.includes("putStudioRecord('classAudio'"));
+  assert.ok(studio.includes("getStudioRecord('classAudio',clip.id)"));
+  assert.ok(studio.includes("classAudio:classAudioRecords"));
+  assert.ok(studio.includes("classAudio=zip.folder('class-audio')"));
+  assert.ok(studio.includes("stores=[STUDIO_STORE,'academicRecords','personalDocuments','classAudio']"));
+  assert.ok(voice.includes('navigator.mediaDevices.getUserMedia'));
+  assert.ok(voice.includes('new MediaRecorder'));
+  assert.ok(voice.includes('window.SpeechRecognition || window.webkitSpeechRecognition'));
+  assert.ok(voice.includes('getPending:'));
+  assert.ok(voice.includes('function cancel()'));
+  assert.ok(voice.includes('recognition.onend ='));
+  assert.ok(voice.includes('session.transcriptBeforeRecognition'));
+  assert.ok(voice.includes('session.recognitionRestartTimer'));
+  assert.ok(voice.includes('session.stopRecognition'));
+  assert.ok(read('app.js').includes('EduviaVoiceReflection?.cancel?.()'));
+  assert.ok(voice.includes('attachSavedAudio'));
+  assert.ok(studio.includes("field('Five things you learned'"));
+  assert.ok(studio.includes('if(!record)return;'));
 });
-
 test('voice reflection assets are built, cached and syntax-checked', () => {
- const html=read('index.html');
- const sw=read('service-worker.js');
- const build=read('scripts/build-web.mjs');
- const workflow=read('.github/workflows/validate.yml');
- for(const asset of ['voice-reflection.js','voice-reflection.css']){
-  assert.ok(html.includes(asset));
-  assert.ok(sw.includes(asset));
-  assert.ok(build.includes(asset));
- }
- assert.ok(workflow.includes('node --check voice-reflection.js'));
- assert.ok(workflow.includes("eduvia-v105-voice-class-reflections"));
+  const html=read('index.html'), sw=read('service-worker.js'), build=read('scripts/build-web.mjs'), workflow=read('.github/workflows/validate.yml');
+  for (const asset of ['voice-reflection.js','voice-reflection.css']) {
+    assert.ok(html.includes(asset)); assert.ok(sw.includes(asset)); assert.ok(build.includes(asset));
+  }
+  assert.ok(workflow.includes('node --check voice-reflection.js'));
+  assert.ok(workflow.includes("eduvia-v105-voice-class-reflections"));
 });
-
-
 test('Android build declares the native microphone capture permissions requested by Capacitor WebView', () => {
- assert.ok(androidPrep.includes('android.permission.RECORD_AUDIO'));
- assert.ok(androidPrep.includes('android.permission.MODIFY_AUDIO_SETTINGS'));
- assert.ok(androidPrep.includes('android.permission.CAMERA'));
+  assert.ok(androidPrep.includes('android.permission.RECORD_AUDIO'));
+  assert.ok(androidPrep.includes('android.permission.MODIFY_AUDIO_SETTINGS'));
+  assert.ok(androidPrep.includes('android.permission.CAMERA'));
 });

@@ -1,6 +1,6 @@
 (function (root) {
   'use strict';
-  const LIMITS = { light: 2, balanced: 4, intensive: 6 };
+  const LIMITS = { light: 1, balanced: 2, intensive: 3 };
   const REVIEW_DAYS = [1, 3, 7, 14, 30];
   function stableId(value) {
     const input = String(value || ''); let hash = 2166136261;
@@ -65,7 +65,7 @@
     const now = settings.now instanceof Date ? new Date(settings.now.getTime()) : new Date(settings.now || Date.now());
     const questions = Array.isArray(settings.questions) ? settings.questions : [];
     const frequency = Object.prototype.hasOwnProperty.call(LIMITS, settings.frequency) ? settings.frequency : 'balanced';
-    const dailyLimit = LIMITS[frequency];
+    const hourlyLimit = LIMITS[frequency];
     const activeStart = parseClock(settings.activeStart, '09:00');
     const activeEnd = parseClock(settings.activeEnd, '21:00');
     const quietStart = parseClock(settings.quietStart, '21:00');
@@ -101,14 +101,13 @@
       const pickedTimes = [], hourCounts = new Map();
       for (const candidate of shuffle(candidates, random)) {
         const hour = Math.floor(candidate.minute / 60);
-        if ((hourCounts.get(hour) || 0) >= 2) continue;
+        if ((hourCounts.get(hour) || 0) >= hourlyLimit) continue;
         if (pickedTimes.some(item => Math.abs(item.minute - candidate.minute) < 15)) continue;
         pickedTimes.push(candidate); hourCounts.set(hour, (hourCounts.get(hour) || 0) + 1);
-        if (pickedTimes.length >= Math.min(dailyLimit, orderedQuestions.length)) break;
       }
       pickedTimes.sort((a, b) => a.fireAt - b.fireAt);
       const ordered = shuffle(orderedQuestions, random);
-      const count = Math.min(pickedTimes.length, ordered.length, dailyLimit);
+      const count = Math.min(pickedTimes.length, ordered.length);
       for (let index = 0; index < count; index++) {
         const question = ordered[index];
         output.push({ id: 'recall:' + date + ':' + String(question.id), questionId: String(question.id), date, fireAt: pickedTimes[index].fireAt });

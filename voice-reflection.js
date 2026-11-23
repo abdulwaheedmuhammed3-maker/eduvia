@@ -50,6 +50,10 @@
       .find(type => MediaRecorder.isTypeSupported(type)) || '';
   }
   function finishRecognition(instance) {
+    if (active && active.recognition === instance) {
+      active.stopRecognition = true;
+      if (active.recognitionRestartTimer) clearTimeout(active.recognitionRestartTimer);
+    }
     try { instance?.stop(); } catch {}
   }
   async function start() {
@@ -76,7 +80,7 @@
       const Recognition = recognitionConstructor;
       const recognition = Recognition ? new Recognition() : null;
       const baseText = String(field.value || '').trim();
-      const session = { stream, recorder, recognition, chunks, startedAt, target, field, baseText, finalTranscript: '', failed: false };
+      const session = { stream, recorder, recognition, chunks, startedAt, target, field, baseText, finalTranscript: '', transcriptBeforeRecognition: '', currentRecognitionFinal: '', currentRecognitionInterim: '', recognitionRestartTimer: null, stopRecognition: false, transcriptionDisabled: false, failed: false };
       active = session;
 
       recorder.addEventListener('dataavailable', event => {
@@ -112,6 +116,12 @@
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.lang = navigator.language || document.documentElement.lang || 'en-NG';
+        const formatTranscript = value => target === 'learned' ? value.replace(/(?<=[.!?])\s+(?=[A-Z0-9])/g, '\n') : value;
+        const updateTranscriptField = () => {
+          const transcript = [session.transcriptBeforeRecognition, session.currentRecognitionFinal, session.currentRecognitionInterim].filter(Boolean).join(' ');
+          field.value = [baseText, formatTranscript(transcript)].filter(Boolean).join(baseText ? '\n' : '');
+          field.dispatchEvent(new Event('input', { bubbles: true }));
+        };
         recognition.onresult = event => {
           let finalText = '', interimText = '';
           for (let index = 0; index < recognition.results.length; index++) {
@@ -121,19 +131,43 @@
             if (result.isFinal) finalText += (finalText ? ' ' : '') + text;
             else interimText += (interimText ? ' ' : '') + text;
           }
-          session.finalTranscript = finalText;
-          const format = value => target === 'learned' ? value.replace(/(?<=[.!?])\s+(?=[A-Z0-9])/g, '\n') : value;
-          const combined = [baseText, format(finalText), format(interimText)].filter(Boolean).join(baseText ? '\n' : ' ');
-          field.value = combined;
-          field.dispatchEvent(new Event('input', { bubbles: true }));
+          session.currentRecognitionFinal = finalText;
+          session.currentRecognitionInterim = interimText;
+          session.finalTranscript = [session.transcriptBeforeRecognition, finalText].filter(Boolean).join(' ');
+          updateTranscriptField();
           status(interimText ? 'Listening and transcribing…' : 'Recording. Your recognised speech is appearing in the selected field.');
         };
         recognition.onerror = event => {
           if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+            session.transcriptionDisabled = true;
             status('Microphone access for speech-to-text was denied. The audio recording can still be kept; use your phone keyboard microphone to enter the words.');
+          } else if (event.error === 'network') {
+            session.transcriptionDisabled = true;
+            status('Live transcription lost its network connection. Your audio recording continues and any words already recognised are kept.');
           } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
+            session.transcriptionDisabled = true;
             status('Live transcription paused (' + event.error + '). Your audio recording continues.');
           }
+        };
+        recognition.onend = () => {
+          if (session.currentRecognitionFinal) {
+            session.transcriptBeforeRecognition = [session.transcriptBeforeRecognition, session.currentRecognitionFinal].filter(Boolean).join(' ');
+            session.currentRecognitionFinal = '';
+            session.currentRecognitionInterim = '';
+            session.finalTranscript = session.transcriptBeforeRecognition;
+            updateTranscriptField();
+          }
+          if (active !== session || session.stopRecognition || session.transcriptionDisabled || recorder.state !== 'recording') return;
+          clearTimeout(session.recognitionRestartTimer);
+          session.recognitionRestartTimer = setTimeout(() => {
+            if (active !== session || session.stopRecognition || session.transcriptionDisabled || recorder.state !== 'recording') return;
+            try {
+              recognition.start();
+            } catch {
+              session.transcriptionDisabled = true;
+              status('Live transcription stopped in this browser. Your audio recording continues; use your phone keyboard microphone for any remaining words.');
+            }
+          }, 250);
         };
       }
 
@@ -143,6 +177,7 @@
           recognition.start();
           status('Recording and transcribing. Speak naturally; pause briefly between separate learning points.');
         } catch {
+          session.transcriptionDisabled = true;
           status('Audio recording started. Live transcription could not start in this browser; use your phone keyboard microphone in the selected field.');
         }
       } else {

@@ -311,7 +311,7 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
   if(typeof originalCourses==='function'&&!window.eduCoursesFeatureWrapped){
     window.eduCoursesFeatureWrapped=true;
     window.renderCourses=function(){
-      const base=originalCourses().replace(/(<button class="icon-btn" title="Edit course" data-action="edit-course" data-id="([^"]+)">)/g,'<button class="text-btn" data-feature="open-mastery" data-course="$2">Topic mastery →</button>$1');
+      const base=originalCourses().replace(/(<button class="icon-btn" title="Edit (?:course|learning area)" data-action="edit-course" data-id="([^"]+)">)/g,'<button class="text-btn" data-feature="open-mastery" data-course="$2">Topic mastery →</button>$1');
       const tools='<section class="courses-integrated-tools"><div class="section-title-row"><h3>Learning and revision tools</h3><span>Organised with your courses</span></div>'+
         integratedSection('Tutorials and notes','Saved resources and study notes',renderTutorials())+
         integratedSection('Practice and tests','Generate and review questions',renderPractice())+
@@ -352,11 +352,16 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
     }
     const blob=await zip.generateAsync({type:'blob',compression:'STORE'});download(blob,'eduvia-safety-copy-before-restore-'+today()+'.zip');
   }
+  function isValidPlannerBackup(value){
+    return Boolean(value&&typeof value==='object'&&!Array.isArray(value)&&
+      value.profile&&typeof value.profile==='object'&&!Array.isArray(value.profile)&&
+      Array.isArray(value.courses)&&Array.isArray(value.events));
+  }
   async function previewAndRestore(file,isZip){
     if(!file)return;let incoming,summary='';
     try{
-      if(isZip){if(!window.JSZip)await loadStudioScript('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js');const zip=await window.JSZip.loadAsync(file),entry=zip.file('eduvia-data.json')||zip.file('daymark-data.json');if(!entry)throw new Error('No Eduvia data file was found in this ZIP.');incoming=JSON.parse(await entry.async('string'));summary='Courses '+(incoming.courses||[]).length+' · documents '+(incoming.personalDocuments||[]).length+' · education records '+(incoming.academicHistory||[]).length+' · study materials '+(incoming.materials||[]).length;
-      }else{incoming=JSON.parse(await file.text());if(!incoming?.profile||!Array.isArray(incoming.courses)||!Array.isArray(incoming.events))throw new Error('This is not a valid Eduvia JSON backup.');summary='Courses '+incoming.courses.length+' · timetable items '+incoming.events.length+' · study records '+(incoming.studyRecords||[]).length;}
+      if(isZip){if(!window.JSZip)await loadStudioScript('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js');const zip=await window.JSZip.loadAsync(file),entry=zip.file('eduvia-data.json')||zip.file('daymark-data.json');if(!entry)throw new Error('No Eduvia data file was found in this ZIP.');incoming=JSON.parse(await entry.async('string'));if(!isValidPlannerBackup(incoming))throw new Error('The ZIP does not contain a complete Eduvia planner backup.');summary='Courses '+incoming.courses.length+' · documents '+(incoming.personalDocuments||[]).length+' · education records '+(incoming.academicHistory||[]).length+' · study materials '+(incoming.materials||[]).length;
+      }else{incoming=JSON.parse(await file.text());if(!isValidPlannerBackup(incoming))throw new Error('This is not a valid Eduvia JSON backup.');summary='Courses '+incoming.courses.length+' · timetable items '+incoming.events.length+' · study records '+(incoming.studyRecords||[]).length;}
     }catch(error){toast('Backup preview failed: '+error.message+'. Nothing was changed.');return}
     openModal('Preview backup','Selected file: '+file.name+' · '+summary,'<p>Eduvia will first download a portable safety copy of the data currently on this device.</p><p>The selected backup will only be restored after you confirm the next step. Keep both files private because they may contain personal documents.</p>','Continue to restore',async()=>{
       try{await safetyPortableZip();closeModal();if(isZip&&typeof originalImportZip==='function')await originalImportZip(file);else if(!isZip&&typeof originalImportJson==='function')await originalImportJson(file);else throw new Error('The existing restore handler is unavailable.');data.deadlines=Array.isArray(data.deadlines)?data.deadlines:[];data.flashcards=Array.isArray(data.flashcards)?data.flashcards:[];data.topicMastery=data.topicMastery&&typeof data.topicMastery==='object'?data.topicMastery:{};save();}
@@ -380,7 +385,7 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
   }
   function notifyExpiringDocuments(){
     if(!('Notification' in window)||Notification.permission!=='granted')return;
-    const now=new Date();for(const d of data.personalDocuments||[]){if(!d.expiryDate)continue;const days=Math.ceil((new Date(d.expiryDate+'T23:59:59').getTime()-now.getTime())/86400000),lead=Math.max(0,Number(d.remindDays)||14);if(days>lead)continue;const key='eduvia-doc-expiry:'+d.id+':'+d.expiryDate;if(localStorage.getItem(key)==='1')continue;localStorage.setItem(key,'1');showStudyNotification(days<0?'Document has expired':'Document expiry reminder',String(d.title||d.name)+' '+(days<0?'expired':'expires')+(days===0?' today':days===1?' tomorrow':' in '+days+' days')+'.');}
+    const now=new Date();for(const d of data.personalDocuments||[]){if(!d.expiryDate)continue;const days=Math.ceil((new Date(d.expiryDate+'T23:59:59').getTime()-now.getTime())/86400000),lead=Math.max(0,Number(d.remindDays)||14);if(days>lead)continue;const key='eduvia-doc-expiry:'+d.id+':'+d.expiryDate;if(storageGet(key)==='1')continue;storageSet(key,'1');showStudyNotification(days<0?'Document has expired':'Document expiry reminder',String(d.title||d.name)+' '+(days<0?'expired':'expires')+(days===0?' today':days===1?' tomorrow':' in '+days+' days')+'.');}
   }
   window.addEventListener('focus',notifyExpiringDocuments);setTimeout(notifyExpiringDocuments,1500);
   document.addEventListener('click',async event=>{
@@ -438,7 +443,6 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
     }
   });
   document.addEventListener('input',e=>{if(e.target.id==='documentSearch'){const q=e.target.value.toLowerCase();document.querySelectorAll('[data-doc-search]').forEach(el=>el.hidden=!el.dataset.docSearch.includes(q));}});
-  document.addEventListener('change',e=>{
   function categoryKey(value){return String(value??'').trim().toLocaleLowerCase().replace(/\\s+/g,' ')}
   function courseMatchKeys(course){return [categoryKey(course?.code),categoryKey(course?.name)].filter(Boolean)}
   function eventMatchKey(event,courseId=event?.courseId){return [event?.type,event?.date||'weekly',event?.day??'',event?.start,event?.end,categoryKey(event?.title),categoryKey(event?.location),courseId||''].join('|')}
@@ -459,7 +463,7 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
           for(const course of source.items){const match=byId.get(String(course.id))||courseMatchKeys(course).map(key=>byKey.get(key)).find(Boolean);if(match){duplicates++;continue}const copy={...course,id:String(course.id)};data.courses.push(copy);byId.set(String(copy.id),copy);for(const key of courseMatchKeys(copy))if(!byKey.has(key))byKey.set(key,copy);added++}
         }else{
           const refs=new Map((Array.isArray(source.courseReferences)?source.courseReferences:[]).map(c=>[String(c.id),c])),courses=data.courses||[];
-          const resolveCourse=oldId=>{if(!oldId)return '';const exact=courses.find(c=>String(c.id)===String(oldId));if(exact)return exact.id;const ref=refs.get(String(oldId)),key=courseMatchKey(ref);return courses.find(c=>key&&courseMatchKey(c)===key)?.id||''};
+          const resolveCourse=oldId=>{if(!oldId)return '';const exact=courses.find(c=>String(c.id)===String(oldId));if(exact)return exact.id;const ref=refs.get(String(oldId)),keys=courseMatchKeys(ref);return courses.find(c=>courseMatchKeys(c).some(key=>keys.includes(key)))?.id||''};
           const ids=new Set((data.events||[]).map(e=>String(e.id))),signatures=new Set((data.events||[]).map(e=>eventMatchKey(e,e.courseId)));
           for(const event of source.items){const mappedCourse=resolveCourse(event.courseId),copy={...event,id:String(event.id),courseId:mappedCourse};if(event.courseId&&!mappedCourse)unlinked++;const signature=eventMatchKey(copy,mappedCourse);if(ids.has(String(copy.id))||signatures.has(signature)){duplicates++;continue}data.events.push(copy);ids.add(String(copy.id));signatures.add(signature);added++}
         }
@@ -467,6 +471,8 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
       }catch(error){toast('Restore failed: '+(error.message||'unknown error'))}
     });
   }
+
+  document.addEventListener('change',e=>{
     if(e.target.id==='coursesCategoryBackupFile'||e.target.id==='timetableCategoryBackupFile'){const file=e.target.files?.[0],kind=e.target.id==='coursesCategoryBackupFile'?'courses':'timetable';e.target.value='';if(file)importCategoryBackup(file,kind);return}
     if(e.target.id==='masteryCourseSelect'){window.eduMasteryCourse=e.target.value;render();return}
     if(e.target.matches('[data-feature="mastery-status"]')){const key=masteryKey(e.target.dataset.course,e.target.dataset.topic);data.topicMastery[key]=data.topicMastery[key]||{};data.topicMastery[key].status=e.target.value;save();return}

@@ -462,7 +462,7 @@ async function previewMaterial(file,text,linkedCourseId=''){
   if(!save()){
     data.materials=data.materials.filter(item=>item.id!==m.id);
     data.materialText=(data.materialText||[]).filter(item=>item.id!==m.id);
-    if(storedInIndexedDb)await removeStoredMaterial(m.id);
+    if(storedInIndexedDb&&!await removeStoredMaterial(m.id))toast('The material was not saved, but its extracted file could not be cleaned up. Export a backup and check device storage.');
     studioNotice='';
     render();return;
   }

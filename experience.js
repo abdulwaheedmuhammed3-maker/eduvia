@@ -91,7 +91,7 @@ function myStudy(){
  academicTools+examTools+
  '<button data-page="profile">'+ic('♙')+'<b>Learning profile</b><small>Update your learning path and personal details</small></button>'+
  '<button data-page="settings">'+ic('⚙','purple')+'<b>Settings & appearance</b><small>Theme, reminders, notifications and backups</small></button></div></section>'+
- '<section class="exp-inline-cta"><div><b>Keep your learning journey moving.</b><span>Your progress, resources and saved learning records stay together.</span></div><button class="primary-btn" data-page="progress">View learning progress ↗</button></section>';
+ '<section class="exp-inline-cta exp-inline-cta-action-bottom"><div><b>Keep your learning journey moving.</b><span>Your progress, resources and saved learning records stay together.</span></div><button class="primary-btn" data-page="progress">View learning progress ↗</button></section>';
 }
 function askResultHtml(){
  if(!askResult)return '';

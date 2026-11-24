@@ -173,7 +173,7 @@ window.eduLectureMaterials={
     const priorMeta={};for(const field of fields)priorMeta[field]=meta[field];
     const fallbackIndex=(data.materialText||[]).findIndex(item=>String(item?.id)===key);
     let storedInIndexedDb=false;
-    try{await storeMaterial(updated);storedInIndexedDb=true}
+    try{await storeMaterial(updated);storedInIndexedDb=true;if(fallbackIndex>=0)data.materialText[fallbackIndex]=updated}
     catch{
       data.materialText=data.materialText||[];
       if(fallbackIndex>=0)data.materialText[fallbackIndex]=updated;else data.materialText.push(updated);

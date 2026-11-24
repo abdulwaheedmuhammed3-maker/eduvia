@@ -42,7 +42,7 @@ APP_REDIRECT_URL must be Eduvia's production web URL with the Ask page fragment,
 
     https://eduvia-study-planner.onrender.com/#ask
 
-The existing Worker ALLOWED_ORIGIN list includes the two configured Eduvia web origins and Capacitor localhost origins. Add any custom production domain to that list before deployment.
+The existing Worker ALLOWED_ORIGIN list includes the two configured Eduvia web origins, Capacitor localhost origins, and the documented Python local-server origins on port 8000. Add any custom production domain or alternate local development origin to that list before deployment.
 
 ## Google Cloud setup
 

@@ -1,4 +1,5 @@
 import { App } from '@capacitor/app';
+import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { LocalNotifications } from '@capacitor/local-notifications';
@@ -113,6 +114,12 @@ const EduviaNative = {
     await clearPendingNotifications();
   },
 
+  async openGoogleAuthorization(url) {
+    const target = new URL(String(url || ''));
+    if (target.origin !== 'https://accounts.google.com') throw new Error('Eduvia can only open the official Google sign-in page.');
+    await Browser.open({ url: target.toString(), toolbarColor: '#655ee0' });
+  },
+
   async capturePhoto(target = 'document') {
     if (!isNative) throw new Error('Take a photo is available in the Eduvia Android app.');
     const permissions = await Camera.checkPermissions();
@@ -143,7 +150,22 @@ const EduviaNative = {
 
 window.EduviaNative = EduviaNative;
 
+async function handleEduviaOAuthLink(rawUrl) {
+  try {
+    const target = new URL(String(rawUrl || ''));
+    if (target.protocol !== 'com.eduvia.studyplanner:' || target.hostname !== 'oauth') return;
+    const detail = {
+      google: target.searchParams.get('google') || '',
+      google_error: target.searchParams.get('google_error') || ''
+    };
+    try { await Browser.close(); } catch {}
+    window.dispatchEvent(new CustomEvent('eduvia-google-oauth-return', { detail }));
+  } catch {}
+}
+
 if (isNative) {
+  App.addListener('appUrlOpen', ({ url }) => handleEduviaOAuthLink(url));
+  App.getLaunchUrl().then(result => { if (result?.url) handleEduviaOAuthLink(result.url); }).catch(() => {});
   App.addListener('appStateChange', ({ isActive }) => {
     if (isActive) window.dispatchEvent(new Event('eduvia-native-resume'));
   });

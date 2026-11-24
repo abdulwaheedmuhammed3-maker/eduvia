@@ -6,7 +6,7 @@
   "workers_dev": true,
   "triggers": { "crons": ["* * * * *"] },
   "vars": {
-    "ALLOWED_ORIGIN": "https://eduvia-study-planner.onrender.com,https://eduvia-pmso.onrender.com",
+    "ALLOWED_ORIGIN": "https://eduvia-study-planner.onrender.com,https://eduvia-pmso.onrender.com,https://localhost,capacitor://localhost",
     "VAPID_SUBJECT": "https://eduvia-study-planner.onrender.com",
     "OPENAI_MODEL": "gpt-6.2-sol",
     "GOOGLE_REDIRECT_URI": "https://eduvia-notifications.abdulwaheedmuhammed3-996.workers.dev/v1/google/callback",

@@ -5,13 +5,10 @@ const MAX_MESSAGES = 16;
 const MAX_DAILY_AI_REQUESTS = 35;
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const GOOGLE_SCOPES = [
-  'openid',
-  'email',
-  'profile',
   'https://www.googleapis.com/auth/drive.file',
   'https://www.googleapis.com/auth/drive.meet.readonly',
   'https://www.googleapis.com/auth/meetings.space.readonly',
-  'https://www.googleapis.com/auth/calendar.events'
+  'https://www.googleapis.com/auth/calendar.events.owned'
 ].join(' ');
 
 export class IntelligenceRequestError extends Error {
@@ -154,7 +151,7 @@ function requireConfigured(value, name) {
 
 async function openAi(env, instructions, input, maxOutputTokens = 1400) {
   const apiKey = requireConfigured(env.OPENAI_API_KEY, 'The AI tutor');
-  const model = String(env.OPENAI_MODEL || 'gpt-6.2-sol').trim();
+  const model = String(requireConfigured(env.OPENAI_MODEL, 'The AI model selection')).trim();
   if (!/^[A-Za-z0-9._-]{2,80}$/.test(model)) throw new IntelligenceRequestError('The AI model configuration is invalid.', 503);
   const response = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
@@ -446,13 +443,34 @@ async function driveImport(request, env, session, cors = {}) {
   }, 200, cors);
 }
 
+async function googleMeetFetch(path, tokens, options = {}) {
+  const response = await fetch('https://meet.googleapis.com' + path, {
+    ...options,
+    headers: { Authorization: 'Bearer ' + tokens.access_token, ...(options.headers || {}) }
+  });
+  if (!response.ok) {
+    const status = response.status === 401 || response.status === 403 ? 403 : response.status === 404 ? 404 : 502;
+    throw new IntelligenceRequestError(status === 403 ? 'Google Meet did not allow access to this meeting artifact.' : 'Google Meet could not complete the request.', status);
+  }
+  return response;
+}
+
+async function pickerConfig(session, env, cors = {}) {
+  const tokens = await googleTokens(session, env);
+  return json({
+    accessToken: tokens.access_token,
+    apiKey: requireConfigured(env.GOOGLE_PICKER_API_KEY, 'Google Picker'),
+    appId: requireConfigured(env.GOOGLE_CLOUD_PROJECT_NUMBER, 'Google Picker project number')
+  }, 200, cors);
+}
+
 async function meetConferences(request, env, session, cors = {}) {
   const tokens = await googleTokens(session, env);
   const url = new URL(request.url);
   const params = new URLSearchParams({ pageSize: '25' });
   const pageToken = url.searchParams.get('pageToken');
   if (pageToken) params.set('pageToken', pageToken.slice(0, 1000));
-  const response = await googleFetch('/meet/v2/conferenceRecords?' + params.toString(), tokens);
+  const response = await googleMeetFetch('/v2/conferenceRecords?' + params.toString(), tokens);
   const payload = await response.json();
   return json({ conferences: payload.conferenceRecords || [], nextPageToken: payload.nextPageToken || null }, 200, cors);
 }
@@ -464,13 +482,13 @@ async function meetTranscripts(request, env, session, cors = {}) {
   if (!/^conferenceRecords\/[A-Za-z0-9_-]{3,200}$/.test(conference)) {
     throw new IntelligenceRequestError('Choose a valid Google Meet conference record.', 400);
   }
-  const transcriptResponse = await googleFetch('/meet/v2/' + conference + '/transcripts?pageSize=10', tokens);
+  const transcriptResponse = await googleMeetFetch('/v2/' + conference + '/transcripts?pageSize=10', tokens);
   const transcriptPayload = await transcriptResponse.json();
   const transcripts = [];
   for (const item of (transcriptPayload.transcripts || []).slice(0, 5)) {
     const resource = String(item.name || '');
     if (!/^conferenceRecords\/[A-Za-z0-9_-]+\/transcripts\/[A-Za-z0-9_-]+$/.test(resource)) continue;
-    const entriesResponse = await googleFetch('/meet/v2/' + resource + '/entries?pageSize=500', tokens);
+    const entriesResponse = await googleMeetFetch('/v2/' + resource + '/entries?pageSize=100', tokens);
     const entriesPayload = await entriesResponse.json();
     transcripts.push({
       name: resource,
@@ -593,6 +611,7 @@ export async function handleIntelligenceRequest(request, env, cors = {}) {
     if (url.pathname.startsWith('/v1/google/')) {
       const session = await requireSession(request, env, false);
       if (request.method === 'POST' && url.pathname === '/v1/google/connect') return await startGoogleConnect(request, env, cors);
+      if (request.method === 'GET' && url.pathname === '/v1/google/picker-config') return await pickerConfig(session, env, cors);
       if (request.method === 'GET' && url.pathname === '/v1/google/status') return await googleStatus(session, env, cors);
       if (request.method === 'POST' && url.pathname === '/v1/google/disconnect') return await googleDisconnect(session, env, cors);
       if (request.method === 'GET' && url.pathname === '/v1/google/drive/files') return await driveFiles(request, env, session, cors);

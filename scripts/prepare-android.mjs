@@ -25,6 +25,30 @@ for (const permission of permissions) {
 }
 await writeFile(manifestPath, manifest);
 
+const stringsPath = 'android/app/src/main/res/values/strings.xml';
+let strings = await readFile(stringsPath, 'utf8');
+const customScheme = 'com.eduvia.studyplanner';
+if (/<string name="custom_url_scheme">[^<]*<\/string>/.test(strings)) {
+  strings = strings.replace(/<string name="custom_url_scheme">[^<]*<\/string>/, `<string name="custom_url_scheme">${customScheme}</string>`);
+} else {
+  strings = strings.replace('</resources>', `    <string name="custom_url_scheme">${customScheme}</string>\n</resources>`);
+}
+await writeFile(stringsPath, strings);
+
+if (!manifest.includes('android:host="oauth"')) {
+  const activityTag = manifest.match(/<activity\\b(?=[^>]*android:name="[^"]*(?:MainActivity|BridgeActivity)")[^>]*>/);
+  if (!activityTag) throw new Error('Could not find the Capacitor main activity to register the Eduvia OAuth callback.');
+  const deepLinkFilter = `
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="@string/custom_url_scheme" android:host="oauth" />
+        </intent-filter>`;
+  manifest = manifest.replace(activityTag[0], activityTag[0] + deepLinkFilter);
+  await writeFile(manifestPath, manifest);
+}
+
 const rawDirectory = 'android/app/src/main/res/raw';
 await mkdir(rawDirectory, { recursive: true });
 const sampleRate = 22050;

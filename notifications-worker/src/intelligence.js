@@ -200,7 +200,7 @@ const SUMMARY_INSTRUCTIONS = [
   'Preserve source markers such as [PAGE 2], [SLIDE 4], timestamps and speaker labels when they matter. Make clear that suggested revision questions are generated practice, not confirmed exam questions.'
 ].join(' ');
 
-async function tutor(request, env) {
+async function tutor(request, env, cors = {}) {
   const session = await requireSession(request, env, true);
   const body = await readJson(request);
   const messages = validateMessages(body.messages);
@@ -217,10 +217,10 @@ async function tutor(request, env) {
   input.push({ role: 'user', content: 'Learner context: course or learning area = ' + course + '; preferred level = ' + level + '. Use this context for the conversation.' });
   input.push(...messages);
   const result = await openAi(env, TUTOR_INSTRUCTIONS, input, 1500);
-  return json({ answer: result.text, model: result.model, requestId: result.requestId, sessionExpiresAt: session.expiresAt });
+  return json({ answer: result.text, model: result.model, requestId: result.requestId, sessionExpiresAt: session.expiresAt }, 200, cors);
 }
 
-async function summarize(request, env) {
+async function summarize(request, env, cors = {}) {
   await requireSession(request, env, true);
   const body = await readJson(request);
   const source = String(body.sourceText || '').trim();
@@ -231,7 +231,7 @@ async function summarize(request, env) {
   const result = await openAi(env, SUMMARY_INSTRUCTIONS, [
     { role: 'user', content: 'Lecture title: ' + title + '\nLearning area: ' + (course || 'Not specified') + '\n\nSOURCE MATERIAL BEGIN\n' + source + '\nSOURCE MATERIAL END' }
   ], 2600);
-  return json({ summary: result.text, model: result.model, requestId: result.requestId });
+  return json({ summary: result.text, model: result.model, requestId: result.requestId }, 200, cors);
 }
 
 function cryptoKey(env) {
@@ -255,7 +255,7 @@ async function decryptTokens(env, iv, ciphertext) {
   return JSON.parse(new TextDecoder().decode(clear));
 }
 
-async function startGoogleConnect(request, env) {
+async function startGoogleConnect(request, env, cors = {}) {
   const session = await requireSession(request, env, false);
   const clientId = requireConfigured(env.GOOGLE_CLIENT_ID, 'Google Workspace connection');
   const redirectUri = requireConfigured(env.GOOGLE_REDIRECT_URI, 'Google OAuth redirect URI');
@@ -278,7 +278,7 @@ async function startGoogleConnect(request, env) {
   url.searchParams.set('state', state);
   url.searchParams.set('code_challenge', challenge);
   url.searchParams.set('code_challenge_method', 'S256');
-  return json({ authorizationUrl: url.toString() });
+  return json({ authorizationUrl: url.toString() }, 200, cors);
 }
 
 async function googleCallback(request, env) {
@@ -387,7 +387,7 @@ async function googleFetch(path, tokens, options = {}) {
   return response;
 }
 
-async function driveFiles(request, env, session) {
+async function driveFiles(request, env, session, cors = {}) {
   const tokens = await googleTokens(session, env);
   const url = new URL(request.url);
   const params = new URLSearchParams({
@@ -405,7 +405,7 @@ async function driveFiles(request, env, session) {
   params.set('includeItemsFromAllDrives', 'true');
   const response = await googleFetch('/drive/v3/files?' + params.toString(), tokens);
   const payload = await response.json();
-  return json({ files: payload.files || [], nextPageToken: payload.nextPageToken || null });
+  return json({ files: payload.files || [], nextPageToken: payload.nextPageToken || null }, 200, cors);
 }
 
 function bytesToBase64(bytes) {
@@ -417,7 +417,7 @@ function bytesToBase64(bytes) {
   return btoa(binary);
 }
 
-async function driveImport(request, env, session) {
+async function driveImport(request, env, session, cors = {}) {
   const tokens = await googleTokens(session, env);
   const body = await readJson(request);
   const fileId = String(body.fileId || '');
@@ -443,10 +443,10 @@ async function driveImport(request, env, session) {
       modifiedTime: meta.modifiedTime || null,
       base64: bytesToBase64(bytes)
     }
-  });
+  }, 200, cors);
 }
 
-async function meetConferences(request, env, session) {
+async function meetConferences(request, env, session, cors = {}) {
   const tokens = await googleTokens(session, env);
   const url = new URL(request.url);
   const params = new URLSearchParams({ pageSize: '25' });
@@ -454,10 +454,10 @@ async function meetConferences(request, env, session) {
   if (pageToken) params.set('pageToken', pageToken.slice(0, 1000));
   const response = await googleFetch('/meet/v2/conferenceRecords?' + params.toString(), tokens);
   const payload = await response.json();
-  return json({ conferences: payload.conferenceRecords || [], nextPageToken: payload.nextPageToken || null });
+  return json({ conferences: payload.conferenceRecords || [], nextPageToken: payload.nextPageToken || null }, 200, cors);
 }
 
-async function meetTranscripts(request, env, session) {
+async function meetTranscripts(request, env, session, cors = {}) {
   const tokens = await googleTokens(session, env);
   const url = new URL(request.url);
   const conference = String(url.searchParams.get('conferenceRecord') || '');
@@ -485,7 +485,7 @@ async function meetTranscripts(request, env, session) {
       }))
     });
   }
-  return json({ transcripts });
+  return json({ transcripts }, 200, cors);
 }
 
 function validIso(value) {
@@ -493,7 +493,7 @@ function validIso(value) {
   return Number.isFinite(date.getTime()) && typeof value === 'string';
 }
 
-async function calendarEvents(request, env, session) {
+async function calendarEvents(request, env, session, cors = {}) {
   const tokens = await googleTokens(session, env);
   const url = new URL(request.url);
   const action = url.searchParams.get('action') || 'list';
@@ -513,7 +513,7 @@ async function calendarEvents(request, env, session) {
     });
     const response = await googleFetch('/calendar/v3/calendars/primary/events?' + params.toString(), tokens);
     const payload = await response.json();
-    return json({ events: payload.items || [], nextSyncToken: payload.nextSyncToken || null });
+    return json({ events: payload.items || [], nextSyncToken: payload.nextSyncToken || null }, 200, cors);
   }
   const body = await readJson(request);
   if (action === 'create') {
@@ -532,13 +532,13 @@ async function calendarEvents(request, env, session) {
         end: { dateTime: event.end.dateTime, timeZone: event.end.timeZone || 'Africa/Lagos' }
       })
     });
-    return json({ event: await response.json() }, 201);
+    return json({ event: await response.json() }, 201, cors);
   }
   const eventId = String(url.searchParams.get('eventId') || '');
   if (!/^[A-Za-z0-9_-]{5,300}$/.test(eventId)) throw new IntelligenceRequestError('The Google Calendar event ID is invalid.', 400);
   if (action === 'delete') {
     await googleFetch('/calendar/v3/calendars/primary/events/' + encodeURIComponent(eventId), tokens, { method: 'DELETE' });
-    return json({ deleted: true });
+    return json({ deleted: true }, 200, cors);
   }
   if (action === 'update') {
     const event = body.event || {};
@@ -557,19 +557,19 @@ async function calendarEvents(request, env, session) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(patch)
     });
-    return json({ event: await response.json() });
+    return json({ event: await response.json() }, 200, cors);
   }
   throw new IntelligenceRequestError('Unknown Calendar action.', 400);
 }
 
-async function googleStatus(session, env) {
+async function googleStatus(session, env, cors = {}) {
   const row = await env.DB.prepare('SELECT updated_at FROM google_connections WHERE session_hash = ?').bind(session.hash).first();
-  return json({ connected: !!row, connectedAt: row?.updated_at || null });
+  return json({ connected: !!row, connectedAt: row?.updated_at || null }, 200, cors);
 }
 
-async function googleDisconnect(session, env) {
+async function googleDisconnect(session, env, cors = {}) {
   await env.DB.prepare('DELETE FROM google_connections WHERE session_hash = ?').bind(session.hash).run();
-  return json({ disconnected: true });
+  return json({ disconnected: true }, 200, cors);
 }
 
 export async function handleIntelligenceRequest(request, env, cors = {}) {

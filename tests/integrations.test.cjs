@@ -90,6 +90,8 @@ test('Calendar sync supports incremental tokens, deletion, weekly schedules and 
   assert.match(client, /googleCalendarImported/);
   assert.match(client, /repeatFrom/);
   assert.match(client, /repeatUntil/);
+  assert.match(client, /localFieldsAsUtc/);
+  assert.match(client, /toISOString\(\)\.slice\(0, 19\)/);
   assert.match(app, /event\.repeatFrom/);
   assert.match(app, /event\.repeatUntil/);
 });

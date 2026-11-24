@@ -30,6 +30,44 @@ For Workers Builds, connect the GitHub repository on production branch `main`, s
 
 This service only needs a production deployment, so disable Preview builds. If you later enable previews for testing, configure a separate Preview command, Preview-safe variables, and a separate D1 database. Do not point Preview builds at the production database.
 
+## AI and Google Workspace integrations
+
+The same Worker can now serve optional AI and Google Workspace endpoints. Run the D1 migration `0004_ai_google_integrations.sql` before deploying the updated Worker. The migration creates short-lived OAuth state rows, encrypted Google connection records, and AI usage counters.
+
+### Required configuration
+
+Set these Worker secrets with Wrangler (use a new randomly generated encryption key and keep a secure backup of it):
+
+```sh
+npx wrangler secret put OPENAI_API_KEY
+npx wrangler secret put GOOGLE_CLIENT_SECRET
+openssl rand -base64 32
+npx wrangler secret put GOOGLE_TOKEN_ENCRYPTION_KEY
+npx wrangler secret put GOOGLE_CLIENT_ID
+npx wrangler secret put GOOGLE_PICKER_API_KEY
+npx wrangler secret put GOOGLE_APP_ID
+```
+
+Set `GOOGLE_REDIRECT_URI` to the exact OAuth redirect URL in `wrangler.jsonc`:
+`https://eduvia-notifications.abdulwaheedmuhammed3-996.workers.dev/v1/google/callback`.
+The OAuth web client in Google Cloud must contain this exact authorised redirect URI. The Picker key must be HTTP-referrer restricted to the Eduvia web origins, and `GOOGLE_APP_ID` is the numeric Google Cloud project number. Keep `OPENAI_MODEL` set to `gpt-6.2-sol` unless the service owner intentionally chooses another Responses API model.
+
+In Google Cloud, enable Google Drive API, Google Picker API, Google Calendar API and Google Meet REST API. Configure the OAuth consent screen and request only the scopes used by Eduvia: OpenID/email, `drive.file`, `drive.meet.readonly`, `meetings.space.readonly`, and `calendar.events.owned`. Google verification or Workspace administrator approval may be required before general public use.
+
+The frontend receives a short-lived Google access token only to open Google Picker. The refresh token stays encrypted in D1 using AES-GCM and the server-only encryption key. Disconnecting Google removes the encrypted connection for that Eduvia device. Clearing local browser/app data also clears that device's integration token; reconnect Google on the new installation.
+
+The AI Tutor sends the learner's question, recent messages and only the locally retrieved source passages to OpenAI. AI lecture summaries send the selected lecture transcript. Audio transcription uploads the selected recording to the OpenAI transcription endpoint and accepts recordings up to 25 MB in this first version. OpenAI API use is billed separately from ChatGPT subscriptions. Usage is rate-limited by IP and tool type, and OpenAI Responses requests use `store: false`.
+
+Google Meet imports only transcript/recording artifacts the connected account can access. Transcript artifacts are normally available for 30 days. If a generated transcript is present, Eduvia imports it without spending OpenAI transcription credits. If only a recording is available, the learner can use OpenAI transcription, subject to the 25 MB limit.
+
+Google Calendar import/export is initiated from Eduvia's **AI & Google Workspace** page. The first import uses an incremental sync token; a Google 410 response triggers a full resync. The current version supports timed single events and weekly recurring events, skips all-day events and other recurrence patterns, and does not continuously synchronise in the background.
+
+Apply the migration before deployment:
+```sh
+npm run db:migrate
+npm run deploy
+```
+
 ## Eduvia Recall notifications
 
 Recall questions are built on the learner's device from saved flashcards, course topics and locally indexed course materials. The notification service receives only the short question prompt, its delivery time and a same-site route back to that question. Answers, course documents, source passages and learning results are not uploaded to the Worker. Applying migration `0003_recall_notification_routes.sql` adds the validated in-app destination used when a learner taps a Recall notification.

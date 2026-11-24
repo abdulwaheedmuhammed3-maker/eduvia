@@ -38,6 +38,8 @@ jobs:
           node --check scripts/configure-android-signing.mjs
           node --check service-worker.js
           node --check notifications-worker/src/index.js
+          node --check notifications-worker/src/integrations.js
+          node --check integrations.js
       - name: Build the production web bundle
         run: npm run build:web
       - name: Verify feature bundle is loaded and cached
@@ -116,6 +118,12 @@ jobs:
           grep -q 'voice-reflection.css' index.html
           grep -q 'voice-reflection.css' service-worker.js
           grep -q 'voice-reflection.css' scripts/build-web.mjs
+          grep -q 'integrations.js' index.html
+          grep -q 'integrations.js' service-worker.js
+          grep -q 'integrations.js' scripts/build-web.mjs
+          grep -q 'integrations.css' index.html
+          grep -q 'integrations.css' service-worker.js
+          grep -q 'integrations.css' scripts/build-web.mjs
           grep -q 'scripts/configure-android-signing.mjs' .github/workflows/build-android.yml
           grep -q 'EDUVIA_ANDROID_KEYSTORE_BASE64' .github/workflows/build-android.yml
           grep -q 'EDUVIA_ANDROID_KEYSTORE_PASSWORD' .github/workflows/build-android.yml
@@ -131,7 +139,7 @@ jobs:
           grep -q 'experience.css' scripts/build-web.mjs
           grep -q 'app.js?v=' service-worker.js
           grep -q 'eduvia-study-alarms-v2' native-bridge-src.js
-          grep -q 'eduvia-v106-native-speech-keywords' service-worker.js
+          grep -q 'eduvia-v107-ai-google-integrations' service-worker.js
           grep -q 'theme-audit-2' index.html
           grep -q 'profile-audit-3-knowledge-check' index.html
           grep -q 'profile-audit-3-knowledge-check' service-worker.js

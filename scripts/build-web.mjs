@@ -2,7 +2,7 @@ import { copyFile, mkdir } from 'node:fs/promises';
 import { build } from 'esbuild';
 
 const webFiles = [
-  'index.html', 'learner-profile.js', 'app.js', 'study-studio.js', 'course-intelligence.js', 'lecture-intelligence.js', 'feature-hub.js', 'styles.css', 'entry-flow.css', 'visual-refresh.css', 'experience.css', 'lecture-intelligence.css', 'experience.js', 'learning-expansions.js', 'icon-system.css', 'ui-polish.css', 'icon-system.js', 'recall-core.js', 'recall.js', 'recall.css', 'voice-reflection.js', 'voice-reflection.css', 'roadmap-core.js', 'roadmaps.js', 'roadmaps.css', 'entry-flow.js', 'manifest.json',
+  'index.html', 'integrations.js', 'integrations.css', 'learner-profile.js', 'app.js', 'study-studio.js', 'course-intelligence.js', 'lecture-intelligence.js', 'feature-hub.js', 'styles.css', 'entry-flow.css', 'visual-refresh.css', 'experience.css', 'lecture-intelligence.css', 'experience.js', 'learning-expansions.js', 'icon-system.css', 'ui-polish.css', 'icon-system.js', 'recall-core.js', 'recall.js', 'recall.css', 'voice-reflection.js', 'voice-reflection.css', 'roadmap-core.js', 'roadmaps.js', 'roadmaps.css', 'entry-flow.js', 'manifest.json',
   'push-config.js', 'service-worker.js', 'icon.svg', 'icon-192.png',
   'icon-512.png', 'apple-touch-icon.png'
 ];

@@ -195,7 +195,10 @@
         if(!root.eduLectureMaterials?.save)throw new Error('The local lecture storage is not ready. Refresh Eduvia and try again.');
         await root.eduLectureMaterials.save(record);
         if(typeof root.render==='function')root.render();
-        if(root.eduIntegrations?.isAutoSummaryEnabled?.())await root.eduIntegrations.generateLectureSummary(record.id,{silent:true}).catch(()=>{});
+        if(root.eduIntegrations?.isAutoSummaryEnabled?.()){
+          try{await root.eduIntegrations.generateLectureSummary(record.id,{silent:true})}
+          catch(error){toast('Lecture saved. AI summary was not created: '+(error?.message||'Try again from the lecture notes.'))}
+        }
         openLecture(await root.eduLectureMaterials.read(record.id));
         toast('Lecture notes saved on this device.');
       }catch(error){

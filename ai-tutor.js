@@ -153,7 +153,7 @@
       ? '<p class="eduvia-ai-error" role="alert">' + escapeHtml(state.error) + '</p>'
       : state.notice
         ? '<p class="eduvia-ai-notice" role="status">' + escapeHtml(state.notice) + '</p>'
-        : '<p class="eduvia-ai-privacy">Your question and any selected source excerpts are sent to Eduvia’s secure AI service. Your OpenAI API key is never stored on this device.</p>';
+        : '<p class="eduvia-ai-privacy">Your question and any selected course excerpts are sent securely to Eduvia’s server and its configured OpenAI model. Chat history is saved on this device; do not submit passwords, private identifiers or sensitive documents.</p>';
     return '<section class="panel eduvia-ai-panel">' +
       '<div class="eduvia-ai-heading"><div><div class="eyebrow">YOUR PERSONAL AI TEACHER</div><h2>Eduvia Tutor</h2><p>Ask follow-up questions, request step-by-step explanations and learn from your own course materials.</p></div><span class="eduvia-ai-spark">✦</span></div>' +
       '<div class="eduvia-ai-chat" aria-live="polite">' + (transcript || '<div class="eduvia-ai-welcome"><strong>What would you like to understand today?</strong><p>Try asking for a simple explanation, a worked example or a quick knowledge check.</p></div>') +
@@ -484,8 +484,8 @@
         const calendarPayload = {
           summary: event.title || 'Eduvia learning session',
           description: 'Synced from Eduvia' + (event.type ? ' (' + event.type + ')' : ''),
-          start: { dateTime: start, timeZone: 'Africa/Lagos' },
-          end: { dateTime: end, timeZone: 'Africa/Lagos' }
+          start: { dateTime: start, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC' },
+          end: { dateTime: end, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC' }
         };
         const body = event.googleCalendarEventId
           ? { action: 'update', eventId: event.googleCalendarEventId, event: calendarPayload }
@@ -543,6 +543,7 @@
     } catch {
       state.googleChecked = true;
     }
+    renderApp();
   }
 
   document.addEventListener('submit', event => {

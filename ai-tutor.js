@@ -434,9 +434,9 @@
     }
   }
 
-  function lagosDateTime(value) {
+  function localDateTime(value) {
     const parts = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Africa/Lagos', year: 'numeric', month: '2-digit', day: '2-digit',
+      year: 'numeric', month: '2-digit', day: '2-digit',
       hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
     }).formatToParts(new Date(value));
     const get = type => parts.find(part => part.type === type)?.value || '';
@@ -456,8 +456,8 @@
       for (const item of state.calendarEvents) {
         if (!item.start?.dateTime || !item.end?.dateTime) continue;
         const existing = app.events.find(entry => entry.googleEventId === item.id || entry.googleCalendarEventId === item.id);
-        const start = lagosDateTime(item.start.dateTime);
-        const end = lagosDateTime(item.end.dateTime);
+        const start = localDateTime(item.start.dateTime);
+        const end = localDateTime(item.end.dateTime);
         const synced = {
           ...(existing || {}),
           id: existing?.id || 'gcal-' + item.id,
@@ -468,6 +468,7 @@
           start: start.time,
           end: end.time,
           googleEventId: existing?.googleEventId || item.id,
+          googleCalendarEventId: existing?.googleCalendarEventId || item.id,
           note: item.description || existing?.note || ''
         };
         if (existing) Object.assign(existing, synced);
@@ -478,7 +479,7 @@
       let exported = 0;
       const today = new Date().toLocaleDateString('en-CA');
       for (const event of app.events.slice(0, 60)) {
-        if (!event.date || event.date < today || event.googleEventId || !event.start || !event.end) continue;
+        if (!event.date || event.date < today || !event.start || !event.end) continue;
         const start = event.date + 'T' + event.start + ':00';
         const end = event.date + 'T' + event.end + ':00';
         const calendarPayload = {
@@ -487,13 +488,17 @@
           start: { dateTime: start, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC' },
           end: { dateTime: end, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC' }
         };
-        const body = event.googleCalendarEventId
-          ? { action: 'update', eventId: event.googleCalendarEventId, event: calendarPayload }
+        const remoteEventId = event.googleCalendarEventId || event.googleEventId || '';
+        const body = remoteEventId
+          ? { action: 'update', eventId: remoteEventId, event: calendarPayload }
           : { action: 'create', event: calendarPayload };
         const method = body.action;
         const endpoint = '/v1/google/calendar/events?action=' + method + (body.eventId ? '&eventId=' + encodeURIComponent(body.eventId) : '');
         const saved = await apiRequest(endpoint, { method: 'POST', body: { event: calendarPayload } });
-        if (method === 'create') event.googleCalendarEventId = saved.event?.id || '';
+        if (method === 'create') {
+          event.googleCalendarEventId = saved.event?.id || '';
+          event.googleEventId = event.googleCalendarEventId;
+        }
         exported++;
       }
       if (exported && typeof save === 'function') await save();

@@ -482,7 +482,7 @@ async function googleDriveDownload(request, env, id, headers) {
 async function googleCalendarEvents(env, id, syncToken, headers) {
   const params = new URLSearchParams({
     maxResults: '2500',
-    singleEvents: 'true',
+    singleEvents: 'false',
     showDeleted: 'true'
   });
   if (syncToken) params.set('syncToken', syncToken);

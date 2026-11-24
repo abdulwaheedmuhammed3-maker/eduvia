@@ -195,7 +195,8 @@
         if(!root.eduLectureMaterials?.save)throw new Error('The local lecture storage is not ready. Refresh Eduvia and try again.');
         await root.eduLectureMaterials.save(record);
         if(typeof root.render==='function')root.render();
-        openLecture(record);
+        if(root.eduIntegrations?.isAutoSummaryEnabled?.())await root.eduIntegrations.generateLectureSummary(record.id,{silent:true}).catch(()=>{});
+        openLecture(await root.eduLectureMaterials.read(record.id));
         toast('Lecture notes saved on this device.');
       }catch(error){
         toast(error?.message||'Could not process this lecture.');
@@ -207,6 +208,7 @@
   function notesMarkdown(record){
     const lines=['# '+String(record.name||'Recorded lecture'),'','**Class date:** '+formatDate(record.lectureDate),'**Saved:** '+new Date(record.createdAt||Date.now()).toLocaleString(),''];
     if(record.sourceUrl)lines.push('**Google source:** '+record.sourceUrl,'');
+    if(record.aiSummary)lines.push('## AI-generated study guide','',String(record.aiSummary),'');
     lines.push('## Major points');
     (record.keyPoints||[]).forEach((point,index)=>lines.push((index+1)+'. '+point.text+' — *'+(point.location||'Lecture transcript')+'*'));
     if(record.topics?.length)lines.push('','## Repeated topics','',record.topics.join(' · '));
@@ -227,7 +229,9 @@
     const sources=(record.attachments||[]).map(file=>'<li>'+escapeHtml(file.name)+' · '+Number(file.characters||0).toLocaleString()+' characters extracted</li>').join('');
     const text=String(record.text||'');
     const preview=text.length>50000?text.slice(0,50000)+'\n\n[Preview shortened. Download the notes to read the complete extracted text.]':text;
-    const body='<div class="lecture-summary-head"><span class="course-code">'+escapeHtml(formatDate(record.lectureDate))+'</span><p>Major statements selected from '+Number(record.sentenceCount||0)+' readable sentences across '+(record.attachments||[]).length+' source files.</p></div><div class="lecture-key-points">'+points+'</div>'+(topics?'<div class="lecture-topic-list">'+topics+'</div>':'')+'<div class="lecture-import-explainer"><strong>How to read this summary</strong><p>These points are sentences selected from the transcript or OCR text, not newly written AI claims. Check the original context, especially where a slide contains equations, diagrams or handwriting.</p></div><h3 class="lecture-subheading">Source files</h3><ul class="lecture-source-files">'+sources+'</ul>'+ (record.sourceUrl?'<p>'+sourceLinkMarkup(record.sourceUrl)+'</p>':'')+'<details class="lecture-transcript"><summary>Show extracted transcript and image text</summary><pre>'+escapeHtml(preview)+'</pre></details>';
+    const aiSummary=record.aiSummary?'<section class="int-ai-summary"><div class="eyebrow">AI-GENERATED STUDY GUIDE</div><pre>'+escapeHtml(record.aiSummary)+'</pre><small>Generated with '+escapeHtml(record.aiSummaryModel||'Eduvia AI')+'</small></section>':'';
+    const aiAction='<div class="lecture-ai-action"><button type="button" class="secondary-btn" data-lecture-action="ai-summary" data-id="'+escapeHtml(record.id)+'">'+(record.aiSummary?'Regenerate AI study guide':'Generate AI study guide')+'</button><span>Uses your lecture transcript and OpenAI API credits.</span></div>';
+    const body='<div class="lecture-summary-head"><span class="course-code">'+escapeHtml(formatDate(record.lectureDate))+'</span><p>Major statements selected from '+Number(record.sentenceCount||0)+' readable sentences across '+(record.attachments||[]).length+' source files.</p></div>'+aiAction+aiSummary+'<div class="lecture-key-points">'+points+'</div>'+(topics?'<div class="lecture-topic-list">'+topics+'</div>':'')+'<div class="lecture-import-explainer"><strong>About the local key points</strong><p>These statements are selected directly from the transcript or OCR text. The AI guide is generated separately and should be checked against your original lecture material.</p></div><h3 class="lecture-subheading">Source files</h3><ul class="lecture-source-files">'+sources+'</ul>'+ (record.sourceUrl?'<p>'+sourceLinkMarkup(record.sourceUrl)+'</p>':'')+'<details class="lecture-transcript"><summary>Show extracted transcript and image text</summary><pre>'+escapeHtml(preview)+'</pre></details>';
     openModal('Lecture notes',String(record.name||'Recorded lecture'),body,'Download notes',()=>{downloadNotes(record);root.closeModal?.()});
   }
   async function openSavedLecture(id){
@@ -253,6 +257,7 @@
     if(action==='import')importDialog(button.dataset.courseId||'');
     if(action==='open')openSavedLecture(button.dataset.id||'');
     if(action==='delete')deleteLecture(button.dataset.id||'');
+    if(action==='ai-summary')root.eduIntegrations?.generateLectureSummary?.(button.dataset.id||'').catch(()=>{});
   });
 
   root.eduLectureIntelligence={renderCourseSection,importDialog,openSavedLecture};

@@ -304,7 +304,7 @@
       const config = await apiRequest('/v1/google/picker-config', { method: 'GET' });
       await loadGooglePicker();
       const picker = new window.google.picker.PickerBuilder()
-        .addView(new window.google.picker.DocsView(window.google.picker.ViewId.DOCS).setMode(window.google.picker.DocsViewMode.LIST).setMimeTypes('application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/png,image/jpeg,image/webp,text/plain,text/markdown'))
+        .addView(new window.google.picker.DocsView(window.google.picker.ViewId.DOCS).setMode(window.google.picker.DocsViewMode.LIST).setMimeTypes('application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.google-apps.document,application/vnd.google-apps.presentation,application/vnd.google-apps.spreadsheet,image/png,image/jpeg,image/webp,text/plain,text/markdown'))
         .setOAuthToken(config.accessToken)
         .setDeveloperKey(config.apiKey)
         .setAppId(String(config.appId))

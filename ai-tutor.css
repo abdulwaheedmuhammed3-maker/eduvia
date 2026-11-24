@@ -10,7 +10,7 @@
 .eduvia-ai-welcome p{margin:7px auto 0;max-width:380px;color:var(--muted);font-size:12px;line-height:1.6}
 .eduvia-ai-message{max-width:min(88%,680px);padding:11px 13px;border-radius:13px;overflow-wrap:anywhere}
 .eduvia-ai-message span{display:block;margin-bottom:5px;font-size:9px;font-weight:800;letter-spacing:.09em;opacity:.7}
-.eduvia-ai-message p{margin:0;font-size:13px;line-height:1.65}
+.eduvia-ai-message-body{font-size:13px;line-height:1.7;overflow-wrap:anywhere}.eduvia-ai-message-body h3,.eduvia-ai-message-body h4{margin:8px 0 4px;font-size:14px}.eduvia-ai-message-body code{padding:1px 4px;border-radius:4px;background:var(--panel-soft);font-size:11px}
 .eduvia-ai-message-learner{justify-self:end;background:var(--accent-soft,rgba(106,91,220,.12));color:var(--text)}
 .eduvia-ai-message-assistant{justify-self:start;background:var(--panel);border:1px solid var(--border-color);color:var(--text)}
 .eduvia-ai-thinking{display:flex;align-items:center;gap:5px;padding:9px 4px;color:var(--muted);font-size:12px}

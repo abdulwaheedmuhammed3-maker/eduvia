@@ -423,7 +423,7 @@
     const endTime = String(end.getHours()).padStart(2, '0') + ':' + String(end.getMinutes()).padStart(2, '0');
     const rules = (event.recurrence || []).join(';');
     const weekly = /FREQ=WEEKLY/i.test(rules);
-    if (event.recurrence?.length && !weekly) return 0;
+    if (event.recurrence?.length && (!weekly || /COUNT=/i.test(rules))) return 0;
     const byDayMatch = rules.match(/BYDAY=([^;]+)/i);
     const dayMap = {SU:0,MO:1,TU:2,WE:3,TH:4,FR:5,SA:6};
     const days = weekly && byDayMatch ? byDayMatch[1].split(',').map(value => dayMap[value.replace(/^[+-]?\d+/, '')]).filter(value => Number.isInteger(value)) : [start.getDay()];
@@ -441,6 +441,8 @@
         existing.start = startTime;
         existing.end = endTime;
         existing.date = weekly ? '' : date;
+        existing.repeatFrom = weekly ? date : '';
+        existing.repeatUntil = weekly && /UNTIL=(\d{4})(\d{2})(\d{2})/.test(rules) ? rules.match(/UNTIL=(\d{4})(\d{2})(\d{2})/).slice(1).join('-') : '';
         existing.location = event.location || '';
         count++;
         continue;
@@ -451,7 +453,8 @@
         type: 'study',
         courseId: '',
         date: weekly ? '' : date,
-        repeatUntil: weekly && /UNTIL=(\d{4})(\d{2})(\d{2})/.test(rules) ? (rules.match(/UNTIL=(\d{4})(\d{2})(\d{2})/).slice(1).join('-')) : '',
+        repeatFrom: weekly ? date : '',
+        repeatUntil: weekly && /UNTIL=(\d{4})(\d{2})(\d{2})/.test(rules) ? rules.match(/UNTIL=(\d{4})(\d{2})(\d{2})/).slice(1).join('-') : '',
         day,
         start: startTime,
         end: endTime,

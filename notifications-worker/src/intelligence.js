@@ -422,14 +422,41 @@ async function driveImport(request, env, session, cors = {}) {
   const metaResponse = await googleFetch('/drive/v3/files/' + encodeURIComponent(fileId) + '?fields=id,name,mimeType,size,modifiedTime', tokens);
   const meta = await metaResponse.json();
   const googleMime = String(meta.mimeType || '');
+  if (googleMime === 'application/vnd.google-apps.folder') {
+    throw new IntelligenceRequestError('Choose a file, not a Drive folder.', 400);
+  }
+  if (Number(meta.size || 0) > 8 * 1024 * 1024) {
+    throw new IntelligenceRequestError('This Drive file is larger than the 8 MB import limit. Download and split it before importing.', 413);
+  }
   const isGoogleDoc = googleMime.startsWith('application/vnd.google-apps.');
   const exportMime = isGoogleDoc ? 'application/pdf' : '';
   const contentPath = isGoogleDoc
     ? '/drive/v3/files/' + encodeURIComponent(fileId) + '/export?mimeType=' + encodeURIComponent(exportMime)
     : '/drive/v3/files/' + encodeURIComponent(fileId) + '?alt=media';
   const contentResponse = await googleFetch(contentPath, tokens);
-  const bytes = new Uint8Array(await contentResponse.arrayBuffer());
-  if (bytes.byteLength > 8 * 1024 * 1024) throw new IntelligenceRequestError('This Drive file is larger than the 8 MB import limit. Download and split it before importing.', 413);
+  const reader = contentResponse.body?.getReader();
+  const chunks = [];
+  let totalBytes = 0;
+  if (reader) {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > 8 * 1024 * 1024) {
+        await reader.cancel();
+        throw new IntelligenceRequestError('This Drive file is larger than the 8 MB import limit. Download and split it before importing.', 413);
+      }
+      chunks.push(value);
+    }
+  } else {
+    const raw = new Uint8Array(await contentResponse.arrayBuffer());
+    totalBytes = raw.byteLength;
+    if (totalBytes > 8 * 1024 * 1024) throw new IntelligenceRequestError('This Drive file is larger than the 8 MB import limit. Download and split it before importing.', 413);
+    chunks.push(raw);
+  }
+  const bytes = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
   const mimeType = exportMime || contentResponse.headers.get('Content-Type') || googleMime || 'application/octet-stream';
   return json({
     file: {
@@ -488,14 +515,23 @@ async function meetTranscripts(request, env, session, cors = {}) {
   for (const item of (transcriptPayload.transcripts || []).slice(0, 5)) {
     const resource = String(item.name || '');
     if (!/^conferenceRecords\/[A-Za-z0-9_-]+\/transcripts\/[A-Za-z0-9_-]+$/.test(resource)) continue;
-    const entriesResponse = await googleMeetFetch('/v2/' + resource + '/entries?pageSize=100', tokens);
-    const entriesPayload = await entriesResponse.json();
+    const entries = [];
+    let entryPageToken = '';
+    for (let page = 0; page < 10; page++) {
+      const entryParams = new URLSearchParams({ pageSize: '100' });
+      if (entryPageToken) entryParams.set('pageToken', entryPageToken);
+      const entriesResponse = await googleMeetFetch('/v2/' + resource + '/entries?' + entryParams.toString(), tokens);
+      const entriesPayload = await entriesResponse.json();
+      entries.push(...(entriesPayload.transcriptEntries || []));
+      entryPageToken = entriesPayload.nextPageToken || '';
+      if (!entryPageToken) break;
+    }
     transcripts.push({
       name: resource,
       startTime: item.startTime || null,
       endTime: item.endTime || null,
       state: item.state || null,
-      entries: (entriesPayload.transcriptEntries || []).map(entry => ({
+      entries: entries.map(entry => ({
         text: String(entry.text || '').slice(0, 4000),
         startTime: entry.startTime || null,
         endTime: entry.endTime || null,

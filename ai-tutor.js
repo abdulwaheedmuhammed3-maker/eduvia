@@ -535,7 +535,7 @@
         if (!event.date || event.date < today || !event.start || !event.end) continue;
         const calendarPayload = {
           summary: event.title || 'Eduvia learning session',
-          description: String(event.note || '') + (event.type ? (event.note ? '\n' : '') + 'Synced from Eduvia (' + event.type + ')' : 'Synced from Eduvia'),
+          description: String(event.note || ''),
           start: {
             dateTime: event.date + 'T' + event.start + ':00',
             timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'

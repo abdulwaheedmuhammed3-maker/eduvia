@@ -72,9 +72,9 @@
   function courseName(id) {
     return (data.courses || []).find(course => String(course.id) === String(id))?.name || 'General learning';
   }
-  function settingsToggle(label, description, key, checked) {
+  function settingsToggle(label, description, key, checked, disabled = false) {
     return '<label class="int-toggle-row"><span><b>' + esc(label) + '</b><small>' + esc(description) + '</small></span>' +
-      '<input type="checkbox" data-integration-toggle="' + esc(key) + '" ' + (checked ? 'checked' : '') + '></label>';
+      '<input type="checkbox" data-integration-toggle="' + esc(key) + '" ' + (checked ? 'checked' : '') + (disabled ? ' disabled' : '') + '></label>';
   }
   function ensureStatus() {
     if (state.status || state.statusLoading) return;
@@ -126,7 +126,7 @@
       '</section>' +
       '<section class="panel int-panel"><div class="int-panel-head"><div><div class="eyebrow">GOOGLE MEET</div><h2>Recorded lectures and transcripts</h2><p>Find your recent Meet conference artifacts, import generated transcripts, or transcribe a small recording when no transcript exists.</p></div></div>' +
         '<label class="form-field int-course-field">Save imported lectures under<select id="intMeetCourse">' + courseOptions('') + '</select></label>' +
-        settingsToggle('Automatically transcribe eligible Meet recordings when syncing', 'This can use OpenAI transcription credits. Only recordings up to 25 MB are supported by this first version.', AUTO_MEET_KEY, isAutoMeetEnabled()) +
+        settingsToggle('Automatically transcribe eligible Meet recordings when syncing', 'Requires an active OpenAI service and connected Google account. This can use transcription credits; recordings are limited to 25 MB.', AUTO_MEET_KEY, isAutoMeetEnabled(), !aiReady || !connected) +
         '<div class="int-action-row"><button class="primary-btn" data-integration-action="sync-meet" ' + (!connected ? 'disabled' : '') + '>Find recent Meet recordings</button></div>' +
         (state.meetMessage ? '<p class="int-muted">' + esc(state.meetMessage) + '</p>' : '') +
         '<div class="int-meet-list">' + (meetingList || '<p class="int-muted">No Meet artifacts loaded. Select Find recent Meet recordings to check the last 30 days.</p>') + '</div>' +
@@ -138,7 +138,7 @@
         '<p class="int-privacy-note">Imports skip duplicates and bring in dated events for the next 180 days. Exported events receive an Eduvia ID so repeat exports update existing events rather than duplicating them. Google Calendar changes are imported when you sync; this is not a continuous background two-way sync.</p>' +
       '</section>' +
       '<section class="panel int-panel"><div class="int-panel-head"><div><div class="eyebrow">LECTURE PROCESSING</div><h2>AI-generated study summaries</h2><p>Upgrade extracted lecture notes into a structured study guide with explanations, definitions, key concepts and revision questions.</p></div></div>' +
-        settingsToggle('Automatically create an AI summary after importing a lecture', 'When enabled, a saved transcript or lecture import is sent to OpenAI for a study guide. You can still create summaries manually.', AUTO_SUMMARY_KEY, isAutoSummaryEnabled()) +
+        settingsToggle('Automatically create an AI summary after importing a lecture', 'When enabled, a saved transcript or lecture import is sent to OpenAI for a study guide. You can still create summaries manually.', AUTO_SUMMARY_KEY, isAutoSummaryEnabled(), !aiReady) +
         '<p class="int-privacy-note">AI summaries are saved with the lecture on this device. AI processing requires an active OpenAI API configuration and uses separate API billing.</p>' +
       '</section>';
   }
@@ -403,8 +403,28 @@
       document.getElementById('intTutorMessages')?.scrollTo({ top: 999999, behavior: 'smooth' });
     }
   }
-  function localDateTime(date, time) {
-    return date + 'T' + time + ':00';
+  function localDateTime(date, time, zone) {
+    const [year, month, day] = String(date).split('-').map(Number);
+    const [hour, minute, second = 0] = String(time).split(':').map(Number);
+    if (![year, month, day, hour, minute, second].every(Number.isFinite)) throw new Error('This calendar item has an invalid date or time.');
+    const targetWallTime = Date.UTC(year, month - 1, day, hour, minute, second);
+    const localFieldsAsUtc = instant => {
+      const fields = {};
+      for (const part of new Intl.DateTimeFormat('en-US', { timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).formatToParts(instant)) {
+        if (part.type !== 'literal') fields[part.type] = Number(part.value);
+      }
+      return Date.UTC(fields.year, fields.month - 1, fields.day, fields.hour, fields.minute, fields.second);
+    };
+    let instant = targetWallTime;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const offset = localFieldsAsUtc(new Date(instant)) - instant;
+      instant = targetWallTime - offset;
+    }
+    const offsetMinutes = Math.round((localFieldsAsUtc(new Date(instant)) - instant) / 60000);
+    const absoluteOffset = Math.abs(offsetMinutes);
+    const pad = value => String(value).padStart(2, '0');
+    const suffix = (offsetMinutes >= 0 ? '+' : '-') + pad(Math.floor(absoluteOffset / 60)) + ':' + pad(absoluteOffset % 60);
+    return new Date(instant).toISOString().slice(0, 19) + suffix;
   }
   function nextWeekdayDate(weekday) {
     const now = new Date();
@@ -506,8 +526,8 @@
       summary: String(event.title || 'Eduvia learning session').slice(0, 150),
       description: 'Exported from Eduvia.',
       location: String(event.location || ''),
-      start: { dateTime: localDateTime(date, event.start), timeZone: zone },
-      end: { dateTime: localDateTime(date, event.end), timeZone: zone },
+      start: { dateTime: localDateTime(date, event.start, zone), timeZone: zone },
+      end: { dateTime: localDateTime(date, event.end, zone), timeZone: zone },
       recurrence: recurrence || [],
       googleEventId: event.googleEventId || ''
     });

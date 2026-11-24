@@ -30,23 +30,52 @@ Learners can create personal roadmaps around academic, career, professional-skil
 
 ## Study guides and practice
 
-Eduvia creates study guides and practice questions on the device from learning-area topics and uploaded materials. It has no AI connection or API key requirement. Use **Find a learning resource online** to open a normal web search; review the results yourself and save useful links or notes to the learning kit.
+Eduvia's existing study guides and practice questions are generated on the device from learning-area topics and uploaded materials, and continue to work without an AI key. The optional AI Tutor is a separate, server-backed feature described below. Use **Find a learning resource online** to open a normal web search; review the results yourself and save useful links or notes to the learning kit.
 
 ## Recorded lectures and image scanning
 
 Each course workspace includes a **Recorded lectures** area. Import a saved Google Meet transcript as TXT, VTT, SRT or DOCX, and attach lecture PDFs, PowerPoint slides, screenshots or photographs. Eduvia extracts embedded PDF and slide text, and uses its existing browser OCR reader to scan image uploads and scanned PDF pages. Extracted text keeps page, slide and source-file markers where available.
 
-The first version selects major statements directly from the uploaded source text and labels each point with its source location. This is an extractive study aid, not a verified AI interpretation or a speech-to-text engine. Check technical details, equations and OCR output against the original lecture. Notes and extracted text are saved with the course on the current device and are included in the existing course-material backup flow.
+The existing local lecture reader still selects major statements directly from source text and labels each point with its source location. When the optional AI service is configured, a learner can also request a structured AI-generated study guide for a saved lecture. Check technical details, equations and OCR output against the original lecture. Notes and extracted text remain saved with the course on the current device and are included in the existing course-material backup flow.
 
-A Google Drive, Docs or Meet URL can be saved as a source reference, but direct private-Drive download is not enabled. It requires a Google OAuth client and user-authorised Drive access; Eduvia must not ask for or store a Google account password. Audio/video transcription and AI-written summaries also require a configured secure processing service. Until those integrations are configured, upload the recording's transcript and its slides/images instead. First-time PDF/Office/OCR processing may need an internet connection to load the existing document-reader libraries.
+The optional integrations can import selected private Google Drive files after the learner authorises Google, retrieve accessible Google Meet transcript/recording artifacts, and transcribe an eligible recording. A Meet transcript is preferred when one exists. Recording transcription uses OpenAI and this first version supports files up to 25 MB. Google Meet artifact access is limited to meetings and files the connected account is permitted to access; Meet transcripts are time-limited by Google. Direct Meet/Drive processing is not enabled until the Worker and Google Cloud credentials are configured.
+
+## AI Tutor and Google Workspace integrations
+
+The optional **AI & Google Workspace** workspace is available from **More tools** after the integrations branch is deployed. It brings together the GPT-powered AI Tutor, AI lecture summaries, Google Drive import, Google Meet transcript/recording import and Google Calendar import/export.
+
+- **AI Tutor:** asks for a course or learning area, searches relevant uploaded passages locally, and sends the learner's question, recent conversation and selected excerpts to the OpenAI Responses API. The tutor is instructed to distinguish source-backed claims from general explanation and not invent citations.
+- **AI lecture summaries:** a learner can generate an optional study guide from a saved lecture. It includes an overview, detailed explanation, keywords/concepts, definitions, examples, points to verify, revision questions and takeaways. An opt-in setting can request a summary after an imported lecture is saved.
+- **Google Drive:** the learner connects Google, chooses a file through Google Picker and chooses the Eduvia learning area to receive it. Eduvia downloads the selected file through the Worker and reuses the existing browser document reader. Google Docs and Slides are exported as PDF, Sheets as CSV, and ordinary supported files are downloaded as-is.
+- **Google Meet:** the learner can list recent conference records, select generated transcript artifacts, and import transcript entries into Recorded Lectures. If a meeting has a permitted recording but no transcript, Eduvia can transcribe the recording through OpenAI. This first version supports recording files up to 25 MB. Meet artifact access depends on the user's Google permissions and meeting access; Meet transcript artifacts are time-limited.
+- **Google Calendar:** the learner can manually import dated events into Eduvia or export Eduvia classes, personal study sessions and examinations to the primary Google Calendar. Exported items carry an Eduvia identifier so repeat exports update existing events instead of making duplicates. Incremental sync tokens reduce repeat imports. This is user-initiated import/export, not continuous background two-way sync. The current importer skips all-day events and non-weekly recurrence rules; weekly repeating events are bounded by their start/end dates.
+
+### Required service setup
+
+These integrations are implemented in the application branch but are **not live until deployment configuration is complete**. The Cloudflare Worker requires these secrets:
+- `OPENAI_API_KEY`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_TOKEN_ENCRYPTION_KEY` (base64 encoding of a random 32-byte key)
+
+It also requires Google OAuth client ID, the exact redirect URI in `notifications-worker/wrangler.jsonc`, Google Picker API key, and Google Cloud project number. Enable Google Drive API, Google Picker API, Google Calendar API and Google Meet REST API, and configure the OAuth consent screen and approved scopes. Google may require app verification or Workspace administrator approval for some scopes.
+
+Run the D1 migration before deploying the Worker:
+```sh
+cd notifications-worker
+npm install
+npx wrangler d1 migrations apply eduvia-notifications --remote
+npx wrangler deploy
+```
+
+Then configure the Eduvia web origin in the Worker, rebuild and deploy the web app. The AI service uses separate OpenAI API billing; a ChatGPT subscription does not include OpenAI API credits. Google credentials and the OpenAI API key must never be placed in browser JavaScript or an APK.
 
 ## Materials and privacy
 
-Uploaded files are read in the browser. Extracted text and planner details stay in that browser on that device. The original files are not uploaded to an Eduvia server. Settings can download a planner JSON backup; Personal documents can create a portable ZIP with files, education history, and recorded results. The ZIP is not encrypted, so keep it private. There are no accounts or automatic cloud sync in this version.
+Uploaded local files are read in the browser. Extracted text and planner details stay in that browser on that device by default. When a learner explicitly uses the AI Tutor or requests an AI lecture summary/transcription, the selected question, recent conversation, source excerpts or lecture recording/transcript are sent through the Eduvia Worker to OpenAI for processing. When the learner connects Google, Google refresh credentials are encrypted in the Worker database; selected Drive content and permitted Meet artifacts are fetched only for the requested import. Calendar events are exchanged only when the learner runs a sync. The ZIP backup is not encrypted, so keep it private. There are no general Eduvia accounts or automatic planner cloud sync in this version.
 
 ## Phone notifications
 
-In the browser and installed PWA, Eduvia schedules class and learning-session alerts for their scheduled start time, plus a daily learning reminder, through its own phone notification service. Browser push can arrive late because a scheduled Worker checks once per minute and sends up to ten due reminders per run. The free service uses Cloudflare Workers and D1; it does not use Google Calendar. Phone notification permissions and sound settings still apply. iPhone and iPad require Eduvia to be added to the Home Screen (iOS/iPadOS 16.4 or later).
+In the browser and installed PWA, Eduvia schedules class and learning-session alerts for their scheduled start time, plus a daily learning reminder, through its own phone notification service. Browser push can arrive late because a scheduled Worker checks once per minute and sends up to ten due reminders per run. The service uses Cloudflare Workers and D1. Google Calendar integration is optional and is described separately below. Phone notification permissions and sound settings still apply. iPhone and iPad require Eduvia to be added to the Home Screen (iOS/iPadOS 16.4 or later).
 
 On first-time profile setup, Eduvia offers a one-time invitation to enable class, learning-session and daily reminder alerts. The operating-system or browser permission request appears only after the learner taps **Enable alerts**. Dismissing the invitation does not make it appear again when an existing learner reopens Eduvia; notification controls remain available in **Settings**.
 
@@ -77,4 +106,4 @@ Eduvia schedules class and learning-session notifications for the event's actual
 
 ## Learning experiences, wellness and insights
 
-Play & Learn includes a short recall sprint using saved flashcards; completed cards receive the existing spaced-review intervals. Ask Eduvia searches the learner's own uploaded materials and keeps a local recent-search list; it does not connect to an online AI model. Discover includes saved guides, reading history and digital-skills and career-readiness topics. Study Wellness stores one editable daily study-balance check-in on the device. Performance Insights summarises saved study quizzes, topic mastery, mock-exam self-assessments and activity; it does not infer or invent official grades.
+Play & Learn includes a short recall sprint using saved flashcards; completed cards receive the existing spaced-review intervals. Ask Eduvia continues to retrieve source passages locally and keeps a local recent-search list. The separate optional AI Tutor sends the learner's question and selected source excerpts to OpenAI for conversational, step-by-step teaching. Discover includes saved guides, reading history and digital-skills and career-readiness topics. Study Wellness stores one editable daily study-balance check-in on the device. Performance Insights summarises saved study quizzes, topic mastery, mock-exam self-assessments and activity; it does not infer or invent official grades.

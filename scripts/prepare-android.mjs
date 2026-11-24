@@ -36,7 +36,7 @@ if (/<string name="custom_url_scheme">[^<]*<\/string>/.test(strings)) {
 await writeFile(stringsPath, strings);
 
 if (!manifest.includes('android:host="oauth"')) {
-  const activityTag = manifest.match(/<activity\\b(?=[^>]*android:name="[^"]*(?:MainActivity|BridgeActivity)")[^>]*>/);
+  const activityTag = manifest.match(/<activity\b(?=[^>]*android:name="[^"]*(?:MainActivity|BridgeActivity)")[^>]*>/);
   if (!activityTag) throw new Error('Could not find the Capacitor main activity to register the Eduvia OAuth callback.');
   const deepLinkFilter = `
         <intent-filter>

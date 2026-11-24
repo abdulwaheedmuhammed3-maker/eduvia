@@ -1,6 +1,6 @@
 # Eduvia phone notification service
 
-This is a small, serverless push service for Eduvia. It uses Cloudflare Workers and D1 on their free plan. It does not use Google Calendar and does not need an always-on server.
+This is Eduvia's serverless notification and optional AI/Google Workspace integration service. It uses Cloudflare Workers and D1 and does not require an always-on application server.
 
 The Worker checks due reminders once per minute and can send up to ten per run. Lecture and study reminders are scheduled for the event's actual start time (not five minutes before), so browser push delivery may arrive up to roughly one scheduler interval late. It claims each reminder before sending so overlapping checks do not send the same alert twice. Alerts more than ten minutes late are discarded. Phone operating-system notification settings still control whether an alert makes a sound.
 

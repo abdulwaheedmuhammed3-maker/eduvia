@@ -54,7 +54,7 @@ test('Drive Picker imports selected files through the existing local document re
   const client = read('integrations.js');
   assert.match(worker, /drive\.file/);
   assert.match(worker, /google\/drive\/download/);
-  assert.match(worker, /MAX_REQUEST_BYTES/);
+  assert.match(worker, /MAX_JSON_BYTES/);
   assert.match(client, /google\.picker\.PickerBuilder/);
   assert.match(client, /eduHandleStudioFile\('material'/);
   assert.match(client, /intDriveCourse/);
@@ -86,7 +86,7 @@ test('Calendar sync supports incremental tokens, deletion, weekly schedules and 
   assert.match(worker, /status === 410/);
   assert.match(worker, /extendedProperties/);
   assert.match(worker, /eduviaId/);
-  assert.match(client, /fullSyncRequired/);
+  assert.match(worker, /fullSyncRequired/);
   assert.match(client, /googleCalendarImported/);
   assert.match(client, /repeatFrom/);
   assert.match(client, /repeatUntil/);

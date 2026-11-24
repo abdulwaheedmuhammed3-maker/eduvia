@@ -380,17 +380,8 @@
       sentenceCount: result.sentenceCount,
       method: 'google-import-local-extractive-v1'
     };
-    try {
-      const ai = await summarizeLecture({ title: record.name, course: course?.name || '', sourceText: extracted.slice(0, 50000) });
-      record.aiSummary = ai.summary;
-      record.aiSummaryModel = ai.model;
-      record.aiSummaryCreatedAt = Date.now();
-      record.method = 'google-import-ai-summary-v1';
-    } catch (error) {
-      record.aiSummaryError = error?.message || 'AI summary unavailable';
-    }
     await root.eduLectureMaterials.save(record);
-    state.notice = record.aiSummary ? 'Lecture imported and AI summary generated.' : 'Lecture imported. Local source-based notes were saved; AI summary is not currently available.';
+    state.notice = 'Lecture imported. Your source text and key points are saved on this device. Choose Generate AI summary in the lecture notes when you are ready to send the extracted text to the AI service.';
     return record;
   }
 

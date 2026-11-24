@@ -108,7 +108,7 @@
         '<article class="int-status-card"><span class="int-status-icon">G</span><div><b>Google account</b><small>' + (connected ? esc(s.googleEmail || 'Connected') : 'Not connected') + '</small></div><span class="int-status-dot ' + (connected ? 'is-ready' : '') + '"></span></article>' +
         '<article class="int-status-card"><span class="int-status-icon">▤</span><div><b>Drive Picker</b><small>' + (pickerReady ? 'Ready' : 'Setup required') + '</small></div><span class="int-status-dot ' + (pickerReady ? 'is-ready' : '') + '"></span></article>' +
       '</section>' +
-      (s.unavailable ? '<div class="int-notice is-warning">' + esc(s.error || 'The integration service is unavailable. Complete its setup before connecting services.') + '</div>' : '') +
+      (s.unavailable ? '<div class="int-notice is-warning">' + esc(s.error || 'The integration service is unavailable. Complete its setup before connecting services.') + ' <button class="text-btn" data-integration-action="refresh-status">Retry</button></div>' : '') +
       '<section class="panel int-panel"><div class="int-panel-head"><div><div class="eyebrow">GOOGLE ACCOUNT</div><h2>' + (connected ? 'Google is connected' : 'Connect Google Workspace') + '</h2><p>' + (connected ? 'Eduvia can access only the Google services and files covered by the permissions you approved.' : 'Authorise Google once to enable Drive imports, eligible Meet artifacts and Calendar synchronisation.') + '</p></div></div>' +
       '<div class="int-action-row">' +
         (connected ? '<button class="secondary-btn" data-integration-action="disconnect-google">Disconnect Google</button>' : '<button class="primary-btn" data-integration-action="connect-google" ' + (!googleReady ? 'disabled' : '') + '>Connect Google account</button>') +
@@ -409,7 +409,9 @@
     return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
   }
   function importGoogleEvent(event) {
-    if (!event || event.status === 'cancelled' || event.start?.date) return 0;
+    if (!event) return 0;
+    if (event.status === 'cancelled') { const before=(data.events||[]).length; data.events=(data.events||[]).filter(item=>!(item.googleCalendarImported&&item.googleEventId===event.id)); return before-data.events.length; }
+    if (event.start?.date) return 0;
     const start = new Date(event.start?.dateTime || '');
     const end = new Date(event.end?.dateTime || '');
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) return 0;
@@ -417,10 +419,15 @@
     const endTime = String(end.getHours()).padStart(2, '0') + ':' + String(end.getMinutes()).padStart(2, '0');
     const rules = (event.recurrence || []).join(';');
     const weekly = /FREQ=WEEKLY/i.test(rules);
+    if (event.recurrence?.length && !weekly) return 0;
     const byDayMatch = rules.match(/BYDAY=([^;]+)/i);
     const dayMap = {SU:0,MO:1,TU:2,WE:3,TH:4,FR:5,SA:6};
     const days = weekly && byDayMatch ? byDayMatch[1].split(',').map(value => dayMap[value.replace(/^[+-]?\d+/, '')]).filter(value => Number.isInteger(value)) : [start.getDay()];
     let count = 0;
+    if (weekly) {
+      const allowedDays = new Set(days.length ? days : [start.getDay()]);
+      data.events = (data.events || []).filter(item => !(item.googleCalendarImported && item.googleEventId === event.id && !allowedDays.has(Number(item.day))));
+    }
     for (const day of (days.length ? days : [start.getDay()])) {
       const date = start.getFullYear() + '-' + String(start.getMonth() + 1).padStart(2, '0') + '-' + String(start.getDate()).padStart(2, '0');
       if (!weekly && (date < new Date().toLocaleDateString('en-CA') || date > new Date(Date.now() + 180 * 86400000).toLocaleDateString('en-CA'))) continue;
@@ -440,6 +447,7 @@
         type: 'study',
         courseId: '',
         date: weekly ? '' : date,
+        repeatUntil: weekly && /UNTIL=(\d{4})(\d{2})(\d{2})/.test(rules) ? (rules.match(/UNTIL=(\d{4})(\d{2})(\d{2})/).slice(1).join('-')) : '',
         day,
         start: startTime,
         end: endTime,
@@ -534,6 +542,7 @@
     if (!button) return;
     const action = button.dataset.integrationAction;
     if (action === 'connect-google') connectGoogle();
+    if (action === 'refresh-status') { state.status = null; syncIntegrationStatus(); }
     if (action === 'disconnect-google') disconnectGoogle();
     if (action === 'pick-drive-file') chooseDriveFile();
     if (action === 'sync-meet') syncMeet();

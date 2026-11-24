@@ -263,7 +263,8 @@ export default {
       sendDueReminders(env),
       env.DB.batch([
         env.DB.prepare('DELETE FROM intelligence_sessions WHERE expires_at <= ?').bind(Date.now()),
-        env.DB.prepare('DELETE FROM google_oauth_states WHERE expires_at <= ?').bind(Date.now())
+        env.DB.prepare('DELETE FROM google_oauth_states WHERE expires_at <= ?').bind(Date.now()),
+        env.DB.prepare('DELETE FROM intelligence_ip_usage WHERE updated_at <= ?').bind(Date.now() - 30 * 24 * 60 * 60 * 1000)
       ])
     ]));
   }

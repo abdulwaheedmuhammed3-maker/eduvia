@@ -66,7 +66,8 @@ function safeReturnUrl(value, env) {
   try { target = new URL(String(value || '')); }
   catch { throw new IntegrationError('Return to Eduvia from a trusted application URL.', 400); }
   const allowed = String(env.ALLOWED_ORIGIN || '').split(',').map(item => item.trim()).filter(Boolean);
-  if (target.protocol !== 'https:' || !allowed.includes(target.origin)) {
+  const isTrustedCapacitorOrigin = target.origin === 'capacitor://localhost';
+  if ((target.protocol !== 'https:' && !isTrustedCapacitorOrigin) || !allowed.includes(target.origin)) {
     throw new IntegrationError('This Eduvia application origin is not allowed.', 403);
   }
   target.hash = 'integrations';

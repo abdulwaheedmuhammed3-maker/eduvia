@@ -40,3 +40,6 @@
 .lecture-ai-summary-text{font-size:12px;line-height:1.75;color:var(--text,#333);overflow-wrap:anywhere}
 .lecture-ai-summary-card>small{font-size:10px;color:var(--muted,#777);line-height:1.5}
 .lecture-ai-summary-empty{margin:0 0 14px;padding:11px 13px;border-radius:11px;background:var(--panel-soft,rgba(128,128,128,.05));color:var(--muted,#777);font-size:12px;line-height:1.55}
+
+.lecture-ai-summary-text h3,.lecture-ai-summary-text h4{margin:9px 0 5px;font-size:13px;color:var(--text,#333)}
+.lecture-ai-summary-text code{padding:1px 4px;border-radius:4px;background:var(--panel-soft,rgba(128,128,128,.1));font-size:11px}

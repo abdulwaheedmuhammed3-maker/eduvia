@@ -183,7 +183,7 @@
       '<div class="eduvia-google-status"><span class="eduvia-google-dot ' + (state.googleConnected ? 'connected' : '') + '"></span>' + escapeHtml(connectedLabel) + '</div>' +
       '<div class="eduvia-google-actions">' +
       (state.googleConnected
-        ? '<button type="button" class="secondary-btn" data-eduvia-google-action="drive">Browse Drive</button><button type="button" class="secondary-btn" data-eduvia-google-action="meet">Find Meet lectures</button><button type="button" class="secondary-btn" data-eduvia-google-action="calendar">Sync Calendar</button><button type="button" class="text-btn" data-eduvia-google-action="disconnect">Disconnect</button>'
+        ? '<button type="button" class="secondary-btn" data-eduvia-google-action="drive">Choose Drive files</button><button type="button" class="secondary-btn" data-eduvia-google-action="meet">Find Meet lectures</button><button type="button" class="secondary-btn" data-eduvia-google-action="calendar">Sync Calendar</button><button type="button" class="text-btn" data-eduvia-google-action="disconnect">Disconnect</button>'
         : '<button type="button" class="primary-btn" data-eduvia-google-action="connect" ' + (state.googleBusy ? 'disabled' : '') + '>Connect Google Workspace</button>') +
       '</div>' +
       (driveItems ? '<div class="eduvia-google-list"><strong>Drive files</strong>' + driveItems + '</div>' : '') +
@@ -255,18 +255,72 @@
     }
   }
 
+  async function loadGooglePicker() {
+    if (window.google?.picker?.PickerBuilder) return;
+    if (!window.__eduviaGooglePickerScript) {
+      window.__eduviaGooglePickerScript = new Promise((resolve, reject) => {
+        const existing = document.querySelector('script[data-eduvia-google-picker]');
+        if (existing) {
+          existing.addEventListener('load', resolve, { once: true });
+          existing.addEventListener('error', reject, { once: true });
+          return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://apis.google.com/js/api.js';
+        script.async = true;
+        script.defer = true;
+        script.dataset.eduviaGooglePicker = '1';
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Google Picker could not be loaded. Check your internet connection and Google API setup.'));
+        document.head.appendChild(script);
+      });
+    }
+    await window.__eduviaGooglePickerScript;
+    await new Promise((resolve, reject) => {
+      if (!window.gapi?.load) return reject(new Error('Google API libraries did not load correctly.'));
+      window.gapi.load('picker', { callback: resolve, onerror: () => reject(new Error('Google Drive file picker could not be initialised.')) });
+    });
+  }
+
   async function browseDrive() {
     state.googleBusy = 'drive';
-    state.calendarMessage = '';
+    state.error = '';
+    state.notice = '';
     renderApp();
     try {
-      const result = await apiRequest('/v1/google/drive/files?pageSize=30', { method: 'GET' });
-      state.driveFiles = result.files || [];
-      state.notice = state.driveFiles.length ? 'Choose a Drive file to import into a course.' : 'No accessible Drive files were found.';
-    } catch (error) {
-      state.error = error.message;
-    } finally {
+      const config = await apiRequest('/v1/google/picker-config', { method: 'GET' });
+      await loadGooglePicker();
+      const picker = new window.google.picker.PickerBuilder()
+        .addView(new window.google.picker.DocsView(window.google.picker.ViewId.DOCS).setMode(window.google.picker.DocsViewMode.LIST))
+        .setOAuthToken(config.accessToken)
+        .setDeveloperKey(config.apiKey)
+        .setAppId(String(config.appId))
+        .setMaxItems(10)
+        .setTitle('Choose lecture files to import into Eduvia')
+        .setCallback(result => {
+          if (result.action !== window.google.picker.Action.PICKED) return;
+          const docs = result[window.google.picker.Response.DOCUMENTS] || [];
+          if (!docs.length) return;
+          state.googleBusy = 'drive-import';
+          (async () => {
+            for (const doc of docs) {
+              try {
+                await importDriveFile(String(doc.id || ''), String(doc.name || 'Drive lecture file'));
+              } catch (error) {
+                state.error = (state.error ? state.error + ' ' : '') + (error?.message || 'One Drive file could not be imported.');
+              }
+            }
+            state.googleBusy = '';
+            renderApp();
+          })();
+        })
+        .build();
       state.googleBusy = '';
+      renderApp();
+      picker.setVisible(true);
+    } catch (error) {
+      state.googleBusy = '';
+      state.error = error?.message || 'Google Drive could not be opened.';
       renderApp();
     }
   }
@@ -327,7 +381,7 @@
     return record;
   }
 
-  async function importDriveFile(fileId) {
+  async function importDriveFile(fileId, fileName = 'Google Drive file') {
     state.googleBusy = 'drive-import';
     renderApp();
     try {
@@ -338,7 +392,7 @@
       if (typeof root.eduExtractLectureAsset !== 'function') throw new Error('The document reader is not ready. Refresh Eduvia and try again.');
       const text = await root.eduExtractLectureAsset(fileObject);
       const courseId = state.courseId || selectedCourseId();
-      await saveImportedLecture(file.name, courseId, text, file.name, '');
+      await saveImportedLecture(file.name || fileName, courseId, text, file.name || fileName, '');
       state.driveFiles = [];
       if (typeof root.render === 'function') root.render();
       showToast(state.notice);
@@ -377,8 +431,13 @@
     }
   }
 
-  function formatInLagos(value, options) {
-    return new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Lagos', ...options }).format(new Date(value));
+  function lagosDateTime(value) {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Africa/Lagos', year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+    }).formatToParts(new Date(value));
+    const get = type => parts.find(part => part.type === type)?.value || '';
+    return { date: get('year') + '-' + get('month') + '-' + get('day'), time: get('hour') + ':' + get('minute') };
   }
 
   async function syncCalendar() {
@@ -393,18 +452,23 @@
       let imported = 0;
       for (const item of state.calendarEvents) {
         if (!item.start?.dateTime || !item.end?.dateTime) continue;
-        if (app.events.some(existing => existing.googleEventId === item.id)) continue;
-        app.events.push({
-          id: 'gcal-' + item.id,
+        const existing = app.events.find(entry => entry.googleEventId === item.id || entry.googleCalendarEventId === item.id);
+        const start = lagosDateTime(item.start.dateTime);
+        const end = lagosDateTime(item.end.dateTime);
+        const synced = {
+          ...(existing || {}),
+          id: existing?.id || 'gcal-' + item.id,
           title: item.summary || 'Google Calendar event',
-          type: 'study',
-          courseId: '',
-          date: formatInLagos(item.start.dateTime, { year: 'numeric', month: '2-digit', day: '2-digit' }).split('/').reverse().join('-'),
-          start: formatInLagos(item.start.dateTime, { hour: '2-digit', minute: '2-digit', hour12: false }),
-          end: formatInLagos(item.end.dateTime, { hour: '2-digit', minute: '2-digit', hour12: false }),
-          googleEventId: item.id,
-          note: item.description || ''
-        });
+          type: existing?.type || 'study',
+          courseId: existing?.courseId || '',
+          date: start.date,
+          start: start.time,
+          end: end.time,
+          googleEventId: existing?.googleEventId || item.id,
+          note: item.description || existing?.note || ''
+        };
+        if (existing) Object.assign(existing, synced);
+        else app.events.push(synced);
         imported++;
       }
       if (imported && typeof save === 'function') await save();

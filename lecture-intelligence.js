@@ -11,6 +11,17 @@
   function escapeHtml(value){
     return String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   }
+  function formatAiSummary(value){
+    let safe=escapeHtml(value);
+    safe=safe.replace(/^### (.+)$/gm,'<h4>$1</h4>');
+    safe=safe.replace(/^## (.+)$/gm,'<h3>$1</h3>');
+    safe=safe.replace(/^# (.+)$/gm,'<h3>$1</h3>');
+    safe=safe.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+    safe=safe.replace(/\*(.+?)\*/g,'<em>$1</em>');
+    safe=safe.replace(/`([^`]+)`/g,'<code>$1</code>');
+    safe=safe.replace(/(^|\n)[*-] (.+)/g,'$1• $2');
+    return safe.replace(/\r\n?/g,'\n').replace(/\n/g,'<br>');
+  }
   function cleanTranscript(value){
     return String(value||'').replace(/\r/g,'').split('\n').filter(line=>{
       const trimmed=line.trim();
@@ -228,7 +239,7 @@
     const sources=(record.attachments||[]).map(file=>'<li>'+escapeHtml(file.name)+' · '+Number(file.characters||0).toLocaleString()+' characters extracted</li>').join('');
     const text=String(record.text||'');
     const preview=text.length>50000?text.slice(0,50000)+'\n\n[Preview shortened. Download the notes to read the complete extracted text.]':text;
-    const aiSection=record.aiSummary?'<section class="lecture-ai-summary-card"><div class="eyebrow">AI-GENERATED LECTURE NOTES</div><div class="lecture-ai-summary-text">'+escapeHtml(record.aiSummary).replace(/\r\n?/g,'\n').replace(/\n/g,'<br>')+'</div><small>Generated from your uploaded lecture text. Verify technical details against the original source.</small></section>':'<div class="lecture-ai-summary-empty">Generate a structured AI summary, definitions, detailed notes and revision questions from this lecture.</div>';
+    const aiSection=record.aiSummary?'<section class="lecture-ai-summary-card"><div class="eyebrow">AI-GENERATED LECTURE NOTES</div><div class="lecture-ai-summary-text">'+formatAiSummary(record.aiSummary)+'</div><small>Generated from your uploaded lecture text. Verify technical details against the original source.</small></section>':'<div class="lecture-ai-summary-empty">Generate a structured AI summary, definitions, detailed notes and revision questions from this lecture.</div>';
     const aiButton='<button type="button" class="secondary-btn" data-lecture-action="ai-summary" data-id="'+escapeHtml(record.id)+'">'+(record.aiSummary?'Regenerate AI summary':'Generate AI summary')+'</button>';
     const body='<div class="lecture-summary-head"><span class="course-code">'+escapeHtml(formatDate(record.lectureDate))+'</span><p>Major statements selected from '+Number(record.sentenceCount||0)+' readable sentences across '+(record.attachments||[]).length+' source files.</p></div><div class="lecture-ai-summary-actions">'+aiButton+'</div>'+aiSection+'<div class="lecture-key-points">'+points+'</div>'+(topics?'<div class="lecture-topic-list">'+topics+'</div>':'')+'<div class="lecture-import-explainer"><strong>About these notes</strong><p>The original key points are selected from your transcript or OCR text. The AI summary is generated separately and may rephrase or organise the lecture. Check equations, diagrams, technical details and any uncertain transcription against the original.</p></div><h3 class="lecture-subheading">Source files</h3><ul class="lecture-source-files">'+sources+'</ul>'+ (record.sourceUrl?'<p>'+sourceLinkMarkup(record.sourceUrl)+'</p>':'')+'<details class="lecture-transcript"><summary>Show extracted transcript and image text</summary><pre>'+escapeHtml(preview)+'</pre></details>';
     openModal('Lecture notes',String(record.name||'Recorded lecture'),body,'Download notes',()=>{downloadNotes(record);root.closeModal?.()});

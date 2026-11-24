@@ -42,6 +42,9 @@ test('Google OAuth uses state, PKCE and encrypted server-side refresh tokens', (
   assert.match(worker, /state_hash/);
   assert.match(worker, /AES-GCM/);
   assert.match(worker, /GOOGLE_TOKEN_ENCRYPTION_KEY/);
+  assert.match(worker, /isTrustedCapacitorOrigin/);
+  assert.match(read('notifications-worker/wrangler.jsonc'), /capacitor:\/\/localhost/);
+  assert.match(read('notifications-worker/wrangler.jsonc'), /https:\/\/localhost/);
   assert.match(worker, /refresh_token_enc/);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS google_connections/);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS google_oauth_states/);

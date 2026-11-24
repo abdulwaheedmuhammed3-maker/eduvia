@@ -1,0 +1,69 @@
+/* Eduvia AI and Google Workspace integration surfaces */
+.int-status-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0 20px}
+.int-status-card{display:flex;align-items:center;gap:12px;min-width:0;padding:15px;border:1px solid var(--line,#e7e7ef);border-radius:18px;background:var(--surface,#fff);color:var(--ink,#27283a)}
+.int-status-card>div{display:grid;gap:3px;min-width:0;flex:1}
+.int-status-card b{font-size:14px}
+.int-status-card small,.int-muted,.int-privacy-note{font-size:12px;line-height:1.55;color:var(--muted,#777b8a)}
+.int-status-icon{display:grid;place-items:center;width:38px;height:38px;flex:0 0 38px;border-radius:13px;background:color-mix(in srgb,var(--accent,#7867df) 12%,transparent);color:var(--accent,#7867df);font-weight:750}
+.int-status-dot{width:9px;height:9px;flex:0 0 9px;border-radius:50%;background:#c8c8d2}
+.int-status-dot.is-ready{background:#21a56b;box-shadow:0 0 0 4px color-mix(in srgb,#21a56b 13%,transparent)}
+.int-panel{margin:15px 0;padding:20px}
+.int-panel-head{display:flex;justify-content:space-between;gap:16px;margin-bottom:14px}
+.int-panel-head h2{margin:3px 0 7px;font-size:20px;letter-spacing:-.025em}
+.int-panel-head p{max-width:690px;margin:0;color:var(--muted,#777b8a);font-size:13px;line-height:1.6}
+.int-action-row{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:13px 0 8px}
+.int-privacy-note{margin:12px 0 0;max-width:850px}
+.int-notice{margin:14px 0;padding:13px 15px;border:1px solid var(--line,#e7e7ef);border-radius:13px;font-size:13px;line-height:1.5}
+.int-notice.is-warning{background:color-mix(in srgb,#da9c2e 9%,var(--surface,#fff));border-color:color-mix(in srgb,#da9c2e 26%,var(--line,#e7e7ef))}
+.int-course-field{max-width:520px;margin:8px 0 14px}
+.int-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:18px;max-width:760px;margin:14px 0;padding:13px 0;border-top:1px solid var(--line,#e7e7ef);border-bottom:1px solid var(--line,#e7e7ef);cursor:pointer}
+.int-toggle-row>span{display:grid;gap:4px}
+.int-toggle-row b{font-size:13px;color:var(--ink,#27283a)}
+.int-toggle-row small{max-width:600px;color:var(--muted,#777b8a);font-size:12px;line-height:1.5}
+.int-toggle-row input{width:19px;height:19px;flex:0 0 19px;accent-color:var(--accent,#7867df)}
+.int-meet-list{display:grid;gap:9px;margin-top:14px}
+.int-meet-card{display:grid;gap:10px;padding:14px;border:1px solid var(--line,#e7e7ef);border-radius:15px;background:var(--surface,#fff)}
+.int-meet-card>div:first-child{display:grid;gap:4px}
+.int-meet-card b{font-size:13px;color:var(--ink,#27283a);overflow-wrap:anywhere}
+.int-meet-card small{font-size:12px;color:var(--muted,#777b8a)}
+.int-meet-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.int-meet-actions .secondary-btn{font-size:12px;padding:8px 11px;min-height:36px}
+.int-tutor-panel{padding:0;overflow:hidden}
+.int-tutor-controls{padding:17px 19px 0}
+.int-tutor-controls .form-field{max-width:520px}
+.int-tutor-messages{display:flex;flex-direction:column;gap:12px;min-height:280px;max-height:58vh;overflow-y:auto;padding:20px;background:color-mix(in srgb,var(--surface,#fff) 92%,var(--accent,#7867df) 8%)}
+.int-tutor-empty{display:grid;justify-items:center;align-content:center;gap:8px;min-height:230px;text-align:center;color:var(--muted,#777b8a)}
+.int-tutor-empty>span{display:grid;place-items:center;width:46px;height:46px;border-radius:16px;background:color-mix(in srgb,var(--accent,#7867df) 12%,transparent);color:var(--accent,#7867df);font-size:22px}
+.int-tutor-empty b{color:var(--ink,#27283a);font-size:16px}
+.int-tutor-empty p{max-width:420px;margin:0;font-size:13px;line-height:1.55}
+.int-chat-message{max-width:min(84%,760px);padding:12px 14px;border:1px solid var(--line,#e7e7ef);border-radius:15px;background:var(--surface,#fff);color:var(--ink,#27283a);box-shadow:0 2px 9px rgba(30,30,50,.035)}
+.int-chat-message small{display:block;margin-bottom:6px;color:var(--muted,#777b8a);font-size:10px;font-weight:750;letter-spacing:.08em}
+.int-chat-message>div{font-size:13px;line-height:1.65;overflow-wrap:anywhere}
+.int-chat-message.is-user{align-self:flex-end;background:color-mix(in srgb,var(--accent,#7867df) 10%,var(--surface,#fff));border-color:color-mix(in srgb,var(--accent,#7867df) 22%,var(--line,#e7e7ef))}
+.int-chat-message.is-assistant{align-self:flex-start}
+.int-tutor-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end;padding:15px 19px}
+.int-tutor-form textarea{width:100%;min-height:74px;resize:vertical;padding:12px 13px;border:1px solid var(--line,#e7e7ef);border-radius:13px;background:var(--surface,#fff);color:var(--ink,#27283a);font:inherit;font-size:13px}
+.int-tutor-form button{min-height:44px;white-space:nowrap}
+.int-tutor-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 2px}
+.int-ai-summary{margin:14px 0 18px;padding:16px;border:1px solid color-mix(in srgb,var(--accent,#7867df) 25%,var(--line,#e7e7ef));border-radius:15px;background:color-mix(in srgb,var(--accent,#7867df) 5%,var(--surface,#fff))}
+.int-ai-summary pre{margin:9px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;font-size:13px;line-height:1.7;color:var(--ink,#27283a)}
+.int-ai-summary small{display:block;margin-top:9px;color:var(--muted,#777b8a);font-size:11px}
+.lecture-ai-action{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0}
+.lecture-ai-action span{font-size:11px;color:var(--muted,#777b8a)}
+.int-ask-tutor-prompt{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 16px;padding:18px;border:1px solid color-mix(in srgb,var(--accent,#7867df) 25%,var(--line,#e7e7ef));background:color-mix(in srgb,var(--accent,#7867df) 5%,var(--surface,#fff))}
+.int-ask-tutor-prompt h2{margin:4px 0 6px;font-size:18px}
+.int-ask-tutor-prompt p{margin:0;color:var(--muted,#777b8a);font-size:12px;line-height:1.5}
+.int-ask-tutor-prompt .primary-btn{flex:0 0 auto}
+@media(max-width:760px){
+  .int-status-grid{grid-template-columns:1fr;gap:8px}
+  .int-status-card{padding:12px}
+  .int-panel{padding:15px}
+  .int-panel-head h2{font-size:18px}
+  .int-tutor-messages{min-height:250px;max-height:54vh;padding:14px}
+  .int-tutor-form{grid-template-columns:1fr;padding:13px}
+  .int-tutor-form button{width:100%}
+  .int-chat-message{max-width:94%}
+  .int-ask-tutor-prompt{align-items:flex-start;flex-direction:column}
+  .int-ask-tutor-prompt .primary-btn{width:100%}
+  .lecture-ai-action{align-items:flex-start;flex-direction:column}
+}

@@ -453,9 +453,27 @@
     return { date: get('year') + '-' + get('month') + '-' + get('day'), time: get('hour') + ':' + get('minute') };
   }
 
+  function calendarSnapshotFromLocal(event) {
+    return {
+      title: String(event.title || ''),
+      date: String(event.date || ''),
+      start: String(event.start || ''),
+      end: String(event.end || ''),
+      note: String(event.note || '')
+    };
+  }
+
+  function calendarSnapshotsEqual(left, right) {
+    if (!left || !right) return false;
+    return ['title', 'date', 'start', 'end', 'note'].every(key =>
+      String(left[key] || '') === String(right[key] || '')
+    );
+  }
+
   async function syncCalendar() {
     state.googleBusy = 'calendar';
     state.calendarMessage = '';
+    state.error = '';
     renderApp();
     try {
       const result = await apiRequest('/v1/google/calendar/events', { method: 'GET' });
@@ -463,56 +481,88 @@
       const app = appData();
       if (!Array.isArray(app.events)) app.events = [];
       let imported = 0;
+      let conflicts = 0;
       for (const item of state.calendarEvents) {
         if (!item.start?.dateTime || !item.end?.dateTime) continue;
-        const existing = app.events.find(entry => entry.googleEventId === item.id || entry.googleCalendarEventId === item.id);
         const start = localDateTime(item.start.dateTime);
         const end = localDateTime(item.end.dateTime);
-        const synced = {
-          ...(existing || {}),
-          id: existing?.id || 'gcal-' + item.id,
-          title: item.summary || 'Google Calendar event',
-          type: existing?.type || 'study',
-          courseId: existing?.courseId || '',
+        const remoteSnapshot = {
+          title: String(item.summary || 'Google Calendar event'),
           date: start.date,
           start: start.time,
           end: end.time,
-          googleEventId: existing?.googleEventId || item.id,
-          googleCalendarEventId: existing?.googleCalendarEventId || item.id,
-          note: item.description || existing?.note || ''
+          note: String(item.description || '')
         };
-        if (existing) Object.assign(existing, synced);
-        else app.events.push(synced);
-        imported++;
+        const existing = app.events.find(entry => entry.googleEventId === item.id || entry.googleCalendarEventId === item.id);
+        if (!existing) {
+          app.events.push({
+            id: 'gcal-' + item.id,
+            ...remoteSnapshot,
+            type: 'study',
+            courseId: '',
+            googleEventId: item.id,
+            googleCalendarEventId: item.id,
+            googleSyncSnapshot: remoteSnapshot
+          });
+          imported++;
+          continue;
+        }
+        const baseline = existing.googleSyncSnapshot || null;
+        const localSnapshot = calendarSnapshotFromLocal(existing);
+        const localChanged = baseline ? !calendarSnapshotsEqual(localSnapshot, baseline) : false;
+        const remoteChanged = baseline ? !calendarSnapshotsEqual(remoteSnapshot, baseline) : true;
+        if (!baseline || (!localChanged && remoteChanged) || (!localChanged && !remoteChanged) || (localChanged && remoteChanged)) {
+          Object.assign(existing, {
+            title: remoteSnapshot.title,
+            date: remoteSnapshot.date,
+            start: remoteSnapshot.start,
+            end: remoteSnapshot.end,
+            note: remoteSnapshot.note,
+            googleSyncSnapshot: remoteSnapshot
+          });
+          if (localChanged && remoteChanged) conflicts++;
+        }
+        existing.googleEventId = item.id;
+        existing.googleCalendarEventId = item.id;
       }
-      if (imported && typeof save === 'function') await save();
+      if (imported || conflicts || state.calendarEvents.length) {
+        if (typeof save === 'function') await save();
+      }
+
       let exported = 0;
       const today = new Date().toLocaleDateString('en-CA');
       for (const event of app.events.slice(0, 60)) {
         if (!event.date || event.date < today || !event.start || !event.end) continue;
-        const start = event.date + 'T' + event.start + ':00';
-        const end = event.date + 'T' + event.end + ':00';
         const calendarPayload = {
           summary: event.title || 'Eduvia learning session',
-          description: 'Synced from Eduvia' + (event.type ? ' (' + event.type + ')' : ''),
-          start: { dateTime: start, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC' },
-          end: { dateTime: end, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC' }
+          description: String(event.note || '') + (event.type ? (event.note ? '\n' : '') + 'Synced from Eduvia (' + event.type + ')' : 'Synced from Eduvia'),
+          start: {
+            dateTime: event.date + 'T' + event.start + ':00',
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+          },
+          end: {
+            dateTime: event.date + 'T' + event.end + ':00',
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+          }
         };
         const remoteEventId = event.googleCalendarEventId || event.googleEventId || '';
-        const body = remoteEventId
-          ? { action: 'update', eventId: remoteEventId, event: calendarPayload }
-          : { action: 'create', event: calendarPayload };
-        const method = body.action;
-        const endpoint = '/v1/google/calendar/events?action=' + method + (body.eventId ? '&eventId=' + encodeURIComponent(body.eventId) : '');
+        const method = remoteEventId ? 'update' : 'create';
+        const endpoint = '/v1/google/calendar/events?action=' + method +
+          (remoteEventId ? '&eventId=' + encodeURIComponent(remoteEventId) : '');
         const saved = await apiRequest(endpoint, { method: 'POST', body: { event: calendarPayload } });
-        if (method === 'create') {
-          event.googleCalendarEventId = saved.event?.id || '';
-          event.googleEventId = event.googleCalendarEventId;
+        const savedId = saved.event?.id || remoteEventId;
+        if (savedId) {
+          event.googleCalendarEventId = savedId;
+          event.googleEventId = savedId;
         }
+        event.googleSyncSnapshot = calendarSnapshotFromLocal(event);
         exported++;
       }
       if (exported && typeof save === 'function') await save();
-      state.calendarMessage = 'Calendar sync finished: ' + imported + ' event(s) imported and ' + exported + ' Eduvia event(s) sent or updated. Only dated one-time timetable entries are exported in this version.';
+      state.calendarMessage = 'Calendar sync finished: ' + imported + ' new event(s) imported and ' +
+        exported + ' Eduvia event(s) synchronised.' +
+        (conflicts ? ' ' + conflicts + ' event(s) changed in both places; Google Calendar values were kept.' : '') +
+        ' Sync is manual and covers timed events and up to 60 Eduvia timetable entries at a time.';
     } catch (error) {
       state.error = error?.message || 'Google Calendar could not be synchronised.';
     } finally {

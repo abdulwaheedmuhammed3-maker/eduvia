@@ -6,7 +6,6 @@ const MAX_DAILY_AI_REQUESTS = 35;
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/drive.file',
-  'https://www.googleapis.com/auth/drive.meet.readonly',
   'https://www.googleapis.com/auth/meetings.space.readonly',
   'https://www.googleapis.com/auth/calendar.events.owned'
 ].join(' ');

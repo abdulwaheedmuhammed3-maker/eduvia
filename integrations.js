@@ -640,14 +640,20 @@
     importMeetTranscript,
     transcribeMeetRecording
   };
-  window.addEventListener('eduvia-google-oauth-return', event => {
-    const google = String(event.detail?.google || '');
-    const googleError = String(event.detail?.google_error || '');
+  function handleGoogleOAuthReturn(detail) {
+    const google = String(detail?.google || '');
+    const googleError = String(detail?.google_error || '');
     state.status = null;
     state.meetings = [];
     syncIntegrationStatus();
     notify(google === 'connected' ? 'Google account connected to this Eduvia device.' : 'Google could not be connected. ' + (googleError === 'consent_denied' ? 'You cancelled the Google permission request.' : 'Check the Google OAuth setup and try again.'));
-  });
+  }
+  window.addEventListener('eduvia-google-oauth-return', event => handleGoogleOAuthReturn(event.detail));
+  if (window.EduviaGoogleOAuthReturn) {
+    const pendingGoogleReturn = window.EduviaGoogleOAuthReturn;
+    delete window.EduviaGoogleOAuthReturn;
+    handleGoogleOAuthReturn(pendingGoogleReturn);
+  }
   const googleStatus = new URLSearchParams(location.search).get('google');
   const googleError = new URLSearchParams(location.search).get('google_error');
   if (googleStatus || googleError) {

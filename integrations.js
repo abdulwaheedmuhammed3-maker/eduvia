@@ -302,13 +302,15 @@
   async function importMeetTranscript(transcriptName, record, silent = false) {
     try {
       if ((data.materials || []).some(item => item?.googleArtifactName === transcriptName)) { if (!silent) notify('This Google Meet transcript is already saved in Eduvia.'); return null; }
+      const selectedCourse = document.getElementById('intMeetCourse')?.value || '';
+      if (!selectedCourse) throw new Error('Choose a learning area before importing this Meet transcript.');
       const result = await api('/v1/integrations/google/meet/entries?transcript=' + encodeURIComponent(transcriptName));
       const entries = (result.items || []).slice().sort((a, b) => String(a.startTime || '').localeCompare(String(b.startTime || '')));
       const text = entries.map(entry => {
         const time = entry.startTime ? new Date(entry.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
         return (time ? '[' + time + '] ' : '') + String(entry.text || '').trim();
       }).filter(line => line.trim()).join('\n');
-      const courseId = document.getElementById('intMeetCourse')?.value || '';
+      const courseId = selectedCourse;
       const lecture = createLectureRecord(meetingTitle(record), courseId, meetingDate(record), text, 'Google Meet transcript', 'google-meet-transcript', '');
       lecture.googleArtifactName = transcriptName;
       await root.eduLectureMaterials.save(lecture);
@@ -323,11 +325,13 @@
   async function transcribeMeetRecording(fileId, name, record, silent = false) {
     try {
       if ((data.materials || []).some(item => item?.googleRecordingFileId === fileId)) { if (!silent) notify('This Google Meet recording is already saved in Eduvia.'); return null; }
+      const selectedCourse = document.getElementById('intMeetCourse')?.value || '';
+      if (!selectedCourse) throw new Error('Choose a learning area before transcribing this Meet recording.');
       const download = await apiBlob('/v1/integrations/google/drive/download?fileId=' + encodeURIComponent(fileId) + '&transcribe=1');
       const upload = new FormData();
       upload.append('file', new File([download.blob], name || download.name || 'meet-recording.mp4', { type: download.blob.type || 'video/mp4' }));
       const result = await api('/v1/ai/transcribe', { method: 'POST', body: upload });
-      const courseId = document.getElementById('intMeetCourse')?.value || '';
+      const courseId = selectedCourse;
       const lecture = createLectureRecord(meetingTitle(record), courseId, meetingDate(record), result.transcript, name || 'Google Meet recording', 'google-meet-ai-transcription', '');
       lecture.googleRecordingFileId = fileId;
       await root.eduLectureMaterials.save(lecture);
@@ -595,6 +599,8 @@
       const destination = currentPage === 'ai-tutor' ? 'ask' : currentPage === 'integrations' ? 'my-study' : '';
       if (destination) {
         document.querySelectorAll('.mobile-nav-item[data-page]').forEach(item => item.classList.toggle('active', item.dataset.page === destination));
+        const desktopDestination = currentPage === 'ai-tutor' ? 'ask' : 'more';
+        document.querySelectorAll('.nav-item[data-page]').forEach(item => item.classList.toggle('active', item.dataset.page === desktopDestination));
         const crumb = document.getElementById('crumbCurrent');
         if (crumb) crumb.textContent = currentPage === 'ai-tutor' ? 'AI Tutor' : 'Integrations';
       }

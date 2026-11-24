@@ -259,6 +259,12 @@ export default {
     }
   },
   async scheduled(_event, env, ctx) {
-    ctx.waitUntil(sendDueReminders(env));
+    ctx.waitUntil(Promise.all([
+      sendDueReminders(env),
+      env.DB.batch([
+        env.DB.prepare('DELETE FROM intelligence_sessions WHERE expires_at <= ?').bind(Date.now()),
+        env.DB.prepare('DELETE FROM google_oauth_states WHERE expires_at <= ?').bind(Date.now())
+      ])
+    ]));
   }
 };

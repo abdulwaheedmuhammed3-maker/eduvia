@@ -151,7 +151,7 @@ async function googleFetch(env, id, url, options = {}) {
       : response.status === 404
         ? 'Google could not find that meeting or file.'
         : 'Google could not complete the request (' + response.status + ').';
-    throw new IntegrationError(message, response.status === 401 ? 401 : response.status === 404 ? 404 : response.status === 403 ? 403 : 502);
+    throw new IntegrationError(message, response.status === 401 ? 401 : response.status === 404 ? 404 : response.status === 403 ? 403 : response.status === 410 ? 410 : 502);
   }
   return response;
 }
@@ -324,7 +324,7 @@ async function openAiResponse(env, instructions, input, maxOutputTokens = 1400) 
   return { text, model: result.model || model };
 }
 
-async function aiTutor(request, env, id) {
+async function aiTutor(request, env, id, headers) {
   const body = await readJson(request);
   const question = String(body.question || '').trim();
   const courseName = String(body.courseName || 'General learning').slice(0, 140);
@@ -354,10 +354,10 @@ async function aiTutor(request, env, id) {
     '\n\nRecent conversation:\n' + (conversation || 'No previous messages.') +
     '\n\nLearner question:\n' + question;
   const result = await openAiResponse(env, instructions, input, 1500);
-  return json({ answer: result.text, model: result.model });
+  return json({ answer: result.text, model: result.model }, 200, headers);
 }
 
-async function aiLectureSummary(request, env, id) {
+async function aiLectureSummary(request, env, id, headers) {
   const body = await readJson(request);
   const transcript = String(body.transcript || '').trim();
   if (!transcript) throw new IntegrationError('There is no readable lecture text to summarise.', 400);
@@ -373,10 +373,10 @@ async function aiLectureSummary(request, env, id) {
     'When the transcript contains page, slide, speaker or timestamp markers, retain useful references. ' +
     'The result should be comprehensive but readable, with no unsupported claims.';
   const result = await openAiResponse(env, instructions, 'Course: ' + courseName + '\nLecture: ' + title + '\n\nLecture transcript:\n' + transcript, 2200);
-  return json({ summary: result.text, model: result.model, createdAt: Date.now() });
+  return json({ summary: result.text, model: result.model, createdAt: Date.now() }, 200, headers);
 }
 
-async function aiTranscribe(request, env, id) {
+async function aiTranscribe(request, env, id, headers) {
   if (!env.OPENAI_API_KEY) throw new IntegrationError('AI services are not configured on Eduvia yet.', 503);
   const type = request.headers.get('Content-Type') || '';
   if (!type.toLowerCase().includes('multipart/form-data')) throw new IntegrationError('Upload a recording as a file.', 400);
@@ -402,16 +402,16 @@ async function aiTranscribe(request, env, id) {
   if (!response.ok) throw new IntegrationError(response.status === 429 ? 'The transcription service is busy. Try again shortly.' : 'The recording could not be transcribed. Check its format and try again.', response.status === 429 ? 429 : 502);
   const transcript = String(result.text || '').trim();
   if (!transcript) throw new IntegrationError('The recording did not produce a readable transcript.', 422);
-  return json({ transcript, model: 'gpt-transcribe' });
+  return json({ transcript, model: 'gpt-transcribe' }, 200, headers);
 }
 
-async function googleMeetRecords(env, id) {
+async function googleMeetRecords(env, id, headers) {
   const start = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const filter = 'start_time>="' + start + '"';
   const url = 'https://meet.googleapis.com/v2/conferenceRecords?filter=' + encodeURIComponent(filter) + '&pageSize=100';
   const response = await googleFetch(env, id, url);
   const payload = await response.json();
-  return json({ records: payload.conferenceRecords || [], nextPageToken: payload.nextPageToken || '' });
+  return json({ records: payload.conferenceRecords || [], nextPageToken: payload.nextPageToken || '' }, 200, headers);
 }
 
 function googleResourceName(value) {
@@ -422,7 +422,7 @@ function googleResourceName(value) {
   return name;
 }
 
-async function googleMeetList(env, id, kind, name) {
+async function googleMeetList(env, id, kind, name, headers) {
   const resource = googleResourceName(name);
   if (kind === 'transcripts' && !/^conferenceRecords\/[^/]+$/.test(resource)) throw new IntegrationError('Choose a conference record first.', 400);
   if (kind === 'recordings' && !/^conferenceRecords\/[^/]+$/.test(resource)) throw new IntegrationError('Choose a conference record first.', 400);
@@ -431,10 +431,10 @@ async function googleMeetList(env, id, kind, name) {
   const response = await googleFetch(env, id, 'https://meet.googleapis.com/v2/' + path);
   const payload = await response.json();
   const key = kind === 'entries' ? 'transcriptEntries' : kind;
-  return json({ items: payload[key] || [], nextPageToken: payload.nextPageToken || '' });
+  return json({ items: payload[key] || [], nextPageToken: payload.nextPageToken || '' }, 200, headers);
 }
 
-async function googleDriveDownload(request, env, id) {
+async function googleDriveDownload(request, env, id, headers) {
   const url = new URL(request.url);
   const fileId = String(url.searchParams.get('fileId') || '');
   const transcribe = url.searchParams.get('transcribe') === '1';
@@ -473,12 +473,13 @@ async function googleDriveDownload(request, env, id) {
     'Content-Length': String(buffer.byteLength),
     'Cache-Control': 'no-store',
     'X-File-Name': encodeURIComponent(outputName),
-    'Access-Control-Expose-Headers': 'X-File-Name'
+    'Access-Control-Expose-Headers': 'X-File-Name',
+    ...headers
   };
   return new Response(buffer, { status: 200, headers });
 }
 
-async function googleCalendarEvents(env, id, syncToken) {
+async function googleCalendarEvents(env, id, syncToken, headers) {
   const params = new URLSearchParams({
     maxResults: '2500',
     singleEvents: 'true',
@@ -496,10 +497,10 @@ async function googleCalendarEvents(env, id, syncToken) {
     pageToken = payload.nextPageToken || '';
     if (!pageToken) { nextSyncToken = payload.nextSyncToken || ''; break; }
   }
-  return json({ events: all, nextSyncToken, moreAvailable: Boolean(pageToken) });
+  return json({ events: all, nextSyncToken, moreAvailable: Boolean(pageToken) }, 200, headers);
 }
 
-async function googleCalendarWrite(request, env, id) {
+async function googleCalendarWrite(request, env, id, headers) {
   const body = await readJson(request);
   const event = body.event;
   if (!event || typeof event !== 'object') throw new IntegrationError('A calendar event is required.', 400);
@@ -534,7 +535,7 @@ async function googleCalendarWrite(request, env, id) {
     body: JSON.stringify(payload)
   });
   const saved = await response.json();
-  return json({ id: saved.id, htmlLink: saved.htmlLink || '', status: saved.status || 'confirmed' });
+  return json({ id: saved.id, htmlLink: saved.htmlLink || '', status: saved.status || 'confirmed' }, 200, headers);
 }
 
 export async function handleIntegrationRoutes(request, env, headers, token, id) {
@@ -577,28 +578,28 @@ export async function handleIntegrationRoutes(request, env, headers, token, id) 
     }
 
     if (path === '/v1/integrations/google/drive/download' && request.method === 'GET') {
-      return googleDriveDownload(request, env, id);
+      return googleDriveDownload(request, env, id, headers);
     }
 
     if (path === '/v1/integrations/google/meet/records' && request.method === 'GET') {
-      return googleMeetRecords(env, id);
+      return googleMeetRecords(env, id, headers);
     }
 
     if (path === '/v1/integrations/google/meet/transcripts' && request.method === 'GET') {
-      return googleMeetList(env, id, 'transcripts', url.searchParams.get('conferenceRecord'));
+      return googleMeetList(env, id, 'transcripts', url.searchParams.get('conferenceRecord'), headers);
     }
 
     if (path === '/v1/integrations/google/meet/entries' && request.method === 'GET') {
-      return googleMeetList(env, id, 'entries', url.searchParams.get('transcript'));
+      return googleMeetList(env, id, 'entries', url.searchParams.get('transcript'), headers);
     }
 
     if (path === '/v1/integrations/google/meet/recordings' && request.method === 'GET') {
-      return googleMeetList(env, id, 'recordings', url.searchParams.get('conferenceRecord'));
+      return googleMeetList(env, id, 'recordings', url.searchParams.get('conferenceRecord'), headers);
     }
 
     if (path === '/v1/integrations/google/calendar/events' && request.method === 'GET') {
       try {
-        return await googleCalendarEvents(env, id, url.searchParams.get('syncToken') || '');
+        return await googleCalendarEvents(env, id, url.searchParams.get('syncToken') || '', headers);
       } catch (error) {
         if (error instanceof IntegrationError && error.status === 410) return json({ fullSyncRequired: true, error: 'Google Calendar requires a fresh sync.' }, 410, headers);
         throw error;
@@ -606,12 +607,12 @@ export async function handleIntegrationRoutes(request, env, headers, token, id) 
     }
 
     if (path === '/v1/integrations/google/calendar/events' && request.method === 'POST') {
-      return await googleCalendarWrite(request, env, id);
+      return await googleCalendarWrite(request, env, id, headers);
     }
 
-    if (path === '/v1/ai/tutor' && request.method === 'POST') return await aiTutor(request, env, id);
-    if (path === '/v1/ai/summary' && request.method === 'POST') return await aiLectureSummary(request, env, id);
-    if (path === '/v1/ai/transcribe' && request.method === 'POST') return await aiTranscribe(request, env, id);
+    if (path === '/v1/ai/tutor' && request.method === 'POST') return await aiTutor(request, env, id, headers);
+    if (path === '/v1/ai/summary' && request.method === 'POST') return await aiLectureSummary(request, env, id, headers);
+    if (path === '/v1/ai/transcribe' && request.method === 'POST') return await aiTranscribe(request, env, id, headers);
 
     return json({ error: 'Integration endpoint not found.' }, 404, headers);
   } catch (error) {

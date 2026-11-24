@@ -170,6 +170,7 @@
 
   function googleMarkup() {
     const connectedLabel = state.googleConnected ? 'Google account connected' : state.googleChecked ? 'Google account not connected' : 'Checking connection…';
+    const nativeApp = Boolean(window.Capacitor?.isNativePlatform?.());
     const driveItems = state.driveFiles.map(file =>
       '<article class="eduvia-google-item"><div><strong>' + escapeHtml(file.name) + '</strong><small>' + escapeHtml(file.mimeType || 'Google Drive file') + '</small></div><button type="button" class="secondary-btn" data-eduvia-google-action="import-drive" data-file-id="' + escapeHtml(file.id) + '">Import to course</button></article>'
     ).join('');
@@ -182,15 +183,17 @@
     return '<section class="panel eduvia-google-panel"><div class="eduvia-google-heading"><div><div class="eyebrow">CONNECTED LEARNING</div><h3>Google Workspace</h3><p>Import authorised Drive files and Meet transcripts, and synchronise your timetable with Calendar.</p></div><span class="eduvia-google-mark">G</span></div>' +
       '<div class="eduvia-google-status"><span class="eduvia-google-dot ' + (state.googleConnected ? 'connected' : '') + '"></span>' + escapeHtml(connectedLabel) + '</div>' +
       '<div class="eduvia-google-actions">' +
-      (state.googleConnected
-        ? '<button type="button" class="secondary-btn" data-eduvia-google-action="drive">Choose Drive files</button><button type="button" class="secondary-btn" data-eduvia-google-action="meet">Find Meet lectures</button><button type="button" class="secondary-btn" data-eduvia-google-action="calendar">Sync Calendar</button><button type="button" class="text-btn" data-eduvia-google-action="disconnect">Disconnect</button>'
-        : '<button type="button" class="primary-btn" data-eduvia-google-action="connect" ' + (state.googleBusy ? 'disabled' : '') + '>Connect Google Workspace</button>') +
+      (nativeApp
+        ? '<button type="button" class="secondary-btn" disabled>Google sign-in on Android is being prepared</button>'
+        : state.googleConnected
+          ? '<button type="button" class="secondary-btn" data-eduvia-google-action="drive">Choose Drive files</button><button type="button" class="secondary-btn" data-eduvia-google-action="meet">Find Meet lectures</button><button type="button" class="secondary-btn" data-eduvia-google-action="calendar">Sync Calendar</button><button type="button" class="text-btn" data-eduvia-google-action="disconnect">Disconnect</button>'
+          : '<button type="button" class="primary-btn" data-eduvia-google-action="connect" ' + (state.googleBusy ? 'disabled' : '') + '>Connect Google Workspace</button>') +
       '</div>' +
       (driveItems ? '<div class="eduvia-google-list"><strong>Drive files</strong>' + driveItems + '</div>' : '') +
       (meetItems ? '<div class="eduvia-google-list"><strong>Recent Meet sessions</strong>' + meetItems + '</div>' : '') +
       (calendarItems ? '<div class="eduvia-google-list"><strong>Upcoming Calendar events</strong>' + calendarItems + '</div>' : '') +
       (state.calendarMessage ? '<p class="eduvia-ai-notice">' + escapeHtml(state.calendarMessage) + '</p>' : '') +
-      '<p class="eduvia-ai-privacy">Google access is permission-based. Eduvia only requests the Drive, Meet and Calendar permissions needed for the integrations you choose. Imported materials are saved to this device.</p></section>';
+      '<p class="eduvia-ai-privacy">Google access is permission-based. Eduvia asks you to select Drive files with Google Picker; it does not browse your entire Drive. Meet access is limited to transcripts available to the connected Google account. Calendar sync uses your primary calendar. Imported materials are saved to this device.</p>' + (nativeApp ? '<p class="eduvia-ai-privacy">Google sign-in currently works in the Eduvia web app. The Android APK needs the separate system-browser OAuth and deep-link configuration before this can be enabled there.</p>' : '') + '</section>';
   }
 
   function renderExtras() {

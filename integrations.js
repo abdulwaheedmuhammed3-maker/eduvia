@@ -5,7 +5,7 @@
   const AUTO_MEET_KEY = 'eduvia.integrations.auto-meet-transcription.v1';
   const CALENDAR_SYNC_KEY = 'eduvia.integrations.calendar-sync.v1';
   const apiRoot = String(root.EDUVIA_PUSH_API_URL || '').replace(/\/+$/, '');
-  const state = { status: null, history: [], meetings: [], busy: false, calendarMessage: '', meetMessage: '' };
+  const state = { status: null, statusLoading: false, history: [], meetings: [], busy: false, calendarMessage: '', meetMessage: '' };
   const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const notify = message => { if (typeof root.toast === 'function') root.toast(message); };
   const isAutoSummaryEnabled = () => safeGet(AUTO_SUMMARY_KEY) === '1';
@@ -76,7 +76,13 @@
     return '<label class="int-toggle-row"><span><b>' + esc(label) + '</b><small>' + esc(description) + '</small></span>' +
       '<input type="checkbox" data-integration-toggle="' + esc(key) + '" ' + (checked ? 'checked' : '') + '></label>';
   }
+  function ensureStatus() {
+    if (state.status || state.statusLoading) return;
+    state.statusLoading = true;
+    loadStatus(true).finally(() => { state.statusLoading = false; if (currentPage === 'integrations' || currentPage === 'ai-tutor') renderIfCurrent(); });
+  }
   function renderIntegrationPage() {
+    ensureStatus();
     const s = state.status || {};
     const connected = Boolean(s.googleConnected);
     const aiReady = Boolean(s.aiEnabled);
@@ -141,6 +147,7 @@
     return state.history.map(item => '<article class="int-chat-message is-' + esc(item.role) + '"><small>' + (item.role === 'assistant' ? 'EDUVIA TUTOR' : 'YOU') + '</small><div>' + esc(item.content).replace(/\n/g, '<br>') + '</div></article>').join('');
   }
   function renderTutorPage() {
+    ensureStatus();
     const aiReady = Boolean(state.status?.aiEnabled);
     const selected = state.selectedTutorCourse || (data.courses || [])[0]?.id || '';
     return '<section class="page-heading"><div><div class="eyebrow">YOUR PERSONAL AI LEARNING COMPANION</div><h1>Eduvia AI Tutor</h1><p>A tutor that can work with your own uploaded notes, explain difficult concepts and help you test your understanding.</p></div></section>' +
@@ -294,6 +301,7 @@
   }
   async function importMeetTranscript(transcriptName, record, silent = false) {
     try {
+      if ((data.materials || []).some(item => item?.googleArtifactName === transcriptName)) { if (!silent) notify('This Google Meet transcript is already saved in Eduvia.'); return null; }
       const result = await api('/v1/integrations/google/meet/entries?transcript=' + encodeURIComponent(transcriptName));
       const entries = (result.items || []).slice().sort((a, b) => String(a.startTime || '').localeCompare(String(b.startTime || '')));
       const text = entries.map(entry => {
@@ -302,6 +310,7 @@
       }).filter(line => line.trim()).join('\n');
       const courseId = document.getElementById('intMeetCourse')?.value || '';
       const lecture = createLectureRecord(meetingTitle(record), courseId, meetingDate(record), text, 'Google Meet transcript', 'google-meet-transcript', '');
+      lecture.googleArtifactName = transcriptName;
       await root.eduLectureMaterials.save(lecture);
       if (isAutoSummaryEnabled() && state.status?.aiEnabled) await generateLectureSummary(lecture.id, { silent: true });
       if (!silent) notify('Meet transcript imported into Recorded Lectures.');
@@ -313,12 +322,14 @@
   }
   async function transcribeMeetRecording(fileId, name, record, silent = false) {
     try {
+      if ((data.materials || []).some(item => item?.googleRecordingFileId === fileId)) { if (!silent) notify('This Google Meet recording is already saved in Eduvia.'); return null; }
       const download = await apiBlob('/v1/integrations/google/drive/download?fileId=' + encodeURIComponent(fileId) + '&transcribe=1');
       const upload = new FormData();
       upload.append('file', new File([download.blob], name || download.name || 'meet-recording.mp4', { type: download.blob.type || 'video/mp4' }));
       const result = await api('/v1/ai/transcribe', { method: 'POST', body: upload });
       const courseId = document.getElementById('intMeetCourse')?.value || '';
       const lecture = createLectureRecord(meetingTitle(record), courseId, meetingDate(record), result.transcript, name || 'Google Meet recording', 'google-meet-ai-transcription', '');
+      lecture.googleRecordingFileId = fileId;
       await root.eduLectureMaterials.save(lecture);
       if (isAutoSummaryEnabled() && state.status?.aiEnabled) await generateLectureSummary(lecture.id, { silent: true });
       if (!silent) notify('Google Meet recording transcribed and saved to Recorded Lectures.');
@@ -361,7 +372,7 @@
       body: {
         courseName: courseName(courseId),
         question,
-        history: state.history.slice(-8),
+        history: state.history.slice(-9, -1),
         contexts
       }
     });
@@ -402,40 +413,46 @@
     const start = new Date(event.start?.dateTime || '');
     const end = new Date(event.end?.dateTime || '');
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) return 0;
-    const date = start.getFullYear() + '-' + String(start.getMonth() + 1).padStart(2, '0') + '-' + String(start.getDate()).padStart(2, '0');
     const startTime = String(start.getHours()).padStart(2, '0') + ':' + String(start.getMinutes()).padStart(2, '0');
     const endTime = String(end.getHours()).padStart(2, '0') + ':' + String(end.getMinutes()).padStart(2, '0');
-    if (date < new Date().toLocaleDateString('en-CA') || date > new Date(Date.now() + 180 * 86400000).toLocaleDateString('en-CA')) return 0;
+    const rules = (event.recurrence || []).join(';');
+    const weekly = /FREQ=WEEKLY/i.test(rules);
+    const byDayMatch = rules.match(/BYDAY=([^;]+)/i);
+    const dayMap = {SU:0,MO:1,TU:2,WE:3,TH:4,FR:5,SA:6};
+    const days = weekly && byDayMatch ? byDayMatch[1].split(',').map(value => dayMap[value.replace(/^[+-]?\d+/, '')]).filter(value => Number.isInteger(value)) : [start.getDay()];
     let count = 0;
-    const existing = (data.events || []).filter(item => item.googleCalendarImported && item.googleEventId === event.id);
-    if (existing.length) {
-      existing.forEach(item => {
-        item.title = event.summary || item.title;
-        item.start = startTime;
-        item.end = endTime;
-        item.date = date;
-        item.location = event.location || '';
+    for (const day of (days.length ? days : [start.getDay()])) {
+      const date = start.getFullYear() + '-' + String(start.getMonth() + 1).padStart(2, '0') + '-' + String(start.getDate()).padStart(2, '0');
+      if (!weekly && (date < new Date().toLocaleDateString('en-CA') || date > new Date(Date.now() + 180 * 86400000).toLocaleDateString('en-CA'))) continue;
+      const existing = (data.events || []).find(item => item.googleCalendarImported && item.googleEventId === event.id && Number(item.day) === Number(day));
+      if (existing) {
+        existing.title = String(event.summary || existing.title).slice(0, 120);
+        existing.start = startTime;
+        existing.end = endTime;
+        existing.date = weekly ? '' : date;
+        existing.location = event.location || '';
+        count++;
+        continue;
+      }
+      data.events.push({
+        id: 'google-' + event.id + '-' + day,
+        title: String(event.summary || 'Google Calendar event').slice(0, 120),
+        type: 'study',
+        courseId: '',
+        date: weekly ? '' : date,
+        day,
+        start: startTime,
+        end: endTime,
+        location: String(event.location || '').slice(0, 180),
+        remind: false,
+        duration: Math.max(1, Math.round((end.getTime() - start.getTime()) / 60000)),
+        oneTime: !weekly,
+        source: 'google-calendar',
+        googleCalendarImported: true,
+        googleEventId: event.id
       });
-      return existing.length;
+      count++;
     }
-    data.events.push({
-      id: 'google-' + event.id,
-      title: String(event.summary || 'Google Calendar event').slice(0, 120),
-      type: 'study',
-      courseId: '',
-      date,
-      day: start.getDay(),
-      start: startTime,
-      end: endTime,
-      location: String(event.location || '').slice(0, 180),
-      remind: false,
-      duration: Math.max(1, Math.round((end.getTime() - start.getTime()) / 60000)),
-      oneTime: true,
-      source: 'google-calendar',
-      googleCalendarImported: true,
-      googleEventId: event.id
-    });
-    count++;
     return count;
   }
   async function importCalendar() {
@@ -492,7 +509,7 @@
       const start = new Date('2000-01-01T' + startTime + ':00');
       const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
       const endTime = String(end.getHours()).padStart(2, '0') + ':' + String(end.getMinutes()).padStart(2, '0');
-      exports.push(make({ id: 'exam-' + exam.id, type: 'exam', title: 'Exam · ' + exam.title }, exam.date, []));
+      exports.push(make({ id: 'exam-' + exam.id, type: 'exam', title: 'Exam · ' + exam.title, googleEventId: exam.googleEventId || '' }, exam.date, []));
       exports[exports.length - 1].end = { dateTime: localDateTime(exam.date, endTime), timeZone: zone };
     }
     let count = 0;
@@ -501,6 +518,8 @@
       count++;
       const local = (data.events || []).find(item => String(item.id) === event.eduviaId);
       if (local) local.googleEventId = result.id;
+      const exam = (data.exams || []).find(item => 'exam-' + item.id === event.eduviaId);
+      if (exam) exam.googleEventId = result.id;
     }
     save();
     state.calendarMessage = count + ' Eduvia calendar item' + (count === 1 ? '' : 's') + ' exported or updated in Google Calendar.';
@@ -589,5 +608,6 @@
   }
   if (!state.status) loadStatus(true);
   root.eduPageRenderers = root.eduPageRenderers || {};
+  ensureStatus();
   if (typeof root.render === 'function') root.render();
 })();

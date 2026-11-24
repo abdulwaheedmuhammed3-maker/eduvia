@@ -33,3 +33,17 @@ This service only needs a production deployment, so disable Preview builds. If y
 ## Eduvia Recall notifications
 
 Recall questions are built on the learner's device from saved flashcards, course topics and locally indexed course materials. The notification service receives only the short question prompt, its delivery time and a same-site route back to that question. Answers, course documents, source passages and learning results are not uploaded to the Worker. Applying migration `0003_recall_notification_routes.sql` adds the validated in-app destination used when a learner taps a Recall notification.
+
+
+## AI Tutor and Google Workspace integrations
+
+The Worker also provides Eduvia's optional AI Tutor, AI lecture summaries, user-selected Drive import, Google Meet transcript import and manual Calendar sync. Setup, required secrets, Google APIs, OAuth scopes, deployment, privacy and current limitations are documented in [docs/ai-tutor-google-workspace.md](../docs/ai-tutor-google-workspace.md).
+
+After merging the integration PR:
+
+1. From this folder, run `npm run db:migrate` to apply migration `0004_intelligence_integrations.sql`.
+2. Add the required Worker secrets described in the integration guide. At minimum, configure `OPENAI_API_KEY` and `OPENAI_MODEL` before making AI Tutor available.
+3. Configure the Google OAuth client, Picker API key, Cloud project number and token-encryption key before enabling Google Workspace.
+4. Deploy the Worker and then deploy the Eduvia web bundle.
+
+The Worker never receives an OpenAI API key from the browser. Google refresh tokens are encrypted in D1. The Tutor uses a per-device daily allowance and a per-source-network daily allowance; learners sharing a campus or public Wi-Fi network share that network limit. Google OAuth is currently enabled only in the web app. Android Google sign-in remains disabled pending the external-browser and deep-link flow.

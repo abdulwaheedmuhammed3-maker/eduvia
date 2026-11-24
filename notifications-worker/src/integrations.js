@@ -468,7 +468,7 @@ async function googleDriveDownload(request, env, id, headers) {
       ? 'This Google Meet recording is larger than 25 MB. Use a generated Meet transcript or upload a shorter audio file.'
       : 'This Drive file is larger than Eduvia’s 20 MB import limit. Choose a smaller file or export fewer pages.', 413);
   }
-  const headers = {
+  const responseHeaders = {
     'Content-Type': outputMime,
     'Content-Length': String(buffer.byteLength),
     'Cache-Control': 'no-store',
@@ -476,7 +476,7 @@ async function googleDriveDownload(request, env, id, headers) {
     'Access-Control-Expose-Headers': 'X-File-Name',
     ...headers
   };
-  return new Response(buffer, { status: 200, headers });
+  return new Response(buffer, { status: 200, headers: responseHeaders });
 }
 
 async function googleCalendarEvents(env, id, syncToken, headers) {

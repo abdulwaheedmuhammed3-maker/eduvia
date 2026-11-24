@@ -14,7 +14,7 @@ The Worker checks due reminders once per minute and can send up to ten per run. 
 6. Run `npm run db:migrate`, then `npm run deploy`.
 7. Wrangler prints the Worker URL, similar to `https://eduvia-notifications.<your-workers-subdomain>.workers.dev`. Set that full URL in the root `push-config.js` file, then deploy the Eduvia site.
 
-The first request to `/v1/config` creates the VAPID push key pair and stores it in D1. The private key is not committed to the repository. The Worker accepts browser requests only from the Eduvia site origin configured in `wrangler.jsonc`.
+The first request to `/v1/config` creates the VAPID push key pair and stores it in D1. The private key is not committed to the repository. The Worker accepts browser requests only from the Eduvia site origins configured in `wrangler.jsonc`. The native Capacitor origins `https://localhost` (Android) and `capacitor://localhost` (iOS) are allow-listed so the same secured integration endpoints work inside supported native builds.
 
 ## What is stored
 
@@ -50,7 +50,7 @@ npx wrangler secret put GOOGLE_APP_ID
 
 Set `GOOGLE_REDIRECT_URI` to the exact OAuth redirect URL in `wrangler.jsonc`:
 `https://eduvia-notifications.abdulwaheedmuhammed3-996.workers.dev/v1/google/callback`.
-The OAuth web client in Google Cloud must contain this exact authorised redirect URI. The Picker key must be HTTP-referrer restricted to the Eduvia web origins, and `GOOGLE_APP_ID` is the numeric Google Cloud project number. Keep `OPENAI_MODEL` set to `gpt-6.2-sol` unless the service owner intentionally chooses another Responses API model.
+The OAuth web client in Google Cloud must contain this exact authorised redirect URI. The application return-origin allow-list also includes the native Capacitor origins so the OAuth callback can return to the installed app. The Picker key must be HTTP-referrer restricted to the Eduvia web origins, and `GOOGLE_APP_ID` is the numeric Google Cloud project number. Keep `OPENAI_MODEL` set to `gpt-6.2-sol` unless the service owner intentionally chooses another Responses API model.
 
 In Google Cloud, enable Google Drive API, Google Picker API, Google Calendar API and Google Meet REST API. Configure the OAuth consent screen and request only the scopes used by Eduvia: OpenID/email, `drive.file`, `drive.meet.readonly`, `meetings.space.readonly`, and `calendar.events.owned`. Google verification or Workspace administrator approval may be required before general public use.
 

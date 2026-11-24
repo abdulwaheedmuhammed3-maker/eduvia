@@ -25,7 +25,17 @@
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[char]);
-  const lineBreaks = value => escapeHtml(value).replace(/\r\n?/g, '\n').replace(/\n/g, '<br>');
+  const lineBreaks = value => {
+    let safe = escapeHtml(value);
+    safe = safe.replace(/^### (.+)$/gm, '<h4>$1</h4>');
+    safe = safe.replace(/^## (.+)$/gm, '<h3>$1</h3>');
+    safe = safe.replace(/^# (.+)$/gm, '<h3>$1</h3>');
+    safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    safe = safe.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    safe = safe.replace(/`([^`]+)`/g, '<code>$1</code>');
+    safe = safe.replace(/(^|\n)[*-] (.+)/g, '$1• $2');
+    return safe.replace(/\r\n?/g, '\n').replace(/\n/g, '<br>');
+  };
   const appData = () => {
     try { if (typeof data !== 'undefined') return data; } catch {}
     return root.data || { courses: [], events: [] };
@@ -294,7 +304,7 @@
       const config = await apiRequest('/v1/google/picker-config', { method: 'GET' });
       await loadGooglePicker();
       const picker = new window.google.picker.PickerBuilder()
-        .addView(new window.google.picker.DocsView(window.google.picker.ViewId.DOCS).setMode(window.google.picker.DocsViewMode.LIST))
+        .addView(new window.google.picker.DocsView(window.google.picker.ViewId.DOCS).setMode(window.google.picker.DocsViewMode.LIST).setMimeTypes('application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/png,image/jpeg,image/webp,text/plain,text/markdown'))
         .setOAuthToken(config.accessToken)
         .setDeveloperKey(config.apiKey)
         .setAppId(String(config.appId))

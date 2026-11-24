@@ -157,7 +157,7 @@
     ).join('');
     const transcript = messages.map(message =>
       '<article class="eduvia-ai-message eduvia-ai-message-' + (message.role === 'assistant' ? 'assistant' : 'learner') + '">' +
-      '<span>' + (message.role === 'assistant' ? 'EDUVIA TUTOR' : 'YOU') + '</span><p>' + lineBreaks(message.content) + '</p></article>'
+      '<span>' + (message.role === 'assistant' ? 'EDUVIA TUTOR' : 'YOU') + '</span><div class="eduvia-ai-message-body">' + lineBreaks(message.content) + '</div></article>'
     ).join('');
     const status = state.error
       ? '<p class="eduvia-ai-error" role="alert">' + escapeHtml(state.error) + '</p>'

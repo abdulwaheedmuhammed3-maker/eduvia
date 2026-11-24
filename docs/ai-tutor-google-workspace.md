@@ -8,7 +8,7 @@ This integration adds a server-side AI and Google Workspace layer to the existin
 - **AI lecture summaries:** a learner can generate a structured AI summary from the text already extracted by Recorded Lectures. The original extractive key points remain available and are not replaced.
 - **Google Drive:** Google Picker lets a learner select up to ten files at a time. Selected Drive files are downloaded through the Worker, returned to the browser for the existing PDF/Office/image/text readers, and saved locally with the course. Each file is limited to 8 MB.
 - **Google Meet:** the learner can list accessible conference records and import generated Meet transcript entries. This is not live meeting capture or automatic video/audio transcription. The meeting must have a transcript artifact available to the connected Google account.
-- **Google Calendar:** manual two-way sync imports timed events from the primary calendar and creates or updates dated, one-off Eduvia timetable events in that calendar. Linked events are tracked to prevent duplicate creation. If both copies change since the last sync, the Google Calendar version is kept and the conflict is reported. Repeated weekly timetable rules, all-day events and unattended background sync are not included yet.
+- **Google Calendar:** manual two-way sync imports timed events from the primary calendar and creates or updates dated, one-off Eduvia timetable events in that calendar. Linked events are tracked to prevent duplicate creation. If both copies change since the last sync, the Google Calendar version is kept and the conflict is reported. Deletions are not synchronised. Repeated weekly timetable rules, all-day events and unattended background sync are not included yet.
 
 ## Required services and secrets
 
@@ -36,7 +36,7 @@ Use that output as GOOGLE_TOKEN_ENCRYPTION_KEY. Google refresh tokens are encryp
 
 GOOGLE_REDIRECT_URI must be the exact callback URL on the deployed Worker, for example:
 
-    https://eduvia-notifications.<your-workers-subdomain>.workers.dev/v1/google/callback
+    https://eduvia-notifications.abdulwaheedmuhammed3-996.workers.dev/v1/google/callback
 
 APP_REDIRECT_URL must be Eduvia's production web URL with the Ask page fragment, for example:
 

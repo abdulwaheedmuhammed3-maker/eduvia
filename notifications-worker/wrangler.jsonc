@@ -10,9 +10,7 @@
     "VAPID_SUBJECT": "https://eduvia-study-planner.onrender.com",
     "OPENAI_MODEL": "gpt-6.2-sol",
     "GOOGLE_REDIRECT_URI": "https://eduvia-notifications.abdulwaheedmuhammed3-996.workers.dev/v1/google/callback",
-    "GOOGLE_CLIENT_ID": "",
-    "GOOGLE_PICKER_API_KEY": "",
-    "GOOGLE_APP_ID": ""
+
   },
   "d1_databases": [
     {

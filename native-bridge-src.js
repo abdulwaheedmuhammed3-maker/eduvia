@@ -159,6 +159,7 @@ async function handleEduviaOAuthLink(rawUrl) {
       google_error: target.searchParams.get('google_error') || ''
     };
     try { await Browser.close(); } catch {}
+    window.EduviaGoogleOAuthReturn = detail;
     window.dispatchEvent(new CustomEvent('eduvia-google-oauth-return', { detail }));
   } catch {}
 }

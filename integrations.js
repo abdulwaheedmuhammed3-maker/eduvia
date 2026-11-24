@@ -167,10 +167,12 @@
   }
   async function connectGoogle() {
     try {
-      const returnUrl = location.origin + location.pathname;
+      const native = Boolean(root.EduviaNative?.isNative && root.EduviaNative?.openGoogleAuthorization);
+      const returnUrl = native ? 'com.eduvia.studyplanner://oauth' : location.origin + location.pathname;
       const result = await api('/v1/integrations/google/start', { method: 'POST', body: { returnUrl } });
       if (!result.authorizationUrl) throw new Error('Google did not return a sign-in link.');
-      location.href = result.authorizationUrl;
+      if (native) await root.EduviaNative.openGoogleAuthorization(result.authorizationUrl);
+      else location.href = result.authorizationUrl;
     } catch (error) { notify(error.message); }
   }
   async function disconnectGoogle() {
@@ -638,6 +640,14 @@
     importMeetTranscript,
     transcribeMeetRecording
   };
+  window.addEventListener('eduvia-google-oauth-return', event => {
+    const google = String(event.detail?.google || '');
+    const googleError = String(event.detail?.google_error || '');
+    state.status = null;
+    state.meetings = [];
+    syncIntegrationStatus();
+    notify(google === 'connected' ? 'Google account connected to this Eduvia device.' : 'Google could not be connected. ' + (googleError === 'consent_denied' ? 'You cancelled the Google permission request.' : 'Check the Google OAuth setup and try again.'));
+  });
   const googleStatus = new URLSearchParams(location.search).get('google');
   const googleError = new URLSearchParams(location.search).get('google_error');
   if (googleStatus || googleError) {

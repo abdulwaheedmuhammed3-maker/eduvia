@@ -1,5 +1,6 @@
 import { generateVapidKeys } from '@mmmike/web-push/vapid';
 import { sendPushNotification } from '@mmmike/web-push/send';
+import { handleIntelligenceRequest } from './intelligence.js';
 
 const MAX_REMINDERS = 600;
 const MAX_HORIZON_MS = 90 * 24 * 60 * 60 * 1000;
@@ -134,6 +135,10 @@ async function handleFetch(request, env) {
   if (!headers) return json({ error: 'This origin is not allowed.' }, 403);
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
   const url = new URL(request.url);
+
+  if (url.pathname.startsWith('/v1/intelligence/') || url.pathname.startsWith('/v1/google/')) {
+    return handleIntelligenceRequest(request, env, headers);
+  }
 
   if (request.method === 'GET' && url.pathname === '/v1/health') return json({ ok: true, service: 'Eduvia phone notifications' }, 200, headers);
   if (request.method === 'GET' && url.pathname === '/v1/config') {

@@ -154,7 +154,7 @@ function minutes(time){const [h,m]=time.split(':').map(Number);return h*60+m}
 function timeLabel(t){if(!t)return '';const [h,m]=t.split(':').map(Number);return `${((h+11)%12)+1}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`}
 function duration(start,end){return Math.max(0,Math.round((minutes(end)-minutes(start))/60*10)/10)}
 function courseById(courseId){return data.courses.find(c=>String(c.id)===String(courseId))}
-function eventIsOnDate(event,date){return event.date===date||(!event.date&&Number(event.day)===parseISO(date).getDay())}
+function eventIsOnDate(event,date){return event.date===date||(!event.date&&Number(event.day)===parseISO(date).getDay()&&(!event.repeatUntil||date<=String(event.repeatUntil)))}
 function dayEvents(date){return data.events.filter(e=>eventIsOnDate(e,date)).sort((a,b)=>String(a.start||'').localeCompare(String(b.start||'')))}
 function completedForDate(date){return data.completed.filter(x=>x.date===date)}
 function isStudyCompletionEntry(item){

@@ -146,7 +146,9 @@ window.eduLectureMaterials={
       lectureDate:String(record.lectureDate||''),sourceUrl:String(record.sourceUrl||''),
       characters:String(record.text).length,keyPoints:Array.isArray(record.keyPoints)?record.keyPoints:[],
       topics:Array.isArray(record.topics)?record.topics:[],attachments:Array.isArray(record.attachments)?record.attachments:[],
-      summaryMethod:'extractive-local-v1'
+      summaryMethod:'extractive-local-v1',
+      googleArtifactName:String(record.googleArtifactName||''),googleRecordingFileId:String(record.googleRecordingFileId||''),
+      aiSummary:String(record.aiSummary||''),aiSummaryModel:String(record.aiSummaryModel||''),aiSummaryCreatedAt:Number(record.aiSummaryCreatedAt)||0
     };
     const stored={...record,id:meta.id,name:meta.name,courseId:meta.courseId,createdAt:meta.createdAt};
     let storedInIndexedDb=false;
@@ -160,6 +162,31 @@ window.eduLectureMaterials={
       throw new Error('Eduvia could not save this lecture. Check device storage and try again.');
     }
     return {...meta};
+  },
+  async update(lectureId,patch){
+    const key=String(lectureId||''),meta=(data.materials||[]).find(item=>item?.kind==='recorded-lecture'&&String(item.id)===key);
+    if(!meta)throw new Error('This lecture is not available in the saved lecture list.');
+    const current=await readMaterial(key);
+    if(!current)throw new Error('The saved lecture text could not be opened.');
+    const updated={...current,...(patch&&typeof patch==='object'?patch:{})};
+    const fields=['aiSummary','aiSummaryModel','aiSummaryCreatedAt','googleArtifactName','googleRecordingFileId'];
+    const priorMeta={};for(const field of fields)priorMeta[field]=meta[field];
+    const fallbackIndex=(data.materialText||[]).findIndex(item=>String(item?.id)===key);
+    let storedInIndexedDb=false;
+    try{await storeMaterial(updated);storedInIndexedDb=true}
+    catch{
+      data.materialText=data.materialText||[];
+      if(fallbackIndex>=0)data.materialText[fallbackIndex]=updated;else data.materialText.push(updated);
+    }
+    for(const field of fields)if(Object.prototype.hasOwnProperty.call(updated,field))meta[field]=updated[field];
+    if(!save()){
+      for(const field of fields){if(priorMeta[field]===undefined)delete meta[field];else meta[field]=priorMeta[field]}
+      if(storedInIndexedDb){try{await storeMaterial(current)}catch{}}
+      else if(fallbackIndex>=0)data.materialText[fallbackIndex]=current;
+      else data.materialText=data.materialText.filter(item=>String(item?.id)!==key);
+      throw new Error('Eduvia could not save the updated lecture. Check your device storage and try again.');
+    }
+    return updated;
   },
   async read(lectureId){return readMaterial(String(lectureId||''))},
   async remove(lectureId){

@@ -1,5 +1,6 @@
 import { generateVapidKeys } from '@mmmike/web-push/vapid';
 import { sendPushNotification } from '@mmmike/web-push/send';
+import { handleIntegrationRoutes } from './integrations.js';
 
 const MAX_REMINDERS = 600;
 const MAX_HORIZON_MS = 90 * 24 * 60 * 60 * 1000;
@@ -141,9 +142,15 @@ async function handleFetch(request, env) {
     return json({ publicKey: keys.public_key }, 200, headers);
   }
 
+  if (request.method === 'GET' && url.pathname === '/v1/google/callback') {
+    return handleIntegrationRoutes(request, env, headers, '', '');
+  }
+
   const token = bearerToken(request);
+  const id = token ? await deviceId(token) : '';
+  const integrationResponse = await handleIntegrationRoutes(request, env, headers, token, id);
+  if (integrationResponse) return integrationResponse;
   if (!token) return json({ error: 'This device is not registered.' }, 401, headers);
-  const id = await deviceId(token);
 
   if (request.method === 'POST' && url.pathname === '/v1/schedule') {
     const body = await readJson(request);

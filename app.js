@@ -75,7 +75,7 @@ if(systemThemeQuery&&!systemThemeQuery.addEventListener)systemThemeQuery.addList
 const SUPPORTED_PAGE_ROUTES=new Set([
   'today','my-study','courses','course-detail','timetable','habit','tutorials','study','practice','setup',
   'progress','records','education','vault','settings','profile','more','planner','flashcards','mastery',
-  'mock-exam','mock-results','exams','play','ask','discover','wellness','insights','roadmaps','recall'
+  'mock-exam','mock-results','exams','play','ask','discover','wellness','insights','roadmaps','recall','integrations','ai-tutor'
 ]);
 function resolveHashRoute(hash){
   const route=String(hash||'').replace(/^#/,'');

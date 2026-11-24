@@ -67,7 +67,7 @@ npx wrangler d1 migrations apply eduvia-notifications --remote
 npx wrangler deploy
 ```
 
-Then configure the Eduvia web origin in the Worker, rebuild and deploy the web app. The AI service uses separate OpenAI API billing; a ChatGPT subscription does not include OpenAI API credits. Google credentials and the OpenAI API key must never be placed in browser JavaScript or an APK.
+Then configure the Eduvia web origin in the Worker, rebuild and deploy the web app. The AI service uses separate OpenAI API billing; a ChatGPT subscription does not include OpenAI API credits. Google credentials and the OpenAI API key must never be placed in browser JavaScript or an APK. In the Android APK, Google consent opens in the system browser and returns to Eduvia through the registered `com.eduvia.studyplanner://oauth` deep link.
 
 ## Materials and privacy
 

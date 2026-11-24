@@ -24,6 +24,8 @@ jobs:
           node --check study-studio.js
           node --check course-intelligence.js
           node --check lecture-intelligence.js
+          node --check ai-tutor.js
+          node --check notifications-worker/src/intelligence.js
           npm test
           node --check feature-hub.js
           node --check experience.js
@@ -52,6 +54,12 @@ jobs:
           grep -q 'roadmaps.css' service-worker.js
           grep -q 'roadmaps.css' scripts/build-web.mjs
           grep -q 'course-intelligence.js' index.html
+          grep -q 'ai-tutor.js' index.html
+          grep -q 'ai-tutor.js' service-worker.js
+          grep -q 'ai-tutor.js' scripts/build-web.mjs
+          grep -q 'ai-tutor.css' index.html
+          grep -q 'ai-tutor.css' service-worker.js
+          grep -q 'ai-tutor.css' scripts/build-web.mjs
           grep -q 'lecture-intelligence.js' index.html
           grep -q 'lecture-intelligence.js' service-worker.js
           grep -q 'lecture-intelligence.js' scripts/build-web.mjs

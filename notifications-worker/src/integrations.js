@@ -555,7 +555,7 @@ export async function handleIntegrationRoutes(request, env, headers, token, id) 
       const connection = await googleConnection(env, id);
       return json({
         aiEnabled: Boolean(env.OPENAI_API_KEY),
-        googleConfigured: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_REDIRECT_URI && env.GOOGLE_TOKEN_ENCRYPTION_KEY),
+        googleConfigured: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.GOOGLE_REDIRECT_URI && env.GOOGLE_TOKEN_ENCRYPTION_KEY),
         googleConnected: Boolean(connection?.refresh_token_enc),
         googleEmail: connection?.account_email || '',
         drivePickerConfigured: Boolean(env.GOOGLE_PICKER_API_KEY && env.GOOGLE_APP_ID)

@@ -110,7 +110,47 @@ function bearerToken(request) {
   return match?.[1] || '';
 }
 
-async function createSession(env) {
+const MAX_DAILY_IP_AI_REQUESTS = 240;
+const MAX_DAILY_IP_SESSIONS = 20;
+
+async function consumeIpQuota(env, request, kind) {
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown-client';
+  const ipHash = await sha256('eduvia-intelligence:' + ip);
+  const today = new Date().toISOString().slice(0, 10);
+  const now = Date.now();
+  if (kind === 'session') {
+    await env.DB.prepare(`
+      INSERT INTO intelligence_ip_usage (ip_hash, usage_date, ai_requests, sessions_created, updated_at)
+      VALUES (?, ?, 0, 1, ?)
+      ON CONFLICT(ip_hash) DO UPDATE SET
+        usage_date = excluded.usage_date,
+        sessions_created = CASE WHEN intelligence_ip_usage.usage_date = excluded.usage_date THEN intelligence_ip_usage.sessions_created + 1 ELSE 1 END,
+        ai_requests = CASE WHEN intelligence_ip_usage.usage_date = excluded.usage_date THEN intelligence_ip_usage.ai_requests ELSE 0 END,
+        updated_at = excluded.updated_at
+    `).bind(ipHash, today, now).run();
+    const row = await env.DB.prepare('SELECT sessions_created FROM intelligence_ip_usage WHERE ip_hash = ?').bind(ipHash).first();
+    if (Number(row?.sessions_created || 0) > MAX_DAILY_IP_SESSIONS) {
+      throw new IntelligenceRequestError('Too many new Eduvia sessions were created from this network today. Try again tomorrow.', 429);
+    }
+    return;
+  }
+  await env.DB.prepare(`
+    INSERT INTO intelligence_ip_usage (ip_hash, usage_date, ai_requests, sessions_created, updated_at)
+    VALUES (?, ?, 1, 0, ?)
+    ON CONFLICT(ip_hash) DO UPDATE SET
+      usage_date = excluded.usage_date,
+      ai_requests = CASE WHEN intelligence_ip_usage.usage_date = excluded.usage_date THEN intelligence_ip_usage.ai_requests + 1 ELSE 1 END,
+      sessions_created = CASE WHEN intelligence_ip_usage.usage_date = excluded.usage_date THEN intelligence_ip_usage.sessions_created ELSE 0 END,
+      updated_at = excluded.updated_at
+  `).bind(ipHash, today, now).run();
+  const row = await env.DB.prepare('SELECT ai_requests FROM intelligence_ip_usage WHERE ip_hash = ?').bind(ipHash).first();
+  if (Number(row?.ai_requests || 0) > MAX_DAILY_IP_AI_REQUESTS) {
+    throw new IntelligenceRequestError('Eduvia has reached today’s AI request allowance for this network. Try again tomorrow.', 429);
+  }
+}
+
+async function createSession(env, request) {
+  await consumeIpQuota(env, request, 'session');
   const token = base64url(randomBytes(32));
   const hash = await sha256(token);
   const now = Date.now();
@@ -199,6 +239,7 @@ const SUMMARY_INSTRUCTIONS = [
 
 async function tutor(request, env, cors = {}) {
   const session = await requireSession(request, env, true);
+  await consumeIpQuota(env, request, 'ai');
   const body = await readJson(request);
   const messages = validateMessages(body.messages);
   const course = String(body.course || 'General learning').trim().slice(0, 120);
@@ -219,6 +260,7 @@ async function tutor(request, env, cors = {}) {
 
 async function summarize(request, env, cors = {}) {
   await requireSession(request, env, true);
+  await consumeIpQuota(env, request, 'ai');
   const body = await readJson(request);
   const source = String(body.sourceText || '').trim();
   if (source.length < 80) throw new IntelligenceRequestError('Add at least 80 characters of readable lecture text before generating an AI summary.', 400);
@@ -649,7 +691,7 @@ export async function handleIntelligenceRequest(request, env, cors = {}) {
       return json({ ok: true, service: 'Eduvia Intelligence', aiConfigured: !!(env.OPENAI_API_KEY && env.OPENAI_MODEL), googleConfigured: !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.GOOGLE_REDIRECT_URI && env.GOOGLE_PICKER_API_KEY && env.GOOGLE_CLOUD_PROJECT_NUMBER) }, 200, cors);
     }
     if (request.method === 'POST' && url.pathname === '/v1/intelligence/session') {
-      const session = await createSession(env);
+      const session = await createSession(env, request);
       return json(session, 201, cors);
     }
     if (request.method === 'GET' && url.pathname === '/v1/google/callback') return await googleCallback(request, env);

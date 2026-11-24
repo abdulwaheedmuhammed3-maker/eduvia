@@ -284,8 +284,8 @@ async function rateLimit(request, env, id, action, limit) {
   const minute = Math.floor(now / 60000) * 60000;
   const windowStart = now - 60 * 60 * 1000;
   const row = await env.DB.prepare(
-    'SELECT COALESCE(SUM(request_count), 0) AS total FROM ai_usage WHERE device_id = ? AND ip_hash = ? AND action = ? AND minute_bucket >= ?'
-  ).bind(id, ipHash, action, windowStart - 60_000).first();
+    'SELECT COALESCE(SUM(request_count), 0) AS total FROM ai_usage WHERE ip_hash = ? AND action = ? AND minute_bucket >= ?'
+  ).bind(ipHash, action, windowStart - 60_000).first();
   if (Number(row?.total || 0) >= limit) throw new IntegrationError('Eduvia has reached the hourly limit for this tool. Try again later.', 429);
   await env.DB.prepare(
     'INSERT INTO ai_usage (device_id, ip_hash, action, minute_bucket, request_count) VALUES (?, ?, ?, ?, 1) ' +

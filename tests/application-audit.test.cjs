@@ -189,7 +189,7 @@ test('objective MCQs use distinct source-grounded distractors and retain source 
 });
 
 test('practice objective choices are checked before revealing feedback and source explanations',()=>{
- assert.ok(studio.includes('question.options.map((option,j)'));
+ assert.ok(studio.includes('q.options.map((option,j)'));
  assert.ok(studio.includes('data-action="check-practice"'));
  assert.ok(studio.includes('function checkPracticeAnswers()'));
  assert.ok(studio.includes('q.options[response.correctOption]'));

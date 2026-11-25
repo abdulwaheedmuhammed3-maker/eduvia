@@ -18,7 +18,11 @@
   }
   let state = ensureState();
   function syncState() {
-    if (data.recallState !== state) state = ensureState();
+    if (data.recallState !== state) {
+      state = ensureState();
+      currentRecallQuestionId = '';
+      revealedQuestionId = '';
+    }
     return state;
   }
   let revealedQuestionId = '';

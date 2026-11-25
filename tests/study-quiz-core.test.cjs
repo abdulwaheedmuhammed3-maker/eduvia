@@ -48,6 +48,17 @@ test('objective question validation rejects malformed, duplicate and multi-answe
   assert.equal(core.isObjectiveQuestion({ options: ['A', 'B', 'C', 'D'], correctOption: null }), false);
 });
 
+test('section headings remain available as course concepts even when page metadata is present', () => {
+  const source = 'Binary search repeatedly halves the remaining search interval. Arrays store values in an ordered sequence. Linked lists connect nodes through references. Queues follow first in first out order.';
+  const questions = core.buildObjectiveQuestions(
+    { reflection: {} },
+    [{ name: 'Algorithms notes', text: source, index: { chunks: [{ start: 0, end: source.length, page: 2, section: 'Binary search' }] } }],
+    ['Binary search', 'Arrays', 'Linked lists', 'Queues'],
+    5
+  );
+  assert.ok(questions.some(question => core.normalize(question.answer) === 'binary search'));
+});
+
 test('source text remains attached to the generated item for answer review', () => {
   const source = 'Arrays store values in an ordered sequence. Linked lists connect nodes through references. Stacks follow last in first out order. Queues follow first in first out order.';
   const question = core.buildObjectiveQuestions(

@@ -974,3 +974,40 @@ button, a, .nav-item, .mobile-nav-item { touch-action: manipulation; }
 .quiz-performance-summary span{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .quiz-performance-summary strong{font-size:16px;color:var(--ink)}
 @media(max-width:480px){.quiz-performance-summary{gap:6px;padding:10px}.quiz-performance-summary strong{font-size:14px}}
+
+
+/* Four-option objective quizzes used in study checks, practice and mock exams. */
+.objective-quiz-list{display:grid;gap:14px}
+.objective-question{border:1px solid var(--line);border-radius:14px;padding:13px;margin:0;min-width:0}
+.objective-question legend{font-size:12px;line-height:1.55;font-weight:750;color:var(--ink);padding:0 4px;max-width:100%}
+.objective-options{display:grid;gap:8px;margin-top:10px}
+.objective-option{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:11px;background:var(--paper);color:var(--ink);cursor:pointer;font-size:12px;line-height:1.5}
+.objective-option input{flex:0 0 auto;width:17px;height:17px;margin:1px 0 0;accent-color:var(--green)}
+.objective-option span{min-width:0}
+.objective-option b{margin-right:4px;color:var(--green)}
+.objective-option:has(input:checked){border-color:var(--green);background:var(--surface-soft,var(--paper))}
+.objective-option:has(input:disabled){cursor:default}
+.objective-result-options{display:grid;gap:6px;margin:10px 0}
+.objective-result-option{padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-size:11px;line-height:1.45}
+.objective-result-option.is-correct{border-color:#69a77b;background:#edf7ef}
+.objective-result-option.is-selected:not(.is-correct){border-color:#d68b76;background:#fff2ed}
+.objective-feedback{margin-top:10px;padding:10px;border-radius:10px;font-size:11px}
+.objective-feedback p{margin:4px 0 0}
+.objective-feedback.is-correct{background:#edf7ef;color:#285b38}
+.objective-feedback.is-incorrect{background:#fff2ed;color:#814431}
+.objective-explanation{display:block;margin-top:8px}
+.objective-practice-score{display:flex;align-items:center;gap:12px;padding:12px 14px;margin:12px 0;border-radius:12px;background:var(--surface-soft,var(--paper));border:1px solid var(--line)}
+.objective-practice-score strong{font-size:24px;color:var(--ink)}
+.objective-practice-score span{font-size:11px;color:var(--muted)}
+.practice-submit-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px}
+.practice-submit-row p{font-size:11px;color:var(--muted);margin:0}
+.mock-objective-options{margin-top:8px}
+.mock-objective-status{font-weight:800;font-size:11px;color:var(--green)}
+.mock-result-question.is-incorrect .mock-objective-status{color:#a45d43}
+html[data-theme="dark"] .objective-option{background:var(--surface,#202b24);color:var(--ink)}
+html[data-theme="dark"] .objective-option:has(input:checked){background:#26372c}
+html[data-theme="dark"] .objective-result-option.is-correct{background:#23392b;color:#ccebd2}
+html[data-theme="dark"] .objective-result-option.is-selected:not(.is-correct){background:#3c2a25;color:#f0c6b9}
+html[data-theme="dark"] .objective-feedback.is-correct{background:#23392b;color:#ccebd2}
+html[data-theme="dark"] .objective-feedback.is-incorrect{background:#3c2a25;color:#f0c6b9}
+@media(max-width:560px){.practice-submit-row{align-items:stretch;flex-direction:column}.practice-submit-row .primary-btn{width:100%}.objective-option{padding:10px}}

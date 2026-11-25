@@ -209,7 +209,7 @@ function renderMockExamHub(){
   '<label class="form-field">Question style<select name="style"><option value="mcq" selected>Objective (4 options)</option><option value="mixed">Mixed review</option><option value="short">Short answer</option><option value="essay">Exam-style essay</option></select></label>'+
   '<label class="form-field">Number of questions<select name="count"><option value="5">5 questions</option><option value="10" selected>10 questions</option><option value="15">15 questions</option></select></label>'+
   '<label class="form-field">Time limit<select name="duration"><option value="15">15 minutes</option><option value="30" selected>30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option></select></label>'+
-  '<div class="form-field full"><p class="privacy-note-inline">Questions are created on this device from saved learning materials and topics. Written answers are reviewed by you against the source answer.</p><button class="primary-btn" type="submit">Start mock examination</button></div></form></div></details>';
+  '<div class="form-field full"><p class="privacy-note-inline">Objective questions are built from saved course materials, shown with four choices and marked automatically. Written styles remain optional.</p><button class="primary-btn" type="submit">Start mock examination</button></div></form></div></details>';
  return '<div class="mock-exam-hub">'+(data.activeMockExam?'<div class="active-mock-banner"><strong>Mock examination in progress</strong><p>'+esc(data.activeMockExam.courseName)+' · Your answers are saved on this device.</p><button class="primary-btn" data-page="mock-exam">Resume examination</button></div>':'')+form+(recent?'<div class="section-title-row"><h3>Recent mock examinations</h3></div><div class="schedule-list">'+recent+'</div>':'')+'</div>';
 }
 async function startMockExam(courseId,count,duration,style){
@@ -324,6 +324,11 @@ document.addEventListener('input',event=>{
  }
 });
 document.addEventListener('change',event=>{
+ if(event.target.matches('[data-mock-answer]')&&data.activeMockExam){
+  data.activeMockExam.answers=data.activeMockExam.answers||[];
+  data.activeMockExam.answers[Number(event.target.dataset.mockAnswer)]=event.target.value;
+  persistMockExamDraft();
+ }
  if(event.target.matches('[data-mock-rating]')&&data.lastMockExam){
   data.lastMockExam.review=data.lastMockExam.review||[];
   data.lastMockExam.review[Number(event.target.dataset.mockRating)]=event.target.value;

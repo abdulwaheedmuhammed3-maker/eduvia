@@ -26,11 +26,15 @@ test('non-formal profile editor does not clear saved academic details', () => {
   assert.ok(!editor.includes("data.profile.institution=''"));
 });
 
-test('study completion accepts flexible key words and starts an unlimited 10-question recall quiz',()=>{
+test('study completion uses objective multiple-choice questions and upgrades old theory quizzes safely',()=>{
   assert.ok(source.includes("field('Key words from your study','keyPoints'"));
   assert.ok(!source.includes("if(keyPoints.length!==5)"));
   assert.ok(source.includes('openSessionQuiz(record.id)'));
-  assert.ok(source.includes('10 questions'));
+  assert.ok(source.includes('buildObjectiveQuestions(record,sources,course?.topics||[],10)'));
+  assert.ok(source.includes('objective-quiz-list'));
+  assert.ok(source.includes('type="radio"'));
+  assert.ok(source.includes('alreadyObjective'));
+  assert.ok(source.includes('Existing quiz attempts are deliberately preserved'));
   assert.ok(source.includes('data-action="retake-session-quiz"'));
 });
 test('study quiz attempts calculate first, latest and best without limiting retakes',()=>{

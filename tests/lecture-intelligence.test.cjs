@@ -53,6 +53,7 @@ test('restored lecture source links are revalidated before becoming clickable',(
   assert.ok(renderer.includes('rel="noopener noreferrer"'));
   assert.throws(()=>core.validateGoogleSource('javascript:alert(1)'));
   assert.throws(()=>core.validateGoogleSource('https://example.com/'));
+  assert.throws(()=>core.validateGoogleSource('https://user:pass@drive.google.com/file/d/abc/view'));
 });
 
 test('major points are selected from exact source sentences rather than rewritten claims',()=>{

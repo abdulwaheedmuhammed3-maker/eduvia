@@ -71,9 +71,10 @@
             text: fullText.slice(Number(chunk.start) || 0, Number(chunk.end) || 0),
             location: chunk.page ? 'Page ' + chunk.page
               : chunk.slide ? 'Slide ' + chunk.slide
-              : String(chunk.section || source.location || '')
+              : String(chunk.section || source.location || ''),
+            section: String(chunk.section || '')
           }))
-        : [{ text: fullText, location: String(source.location || '') }];
+        : [{ text: fullText, location: String(source.location || ''), section: String(source.section || '') }];
 
       units.forEach(unit => {
         splitSentences(unit.text).forEach(sentence => {
@@ -81,6 +82,7 @@
             sentence,
             source: String(source.name || source.source || 'Course material'),
             location: String(unit.location || source.location || ''),
+            section: String(unit.section || source.section || ''),
             citation: String(source.citation || [
               source.name || source.source || 'Course material',
               unit.location || source.location || ''
@@ -101,7 +103,7 @@
 
   function maskPhrase(sentence, phrase) {
     const escaped = String(phrase).replace(/[.*+?^\${}()|[\]\\]/g, '\\$&');
-    return sentence.replace(new RegExp(escaped, 'i'), '_____');
+    return sentence.replace(new RegExp(escaped, 'ig'), '_____');
   }
 
   function chooseAnswer(sentence, explicitConcepts) {
@@ -149,7 +151,7 @@
     asList(courseTopics).forEach(value => addUnique(explicitConcepts, value));
     asList(reflection.topics).forEach(value => addUnique(explicitConcepts, value));
     passages.forEach(item => {
-      const section = item.location.replace(/^Page \d+$|^Slide \d+$/i, '');
+      const section = item.section || item.location.replace(/^Page \d+$|^Slide \d+$/i, '');
       if (section) addUnique(explicitConcepts, section);
     });
 

@@ -41,6 +41,20 @@ test('only secure Google source links are accepted as references',()=>{
   assert.throws(()=>core.validateGoogleSource('https://example.com/recording'));
 });
 
+test('restored lecture source links are revalidated before becoming clickable',()=>{
+  const fs=require('node:fs');
+  const source=fs.readFileSync(require.resolve('../lecture-intelligence.js'),'utf8');
+  const start=source.indexOf('function sourceLinkMarkup(value)');
+  const end=source.indexOf('function renderCourseSection',start);
+  const renderer=source.slice(start,end);
+  assert.ok(renderer.includes('validateGoogleSource(value)'));
+  assert.ok(renderer.includes('catch{return')}));
+  assert.ok(renderer.includes('escapeHtml(validated)'));
+  assert.ok(renderer.includes('rel="noopener noreferrer"'));
+  assert.throws(()=>core.validateGoogleSource('javascript:alert(1)'));
+  assert.throws(()=>core.validateGoogleSource('https://example.com/'));
+});
+
 test('major points are selected from exact source sentences rather than rewritten claims',()=>{
   const sentences=[
     'Relational database normalisation reduces repeated information across connected database tables.',

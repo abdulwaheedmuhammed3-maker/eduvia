@@ -17,7 +17,7 @@ test('Recall is registered as a valid deep-link route and a Play learning tool',
 });
 test('Recall rebinds its in-memory state after restore or clear replaces planner data', () => {
   assert.ok(recall.includes('function syncState()'));
-  assert.ok(recall.includes('if (data.recallState !== state) state = ensureState();'));
+  assert.ok(recall.includes('if (data.recallState !== state) {'));
   for (const entryPoint of [
     'async function buildQuestionBank(silent = false) {',
     'window.eduRecallBuildReminders = function (now) {',

@@ -137,7 +137,9 @@
   }
   function sourceLinkMarkup(value){
     if(!value)return '';
-    const safe=escapeHtml(value);
+    let validated='';
+    try{validated=validateGoogleSource(value)}catch{return ''}
+    const safe=escapeHtml(validated);
     return '<a class="lecture-source-link" href="'+safe+'" target="_blank" rel="noopener noreferrer">Open saved Google source ↗</a>';
   }
   function renderCourseSection(courseId,providedRecords){

@@ -48,7 +48,7 @@ test('restored lecture source links are revalidated before becoming clickable',(
   const end=source.indexOf('function renderCourseSection',start);
   const renderer=source.slice(start,end);
   assert.ok(renderer.includes('validateGoogleSource(value)'));
-  assert.ok(renderer.includes('catch{return')}));
+  assert.ok(renderer.includes('catch{return'));
   assert.ok(renderer.includes('escapeHtml(validated)'));
   assert.ok(renderer.includes('rel="noopener noreferrer"'));
   assert.throws(()=>core.validateGoogleSource('javascript:alert(1)'));

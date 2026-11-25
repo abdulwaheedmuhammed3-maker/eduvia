@@ -21,6 +21,7 @@ jobs:
           node --check roadmaps.js
           node --check app.js
           node --check entry-flow.js
+          node --check study-quiz-core.js
           node --check study-studio.js
           node --check course-intelligence.js
           node --check lecture-intelligence.js
@@ -51,6 +52,9 @@ jobs:
           grep -q 'roadmaps.css' index.html
           grep -q 'roadmaps.css' service-worker.js
           grep -q 'roadmaps.css' scripts/build-web.mjs
+          grep -q 'study-quiz-core.js' index.html
+          grep -q 'study-quiz-core.js' service-worker.js
+          grep -q 'study-quiz-core.js' scripts/build-web.mjs
           grep -q 'course-intelligence.js' index.html
           grep -q 'lecture-intelligence.js' index.html
           grep -q 'lecture-intelligence.js' service-worker.js

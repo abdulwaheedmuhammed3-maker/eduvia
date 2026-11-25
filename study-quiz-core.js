@@ -22,7 +22,7 @@
 
   function asList(value) {
     if (Array.isArray(value)) return value;
-    return String(value || '').split(/[\r\n;|]+/);
+    return String(value || '').split(/[\r\n;,|]+/);
   }
 
   function cleanConcept(value) {
@@ -137,9 +137,9 @@
       Array.isArray(question.options) &&
       question.options.length === 4 &&
       new Set(question.options.map(normalize)).size === 4 &&
-      Number.isInteger(Number(question.correctOption)) &&
-      Number(question.correctOption) >= 0 &&
-      Number(question.correctOption) <= 3;
+      Number.isInteger(question.correctOption) &&
+      question.correctOption >= 0 &&
+      question.correctOption <= 3;
   }
 
   function buildObjectiveQuestions(record, sources, courseTopics, count) {

@@ -45,6 +45,7 @@ test('objective question validation rejects malformed, duplicate and multi-answe
   assert.equal(core.isObjectiveQuestion({ options: ['A', 'B', 'B', 'D'], correctOption: 2 }), false);
   assert.equal(core.isObjectiveQuestion({ options: ['A', 'B', 'C'], correctOption: 1 }), false);
   assert.equal(core.isObjectiveQuestion({ options: ['A', 'B', 'C', 'D'], correctOption: 4 }), false);
+  assert.equal(core.isObjectiveQuestion({ options: ['A', 'B', 'C', 'D'], correctOption: null }), false);
 });
 
 test('source text remains attached to the generated item for answer review', () => {

@@ -10,6 +10,7 @@ function studioCountrySelect(selected=''){
 }
 let studioLesson = null;
 let studioPractice = [];
+let studioPracticeAttempt = null;
 let studioNotice = '';
 let pendingStudioImport = null;
 
@@ -102,10 +103,24 @@ function renderStudyStudio(){
 
 function renderPractice(){
   const course=data.courses.find(c=>c.id===(window.practiceCourseId||''))||data.courses[0];
-  return `${pageHead('RECALL IT. APPLY IT.','Practice & tests','Generate questions from your saved learning materials, then check your answers against the source.','<button class="secondary-btn" data-page="study">← Study studio</button>')}
-  <section class="panel practice-setup"><details class="action-disclosure"><summary><div><h3>Build a practice set</h3><p>Choose a learning area, question style and number of questions</p></div><span class="disclosure-cta">＋ Build set</span></summary><div class="disclosure-body"><p>Use your saved learning materials first. Without notes, questions use your learning topics and may be broader.</p><div class="practice-controls"><label>Learning area<select id="practiceCourseSelect">${courseOptions(course?.id||'')}</select></label><label>Question style<select id="questionStyle"><option value="mixed">Mixed review</option><option value="short">Short answer</option><option value="essay">Exam-style essay</option><option value="mcq">Multiple choice</option></select></label><label>Number of questions<select id="questionCount"><option>5</option><option selected>10</option><option>15</option></select></label><button class="primary-btn" data-action="generate-practice">Generate practice set</button></div><p class="privacy-note-inline">Practice questions are created on this device from your uploaded materials and learning topics.</p><p class="privacy-note-inline">For multiple-choice questions, select an option and open “Show answer” to check your choice. Written answers are reviewed against the source; Eduvia does not automatically grade this practice set.</p></div></details></section>
-  ${studioPractice.length?`<section class="panel practice-results"><div class="panel-head"><div><h3>${safe(studioPractice.title||'Your practice set')}</h3><p>${safe(studioPractice.source||'Generated from your study materials')} · ${studioPractice.questions.length} questions</p></div><button class="panel-link" data-action="generate-practice">Make another set ↻</button></div><div class="question-list">${studioPractice.questions.map((q,i)=>`<article class="question-card"><div class="question-number">${String(i+1).padStart(2,'0')}</div><div class="question-content"><strong>${safe(q.question)}</strong>${q.options?`<div class="question-options">${q.options.map((opt,j)=>`<label><input type="radio" name="q${i}" value="${j}"> ${safe(opt)}</label>`).join('')}</div>`:`<textarea placeholder="Write your answer here…"></textarea>`}<details><summary>${q.options?'Show correct choice / source passage':'Show source passage / sample answer'}</summary><p>${q.options?'Correct choice: '+safe(q.options[q.correctOption]||q.answer):safe(q.answer||'Review the linked course material and explain the key idea in your own words.')}</p>${q.source?'<small>From: '+safe(q.citation||([q.source,q.location].filter(Boolean).join(' · ')))+'</small>':''}</details></div></article>`).join('')}</div></section>`:emptyState('✓','Your practice space is ready','Choose a course and generate a short practice set from your course materials.','', '')}`;
+  const questions=studioPractice.questions||[];
+  const objectiveCount=questions.filter(q=>window.eduStudyQuizCore?.isObjectiveQuestion(q)).length;
+  const responses=studioPracticeAttempt?.responses||[];
+  const cards=questions.map((q,i)=>{
+    const objective=window.eduStudyQuizCore?.isObjectiveQuestion(q);
+    const response=responses[i];
+    const options=objective?'<div class="question-options objective-options" role="group" aria-label="Answer options">'+q.options.map((option,j)=>'<label class="objective-option"><input type="radio" name="practiceQ'+i+'" value="'+j+'" '+(response?.selectedOption===j?'checked ':'')+(response?'disabled ':'')+'><span><b>'+String.fromCharCode(65+j)+'.</b> '+safe(option)+'</span></label>').join('')+'</div>':'<textarea placeholder="Write your answer here…" '+(studioPracticeAttempt?'disabled':'')+'></textarea>';
+    const feedback=response?'<div class="objective-feedback '+(response.correct?'is-correct':'is-incorrect')+'"><strong>'+(response.correct?'Correct':'Not quite')+'</strong><p>Your answer: '+safe(response.selectedAnswer||'No answer selected')+'</p><p>Correct answer: '+String.fromCharCode(65+response.correctOption)+'. '+safe(q.options[response.correctOption])+'</p></div>':'';
+    const source=objective&&studioPracticeAttempt?'<details><summary>Explanation and source</summary><p>'+safe(q.explanation||q.answer||'Review the cited course material.')+'</p>'+(q.citation?'<small>From: '+safe(q.citation)+'</small>':'')+'</details>':!objective?'<details><summary>Show source passage / sample answer</summary><p>'+safe(q.answer||'Review the linked course material and explain the key idea in your own words.')+'</p>'+(q.source?'<small>From: '+safe(q.citation||([q.source,q.location].filter(Boolean).join(' · ')))+'</small>':'')+'</details>':'';
+    return '<article class="question-card"><div class="question-number">'+String(i+1).padStart(2,'0')+'</div><div class="question-content"><strong>'+safe(q.question||q.prompt)+'</strong>'+options+feedback+source+'</div></article>';
+  }).join('');
+  const score=studioPracticeAttempt?'<div class="objective-practice-score"><strong>'+studioPracticeAttempt.score+'/'+studioPracticeAttempt.total+'</strong><span>'+Math.round(studioPracticeAttempt.score/Math.max(1,studioPracticeAttempt.total)*100)+'% · Objective score</span></div>':'';
+  const check=objectiveCount&&!studioPracticeAttempt?'<div class="practice-submit-row"><p>Select one option for every question, then check your answers.</p><button class="primary-btn" data-action="check-practice">Check my answers</button></div>':'';
+  const results=questions.length?'<section class="panel practice-results"><div class="panel-head"><div><h3>'+safe(studioPractice.title||'Your practice set')+'</h3><p>'+safe(studioPractice.source||'Generated from your study materials')+' · '+questions.length+' questions</p></div><button class="panel-link" data-action="generate-practice">Make another set ↻</button></div>'+score+'<div class="question-list">'+cards+'</div>'+check+'</section>':emptyState('✓','Your practice space is ready','Choose a learning area and generate objective questions from your course material.','','');
+  return pageHead('RECALL IT. APPLY IT.','Practice & tests','Practise with objective questions built from your course material, then review your score and source explanations.','<button class="secondary-btn" data-page="study">← Study studio</button>')+
+  '<section class="panel practice-setup"><details class="action-disclosure"><summary><div><h3>Build a practice set</h3><p>Choose a learning area, question style and number of questions</p></div><span class="disclosure-cta">＋ Build set</span></summary><div class="disclosure-body"><p>Eduvia uses your saved learning materials first. Objective questions need enough distinct concepts in the source to create three genuine distractors.</p><div class="practice-controls"><label>Learning area<select id="practiceCourseSelect">'+courseOptions(course?.id||'')+'</select></label><label>Question style<select id="questionStyle"><option value="mcq" selected>Objective (multiple choice)</option><option value="mixed">Mixed review</option><option value="short">Short answer</option><option value="essay">Exam-style essay</option></select></label><label>Number of questions<select id="questionCount"><option>5</option><option selected>10</option><option>15</option></select></label><button class="primary-btn" data-action="generate-practice">Generate practice set</button></div><p class="privacy-note-inline">Practice questions are created on this device from your uploaded materials and learning topics.</p></div></details></section>'+results;
 }
+
 
 function renderSetup(){
   const stages=educationStages(),stage=data.profile.stage||'',learnerType=learnerTypeOf(data.profile);
@@ -521,70 +536,15 @@ async function generateTutorial(){
 function localPractice(course,sources,count,style){
  const topicList=Array.isArray(course.topics)?course.topics:[];
  const query=topicList.slice(0,5).join(' ')||course.name||course.code||'';
- const requested=style==='mcq'?Math.max(count*4,16):Math.max(count,8);
+ const requested=Math.max(count,8);
  const passages=window.eduCourseIntelligence?.search(sources,query,requested)||[];
  if(style==='mcq'){
-  const engine=window.eduCourseIntelligence;
-  if(!engine)return {title:(course.code||course.name)+' · multiple-choice practice',source:'Course retrieval is unavailable',questions:[],requestedCount:count};
-  // Use explicit course topics first. Clearly labelled document sections fill gaps,
-  // allowing each correct passage to be contrasted with passages about other topics.
-  const labels=[];
-  const addLabel=value=>{
-   const label=String(value||'').trim();
-   if(label&&!labels.some(item=>item.toLocaleLowerCase()===label.toLocaleLowerCase()))labels.push(label);
-  };
-  topicList.forEach(addLabel);
-  for(const source of sources){
-   const index=source.index?.version===engine.version?source.index:engine.buildIndex(source.text);
-   for(const chunk of index.chunks||[]){addLabel(chunk.section);if(labels.length>=12)break}
-   if(labels.length>=12)break;
-  }
-  const groups=labels.map(topic=>{
-   const passages=engine.search(sources,topic,20).map(item=>({...item,text:String(item.text||'').replace(/\s+/g,' ').trim().slice(0,220)})).filter(item=>item.text.length>=45);
-   const seen=new Set();
-   return {topic,passages:passages.filter(item=>{
-    const key=item.text.toLocaleLowerCase();if(seen.has(key))return false;seen.add(key);return true;
-   })};
-  }).filter(group=>group.passages.length);
-  if(groups.length<4)return {
-   title:(course.code||course.name)+' · multiple-choice practice',
-   source:'At least four distinct searchable topics or titled sections are needed for unambiguous choices',
-   questions:[],requestedCount:count
-  };
-  const questions=[],usedAnswers=new Set(),answerOffsets=new Map(groups.map(group=>[group.topic,0]));
-  let advanced=true;
-  while(questions.length<count&&advanced){
-   advanced=false;
-   for(let targetIndex=0;targetIndex<groups.length&&questions.length<count;targetIndex++){
-    const target=groups[targetIndex],offset=answerOffsets.get(target.topic)||0;
-    const remaining=target.passages.slice(offset);
-    const correct=remaining.find(item=>!usedAnswers.has(item.text.toLocaleLowerCase()));
-    if(!correct)continue;
-    const distractors=[];
-    for(let step=1;step<groups.length&&distractors.length<3;step++){
-     const other=groups[(targetIndex+step)%groups.length];
-     const candidate=other.passages.find(item=>{
-      const key=item.text.toLocaleLowerCase();
-      return key!==correct.text.toLocaleLowerCase()&&!distractors.some(existing=>existing.text.toLocaleLowerCase()===key);
-     });
-     if(candidate)distractors.push(candidate);
-    }
-    if(distractors.length<3)continue;
-    usedAnswers.add(correct.text.toLocaleLowerCase());
-    answerOffsets.set(target.topic,offset+remaining.indexOf(correct)+1);
-    const options=[correct,...distractors].map(item=>item.text),correctOption=questions.length%options.length;
-    [options[0],options[correctOption]]=[options[correctOption],options[0]];
-    questions.push({
-     question:'Which passage best explains '+target.topic+' according to your course material?',
-     answer:correct.text,options,correctOption,topic:target.topic,
-     source:correct.name,location:correct.location,citation:correct.citation,materialId:correct.materialId
-    });
-    advanced=true;
-   }
-  }
+  const builder=window.eduStudyQuizCore;
+  if(!builder)return {title:(course.code||course.name)+' · objective practice',source:'Objective quiz generation is unavailable',questions:[],requestedCount:count};
+  const questions=builder.buildObjectiveQuestions({title:course.name,reflection:{topics:topicList}},sources,topicList,count);
   return {
-   title:(course.code||course.name)+' · multiple-choice practice',
-   source:questions.length?'Topic-based choices retrieved from your course materials':'Not enough distinct source passages to form single-answer questions',
+   title:(course.code||course.name)+' · objective practice',
+   source:questions.length?'Four-option questions built from your course material':'Not enough distinct course concepts to produce three reliable wrong options for each question',
    questions,requestedCount:count
   };
  }
@@ -592,11 +552,7 @@ function localPractice(course,sources,count,style){
   const essay=style==='essay'||(style==='mixed'&&index%2===1);
   return {
    question:essay?'Using the cited passage, explain the idea in your own words, give an example from your course and state why it matters.':'Explain this idea from your course material in your own words: “'+item.text.slice(0,260)+'”',
-   answer:item.text,
-   source:item.name,
-   location:item.location,
-   citation:item.citation,
-   materialId:item.materialId
+   answer:item.text,source:item.name,location:item.location,citation:item.citation,materialId:item.materialId
   };
  });
  for(let i=0;questions.length<count&&topicList.length;i++){
@@ -613,14 +569,38 @@ function localPractice(course,sources,count,style){
   questions:questions.slice(0,count)
  };
 }
+
+
+function checkPracticeAnswers(){
+  if(!studioPractice?.questions?.length)return;
+  const responses=studioPractice.questions.map((question,index)=>{
+    if(!window.eduStudyQuizCore?.isObjectiveQuestion(question))return null;
+    const selected=document.querySelector('input[name="practiceQ'+index+'"]:checked');
+    const selectedOption=selected?Number(selected.value):null;
+    const valid=Number.isInteger(selectedOption)&&selectedOption>=0&&selectedOption<4;
+    return {
+      selectedOption:valid?selectedOption:null,
+      selectedAnswer:valid?question.options[selectedOption]:'',
+      correctOption:question.correctOption,
+      correct:valid&&selectedOption===question.correctOption
+    };
+  });
+  const objective=responses.filter(Boolean);
+  if(!objective.length){toast('This set does not contain objective questions.');return}
+  const missing=objective.some(response=>response.selectedOption===null);
+  if(missing){toast('Answer every multiple-choice question before checking your score.');return}
+  studioPracticeAttempt={responses,score:objective.filter(item=>item.correct).length,total:objective.length};
+  render();
+}
+
 async function generatePractice(){
   const course=selectedCourse('practiceCourseSelect')||selectedCourse('practiceCourse')||data.courses[0];
   if(!course){toast('Import or add your learning-area list first.');return}
-  const count=Number(document.getElementById('questionCount')?.value)||10,style=document.getElementById('questionStyle')?.value||'mixed';
+  const count=Number(document.getElementById('questionCount')?.value)||10,style=document.getElementById('questionStyle')?.value||'mcq';
   const sources=await loadCourseText(course.id);
   const generated=localPractice(course,sources,count,style);
-  if(!generated.questions.length){toast(style==='mcq'?'Multiple-choice questions need at least four distinct searchable topics or titled sections. Add clear course topics/headings or choose another question style.':'Add course topics or searchable learning materials before generating a practice set.');return}
-  studioPractice=generated;if(generated.questions.length<count)toast('Created '+generated.questions.length+' of '+count+' requested questions. The available topics or sections limit the source material for this set.');window.practiceCourseId=course.id;currentPage='practice';render();document.querySelector('.practice-results')?.scrollIntoView({behavior:'smooth',block:'start'});
+  if(!generated.questions.length){toast(style==='mcq'?'Not enough distinct concepts were found to create four-option questions with three genuine distractors. Add course notes or clearer topics and try again.':'Add course topics or searchable learning materials before generating a practice set.');return}
+  studioPractice=generated;studioPracticeAttempt=null;if(generated.questions.length<count)toast('Created '+generated.questions.length+' of '+count+' requested questions. The available topics or sections limit the source material for this set.');window.practiceCourseId=course.id;currentPage='practice';render();document.querySelector('.practice-results')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 document.addEventListener('change',e=>{if(e.target.id==='materialImportFile'&&e.target.files?.length>1){e.stopImmediatePropagation();toast('Add materials one file at a time so you can link each one to the right course.');handleStudioFile('material',e.target.files[0])}},true);
@@ -651,7 +631,7 @@ document.addEventListener('click',e=>{
     case'open-practice':window.practiceCourseId=document.getElementById('practiceCourse')?.value||'';setPage('practice');break;
     case'generate-tutorial':generateTutorial();break;
     case'find-curriculum':findCurriculum();break;
-    case'generate-practice':generatePractice();break;
+    case'generate-practice':generatePractice();break;case'check-practice':checkPracticeAnswers();break;
     case'go-practice':window.practiceCourseId=data.courses.find(c=>c.name===studioLesson?.course)?.id||'';setPage('practice');break;
     case'delete-material':removeStoredMaterial(b.dataset.id);data.materials=data.materials.filter(m=>m.id!==b.dataset.id);data.materialText=(data.materialText||[]).filter(m=>m.id!==b.dataset.id);save();toast('Material removed from this device');break;
   }
@@ -1369,7 +1349,7 @@ function beginSessionCompletion(event,date){
     attendanceSelect.addEventListener('change',syncAttendanceFields);syncAttendanceFields();
     return;
   }
-  const body='<p class="session-modal-intro">Capture what you studied and the key words, concepts or phrases you want to remember. Eduvia will follow with a 10-question recall check. You can retake it as often as you like.</p>'+
+  const body='<p class="session-modal-intro">Capture what you studied and the key words, concepts or phrases you want to remember. Eduvia will follow with a 10-question objective multiple-choice quiz. You can retake it as often as you like.</p>'+
     field('Topics studied','topics','<textarea id="f-topics" name="topics" required placeholder="List the topics you reviewed"></textarea>',true)+
     field('Key words from your study','keyPoints','<textarea id="f-keyPoints" name="keyPoints" required placeholder="Enter key words, concepts or important phrases"></textarea>',true)+
     field('Additional reflection (optional)','gained','<textarea id="f-gained" name="gained" placeholder="Anything else you gained from this session"></textarea>',true);
@@ -1391,71 +1371,79 @@ function sessionQuizSources(courseId){
   })();
 }
 function buildSessionQuiz(record,sources){
-  const course=data.courses.find(item=>item.id===record.courseId),reflection=record.reflection||{};
-  const topics=[...splitSessionList(reflection.topics),...(course?.topics||[])].filter(Boolean).sort((a,b)=>b.length-a.length);
-  const stop=new Set('about after again also another because before being between could course during each from have into more most other over should some such than that their there these they this those through under very what when where which while with would your lecture material process learn learned theory using used into'.split(' '));
-  const questions=[],seen=new Set();
-  const sentenceList=sources.flatMap(source=>String(source.text||'').replace(/\s+/g,' ').split(/(?<=[.!?])\s+|(?<=:)\s+|\n+/).map(sentence=>({sentence:sentence.trim(),source:source.name||'Course material'}))).filter(item=>item.sentence.length>=35&&item.sentence.length<=360);
-  const addQuestion=(prompt,answer,mode,source)=>{
-    const key=prompt.toLowerCase();if(seen.has(key))return;seen.add(key);questions.push({prompt,answer,mode,source});
-  };
-  for(const item of sentenceList){
-    if(questions.length>=10)break;
-    const topic=topics.find(value=>value.length>2&&item.sentence.toLowerCase().includes(value.toLowerCase()));
-    let answer='',masked='';
-    if(topic){answer=topic;const escaped=topic.replace(/[.*+?^$()|[\]\\]/g,'\\$&');masked=item.sentence.replace(new RegExp(escaped,'i'),'_____')}
-    else{
-      const words=item.sentence.match(/[A-Za-z][A-Za-z'-]{5,}/g)||[];
-      const term=words.find(word=>!stop.has(word.toLowerCase()));
-      if(!term)continue;
-      answer=term;const escaped=term.replace(/[.*+?^$()|[\]\\]/g,'\\$&');masked=item.sentence.replace(new RegExp('\\b'+escaped+'\\b','i'),'_____');
-    }
-    addQuestion('Complete the missing topic or key term: “'+masked+'”',answer,'term',item.source);
-  }
-  const learned=[...splitSessionList(reflection.keyPoints),...splitSessionList(reflection.gained)];
-  if(questions.length<10&&learned.length){
-    const templates=['What key point did you record about ','State one detail you learned about ','How would you explain your main takeaway on ','What idea from your study notes can you recall about ','Which important point did you gain about '];
-    for(let index=0;questions.length<10;index++){
-      const point=learned[index%learned.length],topic=topics[index%Math.max(1,topics.length)]||record.title||'your topic';
-      addQuestion(templates[index%templates.length]+'“'+topic+'”?',point,'keywords','Your study reflection');
-      if(index>50)break;
-    }
-  }
+  const course=data.courses.find(item=>item.id===record.courseId);
+  const builder=window.eduStudyQuizCore;
+  if(!builder)return [];
+  return builder.buildObjectiveQuestions(record,sources,course?.topics||[],10);
+}
 
-  return questions.slice(0,10);
-}
-function normalizeQuizText(value){return String(value||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim()}
-function gradeSessionAnswer(question,response){
-  const actual=normalizeQuizText(response),expected=normalizeQuizText(question.answer);
-  if(!actual||!expected)return false;
-  if(question.mode==='term')return (' '+actual+' ').includes(' '+expected+' ');
-  const skip=new Set('about after again also because before being between could each from have into more most other should some than that their there these they this those through under very what when where which while with would your'.split(' '));
-  const keywords=expected.split(' ').filter(word=>word.length>2&&!skip.has(word));
-  const matched=keywords.filter(word=>(' '+actual+' ').includes(' '+word+' ')).length;
-  return matched>=Math.max(1,Math.ceil(keywords.length*0.4));
-}
+
 async function openSessionQuiz(recordId){
-  const record=(data.studyRecords||[]).find(item=>item.id===recordId);if(!record||record.type!=='study')return;
-  if(!Array.isArray(record.quizQuestions)||record.quizQuestions.length!==10){
+  const record=(data.studyRecords||[]).find(item=>item.id===recordId);
+  if(!record||record.type!=='study')return;
+  const builder=window.eduStudyQuizCore;
+  if(!builder){toast('The objective quiz module is unavailable. Refresh Eduvia and try again.');return}
+  const existing=Array.isArray(record.quizQuestions)?record.quizQuestions:[];
+  const alreadyObjective=existing.length>0&&existing.every(question=>builder.isObjectiveQuestion(question));
+  if(!alreadyObjective){
     const sources=await sessionQuizSources(record.courseId);
     record.quizQuestions=buildSessionQuiz(record,sources);
-    const fallbackPoints=[...splitSessionList(record.reflection?.keyPoints),...splitSessionList(record.reflection?.gained)],fallbackTopics=splitSessionList(record.reflection?.topics);while(record.quizQuestions.length<10){const number=record.quizQuestions.length+1,topic=fallbackTopics[(number-1)%Math.max(1,fallbackTopics.length)]||record.title||'your topic',answer=fallbackPoints[(number-1)%Math.max(1,fallbackPoints.length)]||record.reflection?.gained||topic;record.quizQuestions.push({prompt:'Recall check '+number+': Write one key idea you learned about '+topic+'.',answer,mode:'keywords',source:'Your study reflection'})}
+    if(!record.quizQuestions.length){
+      save();
+      toast('Eduvia could not create four-option questions from this session yet. Add course notes with at least four distinct concepts, then reopen this study quiz.');
+      return;
+    }
+    // Existing quiz attempts are deliberately preserved when old theory questions are upgraded.
     save();
   }
   const questions=record.quizQuestions;
-  const keyPoints=record.reflection?.keyPoints||[];const content='<p class="session-modal-intro">10 questions · on-device grading checks key terms from your course notes or study reflection. Unlimited retakes are saved.</p>'+(keyPoints.length?'<section class="session-key-points"><h3>Key words from your session</h3><ol>'+keyPoints.map(point=>'<li>'+safe(point)+'</li>').join('')+'</ol></section>':'')+'<div class="quick-quiz-list">'+questions.map((question,index)=>'<div class="form-field full"><label for="f-quiz-'+index+'">'+String(index+1).padStart(2,'0')+'. '+safe(question.prompt)+'</label><input id="f-quiz-'+index+'" name="answer'+index+'" required autocomplete="off" placeholder="Your short answer"></div>').join('')+'</div>';
-  openModal('10-question study quiz',record.title,content,'Grade my quiz',fd=>{
-    const responses=questions.map((question,index)=>{const answer=String(fd.get('answer'+index)||'').trim();return {question:question.prompt,answer,key:question.answer,source:question.source,correct:gradeSessionAnswer(question,answer)}});
+  const content='<p class="session-modal-intro">'+questions.length+' questions · choose one answer from A–D. Eduvia marks the quiz automatically and keeps every attempt.</p>'+
+    '<div class="quick-quiz-list objective-quiz-list">'+questions.map((question,index)=>{
+      const choices=question.options.map((option,optionIndex)=>'<label class="objective-option"><input type="radio" name="answer'+index+'" value="'+optionIndex+'" required><span><b>'+String.fromCharCode(65+optionIndex)+'.</b> '+safe(option)+'</span></label>').join('');
+      return '<fieldset class="form-field full objective-question"><legend>'+String(index+1).padStart(2,'0')+'. '+safe(question.prompt||question.question)+'</legend><div class="objective-options">'+choices+'</div></fieldset>';
+    }).join('')+'</div>';
+  openModal(questions.length+'-question objective quiz',record.title,content,'Grade my quiz',fd=>{
+    const responses=questions.map((question,index)=>{
+      const raw=fd.get('answer'+index);
+      const selectedOption=raw===null?null:Number(raw);
+      const valid=Number.isInteger(selectedOption)&&selectedOption>=0&&selectedOption<4;
+      return {
+        question:question.prompt||question.question,
+        answer:valid?question.options[selectedOption]:'',
+        key:question.options[question.correctOption],
+        source:question.source,
+        citation:question.citation,
+        explanation:question.explanation||question.answer,
+        options:question.options.slice(),
+        selectedOption:valid?selectedOption:null,
+        correctOption:question.correctOption,
+        correct:valid&&selectedOption===question.correctOption
+      };
+    });
     const score=responses.filter(item=>item.correct).length,attempts=record.quizAttempts=Array.isArray(record.quizAttempts)?record.quizAttempts:[];
-    const attempt={number:attempts.length+1,completedAt:Date.now(),score,total:questions.length,responses};attempts.unshift(attempt);completeSessionRecord(record);save();showSessionQuizResult(record.id,attempt);
+    const attempt={number:attempts.length+1,completedAt:Date.now(),score,total:questions.length,responses};
+    attempts.unshift(attempt);completeSessionRecord(record);save();showSessionQuizResult(record.id,attempt);
   });
 }
+
+
 function showSessionQuizResult(recordId,attempt){
   const record=(data.studyRecords||[]).find(item=>item.id===recordId);if(!record)return;
-  const rows=attempt.responses.map((result,index)=>'<article class="quiz-result-row '+(result.correct?'correct':'incorrect')+'"><div><strong>'+String(index+1).padStart(2,'0')+'. '+(result.correct?'Correct':'Review this answer')+'</strong><p>'+safe(result.question)+'</p><small>Your answer: '+safe(result.answer||'No answer')+'</small><small>Answer key: '+safe(result.key)+'</small></div></article>').join('');
+  const rows=attempt.responses.map((result,index)=>{
+    const objective=Array.isArray(result.options)&&result.options.length===4;
+    const choices=objective?'<div class="objective-result-options">'+result.options.map((option,optionIndex)=>{
+      const status=optionIndex===result.correctOption?'is-correct':optionIndex===result.selectedOption?'is-selected':'';
+      return '<div class="objective-result-option '+status+'"><b>'+String.fromCharCode(65+optionIndex)+'.</b> '+safe(option)+(optionIndex===result.correctOption?' · Correct answer':'')+(optionIndex===result.selectedOption?' · Your choice':'')+'</div>';
+    }).join('')+'</div>':'<small>Your answer: '+safe(result.answer||'No answer')+'</small><small>Answer key: '+safe(result.key)+'</small>';
+    const explanation=objective&&result.explanation?'<small class="objective-explanation">Explanation: '+safe(result.explanation)+'</small>':'';
+    const citation=result.citation?'<small>Source: '+safe(result.citation)+'</small>':'';
+    return '<article class="quiz-result-row '+(result.correct?'correct':'incorrect')+'"><div><strong>'+String(index+1).padStart(2,'0')+'. '+(result.correct?'Correct':'Review this answer')+'</strong><p>'+safe(result.question)+'</p>'+choices+explanation+citation+'</div></article>';
+  }).join('');
   const stats=sessionQuizStats(record.quizAttempts||[]);const body='<div class="quiz-score-banner"><strong>'+attempt.score+'/'+attempt.total+'</strong><span>Attempt '+attempt.number+' · '+Math.round(attempt.score/attempt.total*100)+'%</span></div><div class="quiz-performance-summary"><div><span>First</span><strong>'+stats.first.score+'/'+stats.first.total+'</strong></div><div><span>Latest</span><strong>'+stats.latest.score+'/'+stats.latest.total+'</strong></div><div><span>Best</span><strong>'+stats.best.score+'/'+stats.best.total+'</strong></div></div><div class="quiz-result-list">'+rows+'</div><button type="button" class="secondary-btn quiz-retake-btn" data-action="retake-session-quiz" data-record-id="'+safe(record.id)+'">Retake this quiz</button>';
   openModal('Quiz result',record.title,body,'Close',()=>closeModal());
 }
+
+
 function sessionQuizStats(attempts){
   const list=Array.isArray(attempts)?attempts:[];
   if(!list.length)return {first:null,latest:null,best:null};
@@ -1480,7 +1468,7 @@ function showSessionRecord(recordId){
     body+='<h3>Topics</h3><p>'+safe(reflection.topics||'None saved')+'</p><h3>Key words from your study</h3>'+(reflection.keyPoints?.length?'<ol>'+reflection.keyPoints.map(point=>'<li>'+safe(point)+'</li>').join('')+'</ol>':'<p>'+safe(reflection.gained||'None saved')+'</p>')+'<h3>Quiz performance</h3><p>'+attempts.length+' attempt'+(attempts.length===1?'':'s')+' · unlimited retakes</p>';
     const stats=sessionQuizStats(attempts);if(stats.latest)body+='<div class="quiz-performance-summary"><div><span>First</span><strong>'+stats.first.score+'/'+stats.first.total+'</strong></div><div><span>Latest</span><strong>'+stats.latest.score+'/'+stats.latest.total+'</strong></div><div><span>Best</span><strong>'+stats.best.score+'/'+stats.best.total+'</strong></div></div>';
     body+=attempts.length?'<div class="quiz-attempt-list">'+attempts.map(item=>'<div><strong>Attempt '+item.number+': '+item.score+'/'+item.total+'</strong><span>'+new Date(item.completedAt).toLocaleString()+'</span></div>').join('')+'</div>':'<p>No quiz taken yet.</p>';
-    body+='<button type="button" class="secondary-btn quiz-retake-btn" data-action="retake-session-quiz" data-record-id="'+safe(record.id)+'">'+(attempts.length?'Retake quiz':'Take 10-question quiz')+'</button>';
+    body+='<button type="button" class="secondary-btn quiz-retake-btn" data-action="retake-session-quiz" data-record-id="'+safe(record.id)+'">'+(attempts.length?'Retake objective quiz':'Take objective quiz')+'</button>';
   }
   openModal(record.type==='class'?'Class record':'Study record',record.title,body,'Close',()=>closeModal());
   if(record.type==='class'&&Array.isArray(reflection.voiceRecordings))window.EduviaVoiceReflection?.attachSavedAudio?.(reflection.voiceRecordings);

@@ -54,3 +54,12 @@ test('examination centre routes to the Play tab instead of More tools',()=>{
  assert.ok(nav.includes("exams:'play'"));
  assert.ok(!nav.includes("exams:'more'"));
 });
+
+test('timed mock exams default to four-option objective questions and auto-mark them',()=>{
+ assert.ok(source.includes('option value="mcq" selected>Objective (4 options)'));
+ assert.ok(source.includes("style||'mcq'"));
+ assert.ok(source.includes('mock-objective-options'));
+ assert.ok(source.includes('active.objectiveScore='));
+ assert.ok(source.includes('OBJECTIVE SCORE'));
+ assert.ok(source.includes('question.options[question.correctOption]'));
+});

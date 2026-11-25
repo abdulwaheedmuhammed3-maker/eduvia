@@ -206,10 +206,10 @@ function renderMockExamHub(){
  const recent=data.mockExamAttempts.slice(0,5).map(attempt=>'<div class="schedule-row"><div class="schedule-time">'+esc(new Date(attempt.submittedAt).toLocaleDateString())+'</div><div class="schedule-row-main"><div><strong>'+esc(attempt.courseName||'Mock examination')+'</strong><span>'+attempt.questions.length+' questions · '+attempt.durationMinutes+' minutes · '+attempt.answeredCount+' answered</span></div></div><button class="text-btn" data-mock-action="open-result" data-id="'+esc(attempt.id)+'">Review →</button></div>').join('');
  const form='<details class="action-disclosure"><summary><div><strong>Start a timed mock examination</strong><p>Generate a paper from your course notes and topics</p></div><span class="disclosure-cta">＋ Start mock</span></summary><div class="disclosure-body"><form id="mockExamSetup" class="form-grid">'+
   '<label class="form-field">Learning area'+selectCourse('courseId')+'</label>'+
-  '<label class="form-field">Question style<select name="style"><option value="mixed">Mixed review</option><option value="short">Short answer</option><option value="essay">Exam-style essay</option></select></label>'+
+  '<label class="form-field">Question style<select name="style"><option value="mcq" selected>Objective (4 options)</option><option value="mixed">Mixed review</option><option value="short">Short answer</option><option value="essay">Exam-style essay</option></select></label>'+
   '<label class="form-field">Number of questions<select name="count"><option value="5">5 questions</option><option value="10" selected>10 questions</option><option value="15">15 questions</option></select></label>'+
   '<label class="form-field">Time limit<select name="duration"><option value="15">15 minutes</option><option value="30" selected>30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option></select></label>'+
-  '<div class="form-field full"><p class="privacy-note-inline">Questions are created on this device from saved learning materials and topics. Written answers are reviewed by you against the source answer.</p><button class="primary-btn" type="submit">Start mock examination</button></div></form></div></details>';
+  '<div class="form-field full"><p class="privacy-note-inline">Objective questions are built from saved course materials, shown with four choices and marked automatically. Written styles remain optional.</p><button class="primary-btn" type="submit">Start mock examination</button></div></form></div></details>';
  return '<div class="mock-exam-hub">'+(data.activeMockExam?'<div class="active-mock-banner"><strong>Mock examination in progress</strong><p>'+esc(data.activeMockExam.courseName)+' · Your answers are saved on this device.</p><button class="primary-btn" data-page="mock-exam">Resume examination</button></div>':'')+form+(recent?'<div class="section-title-row"><h3>Recent mock examinations</h3></div><div class="schedule-list">'+recent+'</div>':'')+'</div>';
 }
 async function startMockExam(courseId,count,duration,style){
@@ -217,7 +217,7 @@ async function startMockExam(courseId,count,duration,style){
  if(!course){toast('Choose a course first.');return}
  try{
   const sources=await loadCourseText(course.id);
-  const generated=localPractice(course,sources,Number(count)||10,style||'mixed');
+  const generated=localPractice(course,sources,Number(count)||10,style||'mcq');
   const topics=Array.isArray(course.topics)?course.topics:[];
   const questions=(generated.questions||[]).map((question,index)=>({...question,topic:topics.length?String(topics[index%topics.length]):course.name}));
   if(!questions.length){toast('Add course topics or upload course notes before starting a mock examination.');return}
@@ -239,16 +239,22 @@ function renderMockExam(){
  const endsAt=Number(active.endsAt);
  if(!Number.isFinite(endsAt)||endsAt<=Date.now()){finishMockExam(true);return renderMockResults()}
  const remaining=endsAt-Date.now();
- const questions=(active.questions||[]).map((question,index)=>'<article class="mock-question"><div class="mock-question-head"><span>QUESTION '+String(index+1).padStart(2,'0')+' / '+active.questions.length+'</span><small>'+esc(question.source||'Course material')+'</small></div><strong>'+esc(question.question)+'</strong><label class="form-field"><span>Your answer</span><textarea rows="4" data-mock-answer="'+index+'" placeholder="Write your answer here">'+esc(active.answers?.[index]||'')+'</textarea></label></article>').join('');
- // Keep a single timer interval across rerenders; persisted endsAt remains authoritative after reload.
+ const questions=(active.questions||[]).map((question,index)=>{
+  const objective=window.eduStudyQuizCore?.isObjectiveQuestion(question);
+  const answer=active.answers?.[index]||'';
+  const input=objective?'<div class="objective-options mock-objective-options">'+question.options.map((option,optionIndex)=>'<label class="objective-option"><input type="radio" name="mockAnswer'+index+'" value="'+optionIndex+'" data-mock-answer="'+index+'" '+(answer===String(optionIndex)?'checked':'')+'><span><b>'+String.fromCharCode(65+optionIndex)+'.</b> '+esc(option)+'</span></label>').join('')+'</div>':'<label class="form-field"><span>Your answer</span><textarea rows="4" data-mock-answer="'+index+'" placeholder="Write your answer here">'+esc(answer)+'</textarea></label>';
+  return '<article class="mock-question"><div class="mock-question-head"><span>QUESTION '+String(index+1).padStart(2,'0')+' / '+active.questions.length+'</span><small>'+esc(question.source||'Course material')+'</small></div><strong>'+esc(question.question||question.prompt)+'</strong>'+input+'</article>';
+ }).join('');
  if(mockExamTicker){clearInterval(mockExamTicker);mockExamTicker=null}
  setTimeout(()=>{if(currentPage==='mock-exam'&&data.activeMockExam?.status==='in-progress'){
   mockExamTicker=setInterval(()=>{const clock=document.getElementById('mockExamClock'),active=data.activeMockExam,left=active?Number(active.endsAt)-Date.now():0;if(clock)clock.textContent=mockClock(left);if(!active||active.status!=='in-progress'){clearInterval(mockExamTicker);mockExamTicker=null;return}if(left<=0)finishMockExam(true)},1000)
  }},0);
- return pageHead('EXAM CONDITIONS',esc(active.courseName)+' · Mock examination','Work independently. Your answers are saved on this device as you type.','<button class="primary-btn" data-mock-action="finish">Submit paper</button>')+
+ return pageHead('EXAM CONDITIONS',esc(active.courseName)+' · Mock examination','Select one option for every objective question. Your answers are saved on this device.','<button class="primary-btn" data-mock-action="finish">Submit paper</button>')+
   '<section class="panel mock-timer-panel"><div><span>TIME REMAINING</span><strong id="mockExamClock">'+mockClock(remaining)+'</strong></div><span>'+esc(active.durationMinutes)+' minute paper</span></section>'+
   '<section class="mock-exam-questions">'+questions+'</section><div class="mock-finish-row"><span>'+active.questions.length+' questions</span><button class="primary-btn" data-mock-action="finish">Finish examination</button></div>';
 }
+
+
 function finishMockExam(autoSubmitted){
  const active=data.activeMockExam;if(!active||active.status!=='in-progress')return;
  const expired=Number(active.endsAt)<=Date.now();autoSubmitted=!!autoSubmitted||expired;
@@ -256,7 +262,7 @@ function finishMockExam(autoSubmitted){
  if(data.mockExamAttempts.some(attempt=>attempt.id===active.id)){data.activeMockExam=null;save();return;}
  if(mockExamTicker){clearInterval(mockExamTicker);mockExamTicker=null}
  active.status='submitted';active.submittedAt=Date.now();active.autoSubmitted=!!autoSubmitted;
- active.answers=(active.answers||[]).map(value=>String(value||''));active.answeredCount=active.answers.filter(value=>value.trim()).length;
+ active.answers=(active.answers||[]).map(value=>String(value||''));active.answeredCount=active.answers.filter(value=>value.trim()).length;const objectiveQuestions=(active.questions||[]).map((question,index)=>({question,index})).filter(item=>window.eduStudyQuizCore?.isObjectiveQuestion(item.question));active.objectiveTotal=objectiveQuestions.length;active.objectiveScore=objectiveQuestions.filter(item=>active.answers[item.index]===String(item.question.correctOption)).length;active.objectivePercent=objectiveQuestions.length?Math.round(active.objectiveScore/objectiveQuestions.length*100):null;
  active.durationMinutes=Math.max(1,Math.round((active.submittedAt-active.startedAt)/60000));
  data.mockExamAttempts.unshift(active);data.lastMockExam=active;data.activeMockExam=null;
  currentPage='mock-results';location.hash='mock-results';save();
@@ -266,28 +272,46 @@ function renderMockResults(){
  if(!attempt)return pageHead('MOCK EXAMINATIONS','No result to review','Your completed mock papers will appear here.','<button class="secondary-btn" data-page="courses">Back to courses</button>');
  const questions=(attempt.questions||[]).map((question,index)=>{
   const answer=attempt.answers?.[index]||'',rating=attempt.review?.[index]||'';
+  const objective=window.eduStudyQuizCore?.isObjectiveQuestion(question);
+  if(objective){
+   const selected=answer===''?-1:Number(answer),answered=Number.isInteger(selected)&&selected>=0&&selected<4,correct=answered&&selected===question.correctOption;
+   const picked=answered?String.fromCharCode(65+selected)+'. '+question.options[selected]:'No answer submitted';
+   const key=String.fromCharCode(65+question.correctOption)+'. '+question.options[question.correctOption];
+   return '<article class="mock-result-question '+(correct?'is-correct':'is-incorrect')+'"><div class="mock-question-head"><span>QUESTION '+String(index+1).padStart(2,'0')+'</span><small>'+esc(question.source||'Course material')+'</small></div><strong>'+esc(question.question||question.prompt)+'</strong><p class="mock-objective-status">'+(correct?'Correct':'Incorrect')+'</p><div class="mock-answer-block"><span>Your response</span><p>'+esc(picked)+'</p><span>Correct answer</span><p>'+esc(key)+'</p></div><details><summary>Explanation and source</summary><p>'+esc(question.explanation||question.answer||'Review the cited passage in your course material.')+'</p>'+(question.citation?'<small>From: '+esc(question.citation)+'</small>':'')+'</details></article>';
+  }
   return '<article class="mock-result-question"><div class="mock-question-head"><span>QUESTION '+String(index+1).padStart(2,'0')+'</span><small>'+esc(question.source||'Course material')+'</small></div><strong>'+esc(question.question)+'</strong><div class="mock-answer-block"><span>Your response</span><p>'+esc(answer||'No answer submitted')+'</p></div><details><summary>View source answer / marking guide</summary><p>'+esc(question.answer||'Review the relevant section in your uploaded course material.')+'</p></details><label class="form-field">Self-assessment<select data-mock-rating="'+index+'"><option value="">Choose how well you answered</option><option value="confident" '+(rating==='confident'?'selected':'')+'>I answered confidently</option><option value="partial" '+(rating==='partial'?'selected':'')+'>I got part of it</option><option value="revisit" '+(rating==='revisit'?'selected':'')+'>I need to revise this</option></select></label></article>';
  }).join('');
- const rated=(attempt.review||[]).filter(Boolean).length;
- return pageHead('PAPER REVIEW','Review your mock examination',attempt.courseName+' · '+attempt.answeredCount+' of '+attempt.questions.length+' questions answered.','<button class="secondary-btn" data-page="courses">Back to courses</button>')+
-  '<div class="stats-row"><div class="stat-card"><div class="stat-label">ANSWERED</div><div class="stat-value">'+attempt.answeredCount+'</div></div><div class="stat-card"><div class="stat-label">UNANSWERED</div><div class="stat-value">'+(attempt.questions.length-attempt.answeredCount)+'</div></div><div class="stat-card"><div class="stat-label">TIME USED</div><div class="stat-value">'+attempt.durationMinutes+'m</div></div></div>'+
-  '<div class="note-callout">Written answers are not automatically graded. Compare each response with the source answer, then record your own assessment below.</div><div class="mock-result-list">'+questions+'</div><button class="primary-btn" data-mock-action="save-review">'+(rated===questions.length?'Update self-assessment':'Save self-assessment')+'</button>';
+ const objectiveQuestions=(attempt.questions||[]).map((question,index)=>({question,index})).filter(item=>window.eduStudyQuizCore?.isObjectiveQuestion(item.question));
+ const objectiveScore=objectiveQuestions.filter(item=>String(attempt.answers?.[item.index]??'')===String(item.question.correctOption)).length;
+ const writtenQuestions=(attempt.questions||[]).map((question,index)=>({question,index})).filter(item=>!window.eduStudyQuizCore?.isObjectiveQuestion(item.question));
+ const rated=writtenQuestions.filter(item=>Boolean(attempt.review?.[item.index])).length;
+ const objectiveStat=objectiveQuestions.length?'<div class="stat-card"><div class="stat-label">OBJECTIVE SCORE</div><div class="stat-value">'+objectiveScore+'/'+objectiveQuestions.length+'</div></div>':'';
+ const stats='<div class="stats-row"><div class="stat-card"><div class="stat-label">ANSWERED</div><div class="stat-value">'+attempt.answeredCount+'</div></div><div class="stat-card"><div class="stat-label">UNANSWERED</div><div class="stat-value">'+(attempt.questions.length-attempt.answeredCount)+'</div></div>'+objectiveStat+'<div class="stat-card"><div class="stat-label">TIME USED</div><div class="stat-value">'+attempt.durationMinutes+'m</div></div></div>';
+ const note=writtenQuestions.length&&objectiveQuestions.length?'<div class="note-callout">Objective questions are marked automatically. Written answers can be compared with the source and self-assessed below.</div>':writtenQuestions.length?'<div class="note-callout">Written answers are not automatically graded. Compare each response with the source answer, then record your own assessment below.</div>':'<div class="note-callout">Your objective answers have been marked automatically. Open each explanation to review the supporting course material.</div>';
+ const reviewButton=writtenQuestions.length?'<button class="primary-btn" data-mock-action="save-review">'+(rated===writtenQuestions.length?'Update self-assessment':'Save self-assessment')+'</button>':'';
+ return pageHead('PAPER REVIEW','Review your mock examination',attempt.courseName+' · '+attempt.answeredCount+' of '+attempt.questions.length+' questions answered.','<button class="secondary-btn" data-page="courses">Back to courses</button>')+stats+note+'<div class="mock-result-list">'+questions+'</div>'+reviewButton;
 }
+
+
 function saveMockReview(){
  const attempt=data.lastMockExam;if(!attempt)return;
+ const writtenIndices=(attempt.questions||[]).map((question,index)=>!window.eduStudyQuizCore?.isObjectiveQuestion(question)?index:-1).filter(index=>index>=0);
+ if(!writtenIndices.length){toast('All questions in this paper were automatically graded.');return}
  const review=attempt.review||[];
  document.querySelectorAll('[data-mock-rating]').forEach(select=>{review[Number(select.dataset.mockRating)]=select.value});
  attempt.review=review;
- if(review.filter(Boolean).length<attempt.questions.length){toast('Review all questions before saving your assessment.');return}
- const counts={confident:0,partial:0,revisit:0};review.forEach(value=>{if(counts[value]!==undefined)counts[value]++});
- attempt.readinessPercent=Math.round((counts.confident+counts.partial*0.5)/Math.max(1,review.length)*100);attempt.reviewSavedAt=Date.now();
- (attempt.questions||[]).forEach((question,index)=>{
-  const topic=question.topic||attempt.courseName;if(!topic)return;
+ if(writtenIndices.some(index=>!review[index])){toast('Review all written questions before saving your assessment.');return}
+ const counts={confident:0,partial:0,revisit:0};writtenIndices.forEach(index=>{const value=review[index];if(counts[value]!==undefined)counts[value]++});
+ attempt.readinessPercent=Math.round((counts.confident+counts.partial*0.5)/Math.max(1,writtenIndices.length)*100);attempt.reviewSavedAt=Date.now();
+ writtenIndices.forEach(index=>{
+  const question=attempt.questions[index],topic=question.topic||attempt.courseName;if(!topic)return;
   const key=masteryKey(attempt.courseId,topic);data.topicMastery[key]=data.topicMastery[key]||{};
   data.topicMastery[key].status=review[index]==='confident'?'confident':review[index]==='partial'?'learning':'not-started';
  });
  save();toast('Self-assessment saved. Topics to revisit are reflected in Learning mastery.');
 }
+
+
 document.addEventListener('submit',async event=>{
  if(event.target.id!=='mockExamSetup')return;
  event.preventDefault();const fd=new FormData(event.target);
@@ -301,6 +325,11 @@ document.addEventListener('input',event=>{
  }
 });
 document.addEventListener('change',event=>{
+ if(event.target.matches('[data-mock-answer]')&&data.activeMockExam){
+  data.activeMockExam.answers=data.activeMockExam.answers||[];
+  data.activeMockExam.answers[Number(event.target.dataset.mockAnswer)]=event.target.value;
+  persistMockExamDraft();
+ }
  if(event.target.matches('[data-mock-rating]')&&data.lastMockExam){
   data.lastMockExam.review=data.lastMockExam.review||[];
   data.lastMockExam.review[Number(event.target.dataset.mockRating)]=event.target.value;

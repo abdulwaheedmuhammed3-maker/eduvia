@@ -179,22 +179,22 @@ test('portable ZIP restore validates attachments before a single atomic IndexedD
  assert.ok(studio.includes('tx.objectStore(storeName).clear()'));
 });
 
-test('multiple-choice questions are topic-specific and use distractors from other topic groups',()=>{
- const studio=read('study-studio.js');
- assert.ok(studio.includes('const groups=labels.map(topic=>'));
- assert.ok(studio.includes('const other=groups[(targetIndex+step)%groups.length]'));
- assert.ok(studio.includes("question:'Which passage best explains '+target.topic+' according to your course material?'"));
- assert.ok(studio.includes("if(distractors.length<3)continue"));
- assert.ok(studio.includes('Show correct choice / source passage'));
- assert.ok(studio.includes("Multiple-choice questions need at least four distinct searchable topics or titled sections."));
- assert.ok(studio.includes("if(generated.questions.length<count)toast('Created '"));
+test('objective MCQs use distinct source-grounded distractors and retain source attribution',()=>{
+ assert.ok(quizCore.includes('const matches = explicitConcepts.filter(term => containsPhrase(sentence, term));'));
+ assert.ok(quizCore.includes('const addDistractor = value => {'));
+ assert.ok(quizCore.includes('if (distractors.length < 3) return;'));
+ assert.ok(quizCore.includes('shuffled([answer, ...distractors.slice(0, 3)]'));
+ assert.ok(quizCore.includes('new Set(question.options.map(normalize)).size === 4'));
+ assert.ok(quizCore.includes('citation: item.citation'));
 });
 
-test('MCQ answer reveal expressions interpolate at runtime rather than displaying template placeholders',()=>{
- const studio=read('study-studio.js');
- assert.ok(studio.includes('<summary>${q.options?'));
- assert.ok(studio.includes('<p>${q.options?'));
- assert.ok(!studio.includes('\\${q.options?'));
+test('practice objective choices are checked before revealing feedback and source explanations',()=>{
+ assert.ok(studio.includes('question.options.map((option,j)'));
+ assert.ok(studio.includes('data-action="check-practice"'));
+ assert.ok(studio.includes('function checkPracticeAnswers()'));
+ assert.ok(studio.includes('q.options[response.correctOption]'));
+ assert.ok(studio.includes('Explanation and source'));
+ assert.ok(studio.includes('studioPracticeAttempt=null'));
 });
 
 test('Android APK is built for pull requests but the beta release is published only outside PRs',()=>{

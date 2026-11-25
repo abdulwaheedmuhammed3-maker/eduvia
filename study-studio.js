@@ -1390,6 +1390,7 @@ async function openSessionQuiz(recordId){
     record.quizQuestions=buildSessionQuiz(record,sources);
     if(!record.quizQuestions.length){
       save();
+      completeSessionRecord(record);save();
       toast('Eduvia could not create four-option questions from this session yet. Add course notes with at least four distinct concepts, then reopen this study quiz.');
       return;
     }

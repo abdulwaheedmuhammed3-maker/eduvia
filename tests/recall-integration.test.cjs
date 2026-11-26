@@ -15,6 +15,23 @@ test('Recall is registered as a valid deep-link route and a Play learning tool',
   assert.ok(recall.includes('window.eduPageRenderers.recall = renderRecall'));
   assert.ok(recall.includes('data-page="recall"'));
 });
+test('Recall rebinds its in-memory state after restore or clear replaces planner data', () => {
+  assert.ok(recall.includes('function syncState()'));
+  assert.ok(recall.includes('if (data.recallState !== state) {'));
+  for (const entryPoint of [
+    'async function buildQuestionBank(silent = false) {',
+    'window.eduRecallBuildReminders = function (now) {',
+    'function renderRecall() {',
+    'function saveRecallSettings(form) {',
+    'function rateQuestion(questionId, remembered) {',
+    'window.eduPageRenderers.play = function () {'
+  ]) {
+    const start = recall.indexOf(entryPoint);
+    assert.ok(start >= 0, 'missing Recall entry point: ' + entryPoint);
+    assert.ok(recall.slice(start, start + 180).includes('syncState();'), 'entry point must sync replacement data: ' + entryPoint);
+  }
+});
+
 test('Recall question bank is built from local course materials and flashcards', () => {
   assert.ok(recall.includes('loadCourseText(course.id)'));
   assert.ok(recall.includes('window.eduCourseIntelligence'));

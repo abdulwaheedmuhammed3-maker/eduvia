@@ -17,3 +17,8 @@ test('non-core same-origin GET requests are not intercepted for runtime caching'
   assert.ok(fetchHandler.includes('if (!CORE_URLS.has(event.request.url)) return;'));
   assert.ok(fetchHandler.includes('cache.put(event.request, response.clone())'));
 });
+
+test('AI Tutor assets are in the explicitly versioned offline core list', () => {
+  assert.ok(source.includes('./ai-tutor.js?v=ai-tutor-1'));
+  assert.ok(source.includes('./ai-tutor.css?v=ai-tutor-1'));
+});

@@ -64,15 +64,24 @@ export function validateMessages(value) {
 }
 
 export function extractOutputText(payload) {
-  if (typeof payload?.output_text === 'string' && payload.output_text.trim()) return payload.output_text.trim();
-  const parts = [];
-  for (const item of Array.isArray(payload?.output) ? payload.output : []) {
-    if (item?.type !== 'message' || !Array.isArray(item.content)) continue;
-    for (const block of item.content) {
-      if (block?.type === 'output_text' && typeof block.text === 'string') parts.push(block.text);
+  const candidates = [
+    payload?.response,
+    payload?.choices?.[0]?.message?.content,
+    payload?.result?.response,
+    payload?.output_text
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
+    if (Array.isArray(candidate)) {
+      const joined = candidate
+        .map(part => typeof part === 'string' ? part : typeof part?.text === 'string' ? part.text : '')
+        .filter(Boolean)
+        .join('\n')
+        .trim();
+      if (joined) return joined;
     }
   }
-  return parts.join('\n').trim();
+  return '';
 }
 
 async function readJson(request) {
@@ -188,34 +197,41 @@ function requireConfigured(value, name) {
   return value;
 }
 
-async function openAi(env, instructions, input, maxOutputTokens = 1400) {
-  const apiKey = requireConfigured(env.OPENAI_API_KEY, 'The AI tutor');
-  const model = String(requireConfigured(env.OPENAI_MODEL, 'The AI model selection')).trim();
-  if (!/^[A-Za-z0-9._-]{2,80}$/.test(model)) throw new IntelligenceRequestError('The AI model configuration is invalid.', 503);
-  const response = await fetch('https://api.openai.com/v1/responses', {
-    method: 'POST',
-    headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model,
-      instructions,
-      input,
-      max_output_tokens: maxOutputTokens,
+const DEFAULT_AI_MODEL = '@cf/google/gemma-4-26b-a4b-it';
+
+function configuredAiModel(env) {
+  const model = String(env.AI_MODEL || DEFAULT_AI_MODEL).trim();
+  if (!/^@cf\/[A-Za-z0-9._/-]{2,120}$/.test(model)) {
+    throw new IntelligenceRequestError('The Eduvia AI model configuration is invalid.', 503);
+  }
+  return model;
+}
+
+async function runEduviaAi(env, instructions, input, maxOutputTokens = 1400) {
+  if (!env.AI || typeof env.AI.run !== 'function') {
+    throw new IntelligenceRequestError('Eduvia AI is not enabled on the service yet.', 503);
+  }
+  const model = configuredAiModel(env);
+  let payload;
+  try {
+    payload = await env.AI.run(model, {
+      messages: [{ role: 'system', content: instructions }, ...input],
+      max_completion_tokens: maxOutputTokens,
+      chat_template_kwargs: { enable_thinking: false },
       store: false
-    })
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const status = response.status === 429 ? 429 : response.status >= 500 ? 503 : 502;
+    });
+  } catch (error) {
+    const upstreamStatus = Number(error?.status || error?.statusCode || 0);
     throw new IntelligenceRequestError(
-      response.status === 429
-        ? 'The AI service is busy or its usage limit has been reached. Try again shortly.'
-        : 'The AI service could not complete this request. Please try again.',
-      status
+      upstreamStatus === 429
+        ? 'Eduvia AI has reached its current usage or capacity limit. Try again later.'
+        : 'Eduvia AI is temporarily unavailable. Please try again.',
+      upstreamStatus === 429 ? 429 : 503
     );
   }
   const text = extractOutputText(payload);
-  if (!text) throw new IntelligenceRequestError('The AI service returned an empty response. Please try again.', 502);
-  return { text, model, requestId: payload.id || null };
+  if (!text) throw new IntelligenceRequestError('Eduvia AI returned an empty response. Please try again.', 502);
+  return { text, model, requestId: payload?.id || payload?.request_id || null };
 }
 
 const TUTOR_INSTRUCTIONS = [
@@ -254,7 +270,7 @@ async function tutor(request, env, cors = {}) {
   }
   input.push({ role: 'user', content: 'Learner context: course or learning area = ' + course + '; preferred level = ' + level + '. Use this context for the conversation.' });
   input.push(...messages);
-  const result = await openAi(env, TUTOR_INSTRUCTIONS, input, 1500);
+  const result = await runEduviaAi(env, TUTOR_INSTRUCTIONS, input, 1500);
   return json({ answer: result.text, model: result.model, requestId: result.requestId, sessionExpiresAt: session.expiresAt }, 200, cors);
 }
 
@@ -267,7 +283,7 @@ async function summarize(request, env, cors = {}) {
   if (source.length > MAX_SOURCE_CHARS) throw new IntelligenceRequestError('This lecture text is too long for one request. Split it into smaller sections and summarise them separately.', 413);
   const title = String(body.title || 'Recorded lecture').trim().slice(0, 160);
   const course = String(body.course || '').trim().slice(0, 120);
-  const result = await openAi(env, SUMMARY_INSTRUCTIONS, [
+  const result = await runEduviaAi(env, SUMMARY_INSTRUCTIONS, [
     { role: 'user', content: 'Lecture title: ' + title + '\nLearning area: ' + (course || 'Not specified') + '\n\nSOURCE MATERIAL BEGIN\n' + source + '\nSOURCE MATERIAL END' }
   ], 2600);
   return json({ summary: result.text, model: result.model, requestId: result.requestId }, 200, cors);
@@ -688,7 +704,7 @@ export async function handleIntelligenceRequest(request, env, cors = {}) {
   try {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     if (request.method === 'GET' && url.pathname === '/v1/intelligence/health') {
-      return json({ ok: true, service: 'Eduvia Intelligence', aiConfigured: !!(env.OPENAI_API_KEY && env.OPENAI_MODEL), googleConfigured: !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.GOOGLE_REDIRECT_URI && env.GOOGLE_PICKER_API_KEY && env.GOOGLE_CLOUD_PROJECT_NUMBER) }, 200, cors);
+      return json({ ok: true, service: 'Eduvia Intelligence', aiConfigured: !!(env.AI && typeof env.AI.run === 'function' && /^@cf\/[A-Za-z0-9._/-]{2,120}$/.test(String(env.AI_MODEL || DEFAULT_AI_MODEL))), googleConfigured: !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.GOOGLE_REDIRECT_URI && env.GOOGLE_PICKER_API_KEY && env.GOOGLE_CLOUD_PROJECT_NUMBER) }, 200, cors);
     }
     if (request.method === 'POST' && url.pathname === '/v1/intelligence/session') {
       const session = await createSession(env, request);

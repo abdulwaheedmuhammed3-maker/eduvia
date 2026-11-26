@@ -100,10 +100,12 @@ test('class voice reflections record locally, attach transcripts and preserve au
 });
 test('voice reflection assets are built, cached and syntax-checked', () => {
   const html=read('index.html'), sw=read('service-worker.js'), build=read('scripts/build-web.mjs'), workflow=read('.github/workflows/validate.yml');
-  for (const asset of ['voice-reflection.js','voice-reflection.css']) {
+  for (const asset of ['voice-reflection.js','voice-reflection.css','ai-tutor.js','ai-tutor.css']) {
     assert.ok(html.includes(asset)); assert.ok(sw.includes(asset)); assert.ok(build.includes(asset));
   }
   assert.ok(workflow.includes('node --check voice-reflection.js'));
+  assert.ok(workflow.includes('node --check ai-tutor.js'));
+  assert.ok(workflow.includes('node --check notifications-worker/src/intelligence.js'));
   assert.ok(workflow.includes("eduvia-v109-ai-tutor-google"));
 });
 test('Android build declares the native microphone capture permissions requested by Capacitor WebView', () => {

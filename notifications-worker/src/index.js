@@ -1,5 +1,6 @@
 import { generateVapidKeys } from '@mmmike/web-push/vapid';
 import { sendPushNotification } from '@mmmike/web-push/send';
+import { handleIntelligenceRequest } from './intelligence.js';
 
 const MAX_REMINDERS = 600;
 const MAX_HORIZON_MS = 90 * 24 * 60 * 60 * 1000;
@@ -135,6 +136,10 @@ async function handleFetch(request, env) {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
   const url = new URL(request.url);
 
+  if (url.pathname.startsWith('/v1/intelligence/') || url.pathname.startsWith('/v1/google/')) {
+    return handleIntelligenceRequest(request, env, headers);
+  }
+
   if (request.method === 'GET' && url.pathname === '/v1/health') return json({ ok: true, service: 'Eduvia phone notifications' }, 200, headers);
   if (request.method === 'GET' && url.pathname === '/v1/config') {
     const keys = await vapidKeys(env.DB);
@@ -254,6 +259,13 @@ export default {
     }
   },
   async scheduled(_event, env, ctx) {
-    ctx.waitUntil(sendDueReminders(env));
+    ctx.waitUntil(Promise.all([
+      sendDueReminders(env),
+      env.DB.batch([
+        env.DB.prepare('DELETE FROM intelligence_sessions WHERE expires_at <= ?').bind(Date.now()),
+        env.DB.prepare('DELETE FROM google_oauth_states WHERE expires_at <= ?').bind(Date.now()),
+        env.DB.prepare('DELETE FROM intelligence_ip_usage WHERE updated_at <= ?').bind(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      ])
+    ]));
   }
 };

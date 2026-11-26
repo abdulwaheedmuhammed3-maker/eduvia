@@ -41,6 +41,21 @@ test('only secure Google source links are accepted as references',()=>{
   assert.throws(()=>core.validateGoogleSource('https://example.com/recording'));
 });
 
+test('restored lecture source links are revalidated before becoming clickable',()=>{
+  const fs=require('node:fs');
+  const source=fs.readFileSync(require.resolve('../lecture-intelligence.js'),'utf8');
+  const start=source.indexOf('function sourceLinkMarkup(value)');
+  const end=source.indexOf('function renderCourseSection',start);
+  const renderer=source.slice(start,end);
+  assert.ok(renderer.includes('validateGoogleSource(value)'));
+  assert.ok(renderer.includes('catch{return'));
+  assert.ok(renderer.includes('escapeHtml(validated)'));
+  assert.ok(renderer.includes('rel="noopener noreferrer"'));
+  assert.throws(()=>core.validateGoogleSource('javascript:alert(1)'));
+  assert.throws(()=>core.validateGoogleSource('https://example.com/'));
+  assert.throws(()=>core.validateGoogleSource('https://user:pass@drive.google.com/file/d/abc/view'));
+});
+
 test('major points are selected from exact source sentences rather than rewritten claims',()=>{
   const sentences=[
     'Relational database normalisation reduces repeated information across connected database tables.',
@@ -50,4 +65,13 @@ test('major points are selected from exact source sentences rather than rewritte
   const result=core.summarizeLecture(sentences.join(' '),5);
   assert.ok(result.keyPoints.length>0);
   for(const point of result.keyPoints)assert.ok(sentences.some(sentence=>sentence.includes(point.text)||point.text.includes(sentence)));
+});
+
+test('recorded lecture notes expose AI summaries through the configured intelligence client', () => {
+  const fs = require('node:fs');
+  const source = fs.readFileSync(require.resolve('../lecture-intelligence.js'), 'utf8');
+  assert.ok(source.includes('data-lecture-action="ai-summary"'));
+  assert.ok(source.includes('root.eduIntelligenceClient?.summarizeLecture'));
+  assert.ok(source.includes('record.aiSummary=result.summary'));
+  assert.ok(source.includes('Review this AI-generated summary against the original lecture material.'));
 });

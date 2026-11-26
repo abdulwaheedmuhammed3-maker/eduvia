@@ -1,0 +1,43 @@
+.eduvia-intelligence-stack{display:grid;gap:16px;margin-top:18px}
+.eduvia-ai-panel,.eduvia-google-panel{overflow:hidden}
+.eduvia-ai-heading,.eduvia-google-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.eduvia-ai-heading h2,.eduvia-google-heading h3{margin:5px 0;font-size:clamp(20px,3vw,25px);letter-spacing:-.03em}
+.eduvia-ai-heading p,.eduvia-google-heading p{margin:0;color:var(--muted);font-size:13px;line-height:1.55;max-width:620px}
+.eduvia-ai-spark,.eduvia-google-mark{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:14px;background:var(--panel-soft);color:var(--accent);font-size:22px;font-weight:800}
+.eduvia-ai-chat{display:grid;gap:10px;max-height:430px;overflow:auto;margin:16px 0;padding:13px;border:1px solid var(--border-color);border-radius:14px;background:var(--panel-soft)}
+.eduvia-ai-welcome{padding:20px 12px;text-align:center}
+.eduvia-ai-welcome strong{font-size:14px}
+.eduvia-ai-welcome p{margin:7px auto 0;max-width:380px;color:var(--muted);font-size:12px;line-height:1.6}
+.eduvia-ai-message{max-width:min(88%,680px);padding:11px 13px;border-radius:13px;overflow-wrap:anywhere}
+.eduvia-ai-message span{display:block;margin-bottom:5px;font-size:9px;font-weight:800;letter-spacing:.09em;opacity:.7}
+.eduvia-ai-message-body{font-size:13px;line-height:1.7;overflow-wrap:anywhere}.eduvia-ai-message-body h3,.eduvia-ai-message-body h4{margin:8px 0 4px;font-size:14px}.eduvia-ai-message-body code{padding:1px 4px;border-radius:4px;background:var(--panel-soft);font-size:11px}
+.eduvia-ai-message-learner{justify-self:end;background:var(--accent-soft,rgba(106,91,220,.12));color:var(--text)}
+.eduvia-ai-message-assistant{justify-self:start;background:var(--panel);border:1px solid var(--border-color);color:var(--text)}
+.eduvia-ai-thinking{display:flex;align-items:center;gap:5px;padding:9px 4px;color:var(--muted);font-size:12px}
+.eduvia-ai-thinking span{width:6px;height:6px;border-radius:50%;background:var(--accent);opacity:.6;animation:eduvia-ai-pulse 1s infinite alternate}
+.eduvia-ai-thinking span:nth-child(2){animation-delay:.2s}.eduvia-ai-thinking span:nth-child(3){animation-delay:.4s}
+@keyframes eduvia-ai-pulse{to{opacity:1;transform:translateY(-3px)}}
+.eduvia-ai-form{display:grid;gap:11px}
+.eduvia-ai-form .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.eduvia-ai-form textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:86px}
+.eduvia-ai-source-toggle{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}
+.eduvia-ai-source-toggle input{accent-color:var(--accent)}
+.eduvia-ai-actions{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap}
+.eduvia-ai-privacy,.eduvia-ai-error,.eduvia-ai-notice{margin:9px 0 0;padding:9px 11px;border-radius:10px;background:var(--panel-soft);color:var(--muted);font-size:11px;line-height:1.5}
+.eduvia-ai-error{color:#a53b3b;background:rgba(190,60,60,.08)}
+.eduvia-ai-notice{color:var(--accent)}
+.eduvia-google-heading{margin-bottom:13px}
+.eduvia-google-mark{background:#f1f3f4;color:#4285f4;font-family:Arial,sans-serif}
+.eduvia-google-status{display:flex;align-items:center;gap:8px;margin:12px 0;color:var(--muted);font-size:12px}
+.eduvia-google-dot{width:8px;height:8px;border-radius:50%;background:#a8a8a8}
+.eduvia-google-dot.connected{background:#269b67;box-shadow:0 0 0 3px rgba(38,155,103,.12)}
+.eduvia-google-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.eduvia-google-list{display:grid;gap:8px;margin-top:14px}
+.eduvia-google-list>strong{font-size:12px}
+.eduvia-google-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 11px;border:1px solid var(--border-color);border-radius:11px;min-width:0}
+.eduvia-google-item>div{display:grid;gap:3px;min-width:0}
+.eduvia-google-item strong{font-size:12px;overflow-wrap:anywhere}
+.eduvia-google-item small{color:var(--muted);font-size:10px;overflow-wrap:anywhere}
+.eduvia-google-item button{flex-shrink:0;font-size:11px}
+.eduvia-google-tag{padding:4px 7px;border-radius:20px;background:var(--panel-soft);font-size:10px;color:var(--muted)}
+@media(max-width:600px){.eduvia-ai-form .form-grid{grid-template-columns:1fr}.eduvia-ai-message{max-width:96%}.eduvia-google-item{align-items:flex-start;flex-direction:column}.eduvia-google-item button{width:100%}.eduvia-ai-actions>*{flex:1}.eduvia-ai-heading{gap:9px}}

@@ -15,6 +15,23 @@ test('Recall is registered as a valid deep-link route and a Play learning tool',
   assert.ok(recall.includes('window.eduPageRenderers.recall = renderRecall'));
   assert.ok(recall.includes('data-page="recall"'));
 });
+test('Recall rebinds its in-memory state after restore or clear replaces planner data', () => {
+  assert.ok(recall.includes('function syncState()'));
+  assert.ok(recall.includes('if (data.recallState !== state) {'));
+  for (const entryPoint of [
+    'async function buildQuestionBank(silent = false) {',
+    'window.eduRecallBuildReminders = function (now) {',
+    'function renderRecall() {',
+    'function saveRecallSettings(form) {',
+    'function rateQuestion(questionId, remembered) {',
+    'window.eduPageRenderers.play = function () {'
+  ]) {
+    const start = recall.indexOf(entryPoint);
+    assert.ok(start >= 0, 'missing Recall entry point: ' + entryPoint);
+    assert.ok(recall.slice(start, start + 220).includes('syncState();'), 'entry point must sync replacement data: ' + entryPoint);
+  }
+});
+
 test('Recall question bank is built from local course materials and flashcards', () => {
   assert.ok(recall.includes('loadCourseText(course.id)'));
   assert.ok(recall.includes('window.eduCourseIntelligence'));
@@ -83,11 +100,13 @@ test('class voice reflections record locally, attach transcripts and preserve au
 });
 test('voice reflection assets are built, cached and syntax-checked', () => {
   const html=read('index.html'), sw=read('service-worker.js'), build=read('scripts/build-web.mjs'), workflow=read('.github/workflows/validate.yml');
-  for (const asset of ['voice-reflection.js','voice-reflection.css']) {
+  for (const asset of ['voice-reflection.js','voice-reflection.css','ai-tutor.js','ai-tutor.css']) {
     assert.ok(html.includes(asset)); assert.ok(sw.includes(asset)); assert.ok(build.includes(asset));
   }
   assert.ok(workflow.includes('node --check voice-reflection.js'));
-  assert.ok(workflow.includes("eduvia-v107-objective-study-quiz"));
+  assert.ok(workflow.includes('node --check ai-tutor.js'));
+  assert.ok(workflow.includes('node --check notifications-worker/src/intelligence.js'));
+  assert.ok(workflow.includes("eduvia-v109-ai-tutor-google"));
 });
 test('Android build declares the native microphone capture permissions requested by Capacitor WebView', () => {
   assert.ok(androidPrep.includes('android.permission.RECORD_AUDIO'));

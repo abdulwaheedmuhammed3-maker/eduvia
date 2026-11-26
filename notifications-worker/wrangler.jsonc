@@ -6,7 +6,7 @@
   "workers_dev": true,
   "triggers": { "crons": ["* * * * *"] },
   "vars": {
-    "ALLOWED_ORIGIN": "https://eduvia-study-planner.onrender.com,https://eduvia-pmso.onrender.com",
+    "ALLOWED_ORIGIN": "https://eduvia-study-planner.onrender.com,https://eduvia-pmso.onrender.com,https://localhost,http://localhost:8000,http://127.0.0.1:8000,capacitor://localhost",
     "VAPID_SUBJECT": "https://eduvia-study-planner.onrender.com"
   },
   "d1_databases": [

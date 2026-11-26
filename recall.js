@@ -17,6 +17,14 @@
     return data.recallState;
   }
   let state = ensureState();
+  function syncState() {
+    if (data.recallState !== state) {
+      state = ensureState();
+      currentRecallQuestionId = '';
+      revealedQuestionId = '';
+    }
+    return state;
+  }
   let revealedQuestionId = '';
   function today() { return todayISO(); }
   function due(question, date) { return !question.nextReview || String(question.nextReview) <= (date || today()); }
@@ -32,6 +40,7 @@
     };
   }
   async function buildQuestionBank(silent = false) {
+    syncState();
     const previous = JSON.parse(JSON.stringify(state));
     const oldQuestions = new Map(state.questions.map(item => [item.id, item]));
     const next = [], seen = new Set();
@@ -140,6 +149,7 @@
     return output;
   }
   window.eduRecallBuildReminders = function (now) {
+    syncState();
     if (!state.enabled || !state.questions.length) return [];
     const reference = now instanceof Date ? new Date(now) : new Date(now || Date.now());
     const schedule = core.createSchedule({
@@ -186,6 +196,7 @@
       '<button class="primary-btn" data-recall-action="reveal" data-id="' + safe(question.id) + '">Reveal answer</button>') + '</div></article>';
   }
   function renderRecall() {
+    syncState();
     const history = state.history || [];
     const askedToday = history.filter(item => item.date === today()).length;
     const remembered = history.filter(item => item.remembered).length;
@@ -221,6 +232,7 @@
       '<div class="recall-privacy-note">Eduvia builds this question bank locally. Only the short prompt and scheduled delivery time are sent to the push service; answers and course materials remain on this device. Questions are built from your flashcards, topic names and material headings, not from unsupported invented facts.</div>';
   }
   function saveRecallSettings(form) {
+    syncState();
     const previous = JSON.parse(JSON.stringify(state)), fd = new FormData(form);
     const selectedDays = fd.getAll('recallDay').map(Number).filter(day => day >= 0 && day <= 6);
     if (!selectedDays.length) { toast('Choose at least one active day for Recall.'); return; }
@@ -234,6 +246,7 @@
     toast(state.enabled ? 'Recall notifications are enabled. Make sure phone notifications are enabled in Settings.' : 'Recall notifications are paused.');
   }
   function rateQuestion(questionId, remembered) {
+    syncState();
     const previousState = JSON.parse(JSON.stringify(state));
     const previousFlashcards = JSON.parse(JSON.stringify(data.flashcards || []));
     const question = state.questions.find(item => item.id === questionId);
@@ -275,6 +288,7 @@
   if (window.eduPageRenderers) {
     window.eduPageRenderers.recall = renderRecall;
     window.eduPageRenderers.play = function () {
+      syncState();
       const base = typeof oldPlay === 'function' ? oldPlay() : '';
       return base + '<section class="exp-section recall-play-link"><div class="exp-section-heading"><div><div class="eyebrow">BUILD LONG-TERM MEMORY</div><h2>Recall a little, often.</h2><p>Get short questions from your own learning material throughout your active study window.</p></div></div>' +
         '<button class="learning-expansion-card" data-page="recall"><span class="exp-icon exp-icon-purple">?</span><strong>Eduvia Recall</strong><span>Random micro-questions, spaced review and a personal recall history.</span><small>' +

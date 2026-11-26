@@ -20,8 +20,8 @@ Choose strong passwords when prompted. Keep the keystore and passwords in a secu
 
 Create the base64 value without changing the keystore:
 
-- macOS/Linux: `base64 -w 0 eduvia-beta.jks` (on macOS, use `base64 eduvia-beta.jks | tr -d '\n'`)
-- Windows PowerShell: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("$PWD\eduvia-beta.jks"))`
+- macOS/Linux: `base64 -w 0 eduvia-beta.jks` (on macOS, use `base64 eduvia-beta.jks | tr -d '\\n'`)
+- Windows PowerShell: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("$PWD\\eduvia-beta.jks"))`
 
 ## Add four GitHub Actions secrets
 
@@ -34,9 +34,13 @@ Open the Eduvia repository's **Settings → Secrets and variables → Actions �
 | `EDUVIA_ANDROID_KEY_ALIAS` | `eduvia-beta` |
 | `EDUVIA_ANDROID_KEY_PASSWORD` | The key password |
 
-The workflow reads these values as Actions secrets. They are not written into the repository or printed in the build log.
+The trusted main-branch workflow reads these values as Actions secrets. They are not written into the repository or printed in the build log.
 
-Pull-request builds may use an ephemeral CI key to verify compilation, but their APK artifacts are not uploaded. A build from `main` or a manually dispatched release requires the persistent key and fails rather than publishing an APK that cannot update the installed beta.
+## Pull-request and non-main build isolation
+
+Pull-request builds always use the runner-generated temporary Android debug key. They never receive the persistent signing secrets, never configure the production signing key, and are never published as the Android beta release. Non-main workflow-dispatch builds follow the same temporary-key path.
+
+Only a push to `main`, or a manual workflow dispatch explicitly run on `main`, configures the persistent beta signing key. The build job has read-only repository permission. The separate conditional publish job receives `contents: write` only after the trusted main-branch build succeeds.
 
 ## One-time migration from an APK signed by an old temporary key
 

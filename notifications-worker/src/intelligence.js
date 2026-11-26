@@ -81,7 +81,19 @@ export function extractOutputText(payload) {
       if (joined) return joined;
     }
   }
-  return '';
+
+  // Keep compatibility with older Responses-style payloads used by existing tests
+  // and any staged rollout still returning that shape.
+  const responseParts = [];
+  for (const item of Array.isArray(payload?.output) ? payload.output : []) {
+    if (item?.type !== 'message' || !Array.isArray(item.content)) continue;
+    for (const block of item.content) {
+      if ((block?.type === 'output_text' || block?.type === 'text') && typeof block.text === 'string') {
+        responseParts.push(block.text);
+      }
+    }
+  }
+  return responseParts.join('\n').trim();
 }
 
 async function readJson(request) {

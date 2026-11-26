@@ -400,7 +400,7 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
       }
     }
     const blob=await zip.generateAsync({type:'blob',compression:'STORE'});
-    download(blob,'eduvia-safety-copy-before-restore-'+today()+'.zip');
+    await download(blob,'eduvia-safety-copy-before-restore-'+today()+'.zip');
   }
   function isValidPlannerBackup(value){
     return Boolean(value&&typeof value==='object'&&!Array.isArray(value)&&
@@ -505,11 +505,11 @@ window.eduPageRenderers=Object.assign(window.eduPageRenderers||{},{'mock-exam':r
   function categoryKey(value){return String(value??'').trim().toLocaleLowerCase().replace(/\s+/g,' ')}
   function courseMatchKeys(course){return [categoryKey(course?.code),categoryKey(course?.name)].filter(Boolean)}
   function eventMatchKey(event,courseId=event?.courseId){return [event?.type,event?.date||'weekly',event?.day??'',event?.start,event?.end,categoryKey(event?.title),categoryKey(event?.location),courseId||''].join('|')}
-  function exportCategoryBackup(kind){
+  async function exportCategoryBackup(kind){
     const payload={format:'eduvia-category-backup',version:1,kind,createdAt:new Date().toISOString(),items:kind==='courses'?(data.courses||[]):(data.events||[])};
     if(kind==='timetable')payload.courseReferences=(data.courses||[]).map(c=>({id:c.id,name:c.name,code:c.code||''}));
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
-    download(blob,'eduvia-'+kind+'-backup-'+today()+'.json');toast((kind==='courses'?'Courses':'Timetable')+' backup downloaded.');
+    try{const result=await download(blob,'eduvia-'+kind+'-backup-'+today()+'.json');toast(result?.directory?'Backup saved to '+result.directory+'.':'Download started. Check your Downloads folder.')}catch(error){toast('Could not save the backup: '+(error.message||'device storage is unavailable'))}
   }
   async function importCategoryBackup(file,expectedKind){
     if(!file)return;if(file.size>25*1024*1024){toast('This backup is too large for a category restore.');return}

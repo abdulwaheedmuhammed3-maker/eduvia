@@ -1,10 +1,48 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 if (!existsSync('android')) execFileSync(npx, ['cap', 'add', 'android'], { stdio: 'inherit' });
 execFileSync(npx, ['cap', 'sync', 'android'], { stdio: 'inherit' });
+
+// Install the Eduvia MediaStore exporter into the generated Capacitor Android project.
+const config = JSON.parse(await readFile('capacitor.config.json', 'utf8'));
+const appPackage = String(config.appId || 'com.eduvia.studyplanner');
+if (!/^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$/.test(appPackage)) {
+  throw new Error('capacitor.config.json contains an invalid Android appId.');
+}
+const javaDirectory = `android/app/src/main/java/${appPackage.replaceAll('.', '/')}`;
+await mkdir(javaDirectory, { recursive: true });
+await copyFile('scripts/android/EduviaFileExportPlugin.java', `${javaDirectory}/EduviaFileExportPlugin.java`);
+const mainActivityPath = `${javaDirectory}/MainActivity.java`;
+let mainActivity = await readFile(mainActivityPath, 'utf8');
+if (!mainActivity.includes('registerPlugin(EduviaFileExportPlugin.class)')) {
+  if (!mainActivity.includes('import com.getcapacitor.BridgeActivity;')) {
+    throw new Error('Could not locate the generated Capacitor MainActivity import.');
+  }
+  mainActivity = mainActivity.replace(
+    'import com.getcapacitor.BridgeActivity;',
+    ['import android.os.Bundle;', 'import com.getcapacitor.BridgeActivity;'].join('\n')
+  );
+  const activityBody = [
+    'public class MainActivity extends BridgeActivity {',
+    '  @Override',
+    '  public void onCreate(Bundle savedInstanceState) {',
+    '    registerPlugin(EduviaFileExportPlugin.class);',
+    '    super.onCreate(savedInstanceState);',
+    '  }',
+    '}'
+  ].join('\n');
+  mainActivity = mainActivity.replace(
+    /public class MainActivity extends BridgeActivity\s*\{\s*\}/,
+    activityBody
+  );
+  if (!mainActivity.includes('registerPlugin(EduviaFileExportPlugin.class)')) {
+    throw new Error('Could not register the Eduvia file exporter in MainActivity.');
+  }
+  await writeFile(mainActivityPath, mainActivity);
+}
 execFileSync(npx, [
   'capacitor-assets', 'generate', '--android', '--assetPath', 'assets',
   '--iconBackgroundColor', '#655ee0', '--splashBackgroundColor', '#f7f8fd'

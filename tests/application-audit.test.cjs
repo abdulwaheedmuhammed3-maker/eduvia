@@ -197,14 +197,20 @@ test('practice objective choices are checked before revealing feedback and sourc
  assert.ok(studio.includes('studioPracticeAttempt=null'));
 });
 
-test('Android APK is built for pull requests but the beta release is published only outside PRs',()=>{
+test('Android pull requests use temporary signing and cannot publish the beta release',()=>{
  const workflow=read('.github/workflows/build-android.yml');
  assert.ok(workflow.includes('pull_request:'));
  assert.ok(workflow.includes('branches: [main]'));
- assert.ok(workflow.includes("if: github.event_name != 'pull_request'"));
+ assert.ok(workflow.includes("if: github.event_name == 'pull_request' || github.ref != 'refs/heads/main'"));
+ assert.ok(workflow.includes("if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'"));
  assert.ok(workflow.includes('npm run android:prepare'));
  assert.ok(workflow.includes('./gradlew assembleDebug'));
  assert.ok(workflow.includes('actions/upload-artifact@v7'));
+ assert.ok(workflow.includes('softprops/action-gh-release@v3'));
+ assert.ok(workflow.includes('publish:'));
+ assert.ok(workflow.includes('needs: build'));
+ assert.ok(workflow.includes("if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')"));
+ assert.ok(workflow.includes('contents: write'));
 });
 
 test('a changed notification schedule removes sent and failed rows before inserting replacement IDs',()=>{

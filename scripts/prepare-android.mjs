@@ -23,10 +23,10 @@ if (!mainActivity.includes('registerPlugin(EduviaFileExportPlugin.class)')) {
   }
   mainActivity = mainActivity.replace(
     'import com.getcapacitor.BridgeActivity;',
-    'import android.os.Bundle;\\nimport com.getcapacitor.BridgeActivity;'
+    'import android.os.Bundle;\nimport com.getcapacitor.BridgeActivity;'
   );
   mainActivity = mainActivity.replace(
-    /public class MainActivity extends BridgeActivity\\s*\\{/,
+    /public class MainActivity extends BridgeActivity\s*\{/,
     'public class MainActivity extends BridgeActivity {\\n  @Override\\n  public void onCreate(Bundle savedInstanceState) {\\n    registerPlugin(EduviaFileExportPlugin.class);\\n    super.onCreate(savedInstanceState);\\n  }'
   );
   if (!mainActivity.includes('registerPlugin(EduviaFileExportPlugin.class)')) {

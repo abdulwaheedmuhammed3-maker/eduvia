@@ -76,3 +76,39 @@ test('AI Tutor is attached to the existing Ask Eduvia renderer without replacing
   assert.ok(tutor.includes("return originalAsk() + renderExtras()"));
   assert.ok(expansion.includes('ask:renderExpandedAsk'));
 });
+
+test('Workers AI uses Gemma-compatible token and reasoning options', async () => {
+  const { runEduviaAi } = await import('../notifications-worker/src/intelligence.js');
+  let captured;
+  const env = {
+    AI_MODEL: '@cf/google/gemma-4-26b-a4b-it',
+    AI: {
+      async run(model, input) {
+        captured = { model, input };
+        return { response: 'The tutor answer is ready.' };
+      }
+    }
+  };
+  const result = await runEduviaAi(
+    env,
+    'You are Eduvia Tutor.',
+    [{ role: 'user', content: 'Explain photosynthesis.' }],
+    640
+  );
+  assert.equal(result.text, 'The tutor answer is ready.');
+  assert.equal(result.model, '@cf/google/gemma-4-26b-a4b-it');
+  assert.equal(captured.model, '@cf/google/gemma-4-26b-a4b-it');
+  assert.equal(captured.input.max_tokens, 640);
+  assert.equal(captured.input.chat_template_kwargs.enable_thinking, false);
+  assert.equal(captured.input.messages[0].role, 'system');
+  assert.equal('max_completion_tokens' in captured.input, false);
+  assert.equal('store' in captured.input, false);
+});
+
+test('Workers AI reports a clear unavailable response when its binding is missing', async () => {
+  const { runEduviaAi } = await import('../notifications-worker/src/intelligence.js');
+  await assert.rejects(
+    () => runEduviaAi({}, 'System', [{ role: 'user', content: 'Hello' }]),
+    /not enabled/
+  );
+});

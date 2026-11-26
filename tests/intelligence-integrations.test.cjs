@@ -12,15 +12,19 @@ test('Tutor validates conversation roles, message limits and final learner promp
   assert.throws(() => validateMessages([{ role: 'user', content: 'x'.repeat(4001) }]), /1 to 4,000 characters/);
 });
 
-test('Responses API output extraction handles output_text and message content blocks', async () => {
+test('Workers AI and legacy response payloads are normalized into tutor text', async () => {
   const { extractOutputText } = await import('../notifications-worker/src/intelligence.js');
-  assert.equal(extractOutputText({ output_text: '  A concise answer.  ' }), 'A concise answer.');
+  assert.equal(extractOutputText({ response: '  A concise answer.  ' }), 'A concise answer.');
+  assert.equal(extractOutputText({
+    choices: [{ message: { content: [{ type: 'text', text: 'First part.' }, { type: 'text', text: 'Second part.' }] } }]
+  }), 'First part.\nSecond part.');
+  assert.equal(extractOutputText({ result: { response: 'Nested answer.' } }), 'Nested answer.');
   assert.equal(extractOutputText({
     output: [
       { type: 'reasoning', summary: [] },
-      { type: 'message', content: [{ type: 'output_text', text: 'First part.' }, { type: 'output_text', text: 'Second part.' }] }
+      { type: 'message', content: [{ type: 'output_text', text: 'Legacy part one.' }, { type: 'output_text', text: 'Legacy part two.' }] }
     ]
-  }), 'First part.\nSecond part.');
+  }), 'Legacy part one.\nLegacy part two.');
   assert.equal(extractOutputText({ output: [] }), '');
 });
 

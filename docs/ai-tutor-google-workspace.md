@@ -10,14 +10,14 @@ This integration adds a server-side AI and Google Workspace layer to the existin
 - **Google Meet:** the learner can list accessible conference records and import generated Meet transcript entries. This is not live meeting capture or automatic video/audio transcription. The meeting must have a transcript artifact available to the connected Google account.
 - **Google Calendar:** manual two-way sync imports timed events from the primary calendar and creates or updates dated, one-off Eduvia timetable events in that calendar. Linked events are tracked to prevent duplicate creation. If both copies change since the last sync, the Google Calendar version is kept and the conflict is reported. Deletions are not synchronised. Repeated weekly timetable rules, all-day events and unattended background sync are not included yet.
 
-## Required services and secrets
+## Required services and configuration
 
-The Worker uses the existing notifications-worker deployment and its existing D1 database. Apply migration 0004_intelligence_integrations.sql before enabling the endpoints.
+The Worker uses the existing notifications-worker deployment, its existing D1 database, and Cloudflare Workers AI through the `AI` binding already declared in `notifications-worker/wrangler.jsonc`. Apply migration `0004_intelligence_integrations.sql` before enabling the endpoints.
 
-From the notifications-worker folder, set the following Cloudflare Worker secrets. Never commit these values or paste them into a public issue or source file.
+**Eduvia Tutor and AI lecture summaries do not require an OpenAI account, OpenAI API key, or separate model-provider subscription.** The default model is `@cf/google/gemma-4-26b-a4b-it`, configured as the non-secret `AI_MODEL` variable. The current Cloudflare model listing marks it as available on Workers AI and identifies zero data retention. Workers AI's Free plan includes 10,000 Neurons per day; requests beyond that free daily allocation require the Workers Paid plan. Requests can be rate-limited or rejected when the allocation or model capacity is reached.
 
-    npx wrangler secret put OPENAI_API_KEY
-    npx wrangler secret put OPENAI_MODEL
+Only Google Workspace credentials are needed for the optional Google features. From the `notifications-worker` folder, set these Cloudflare Worker secrets. Never commit these values or paste them into a public issue or source file.
+
     npx wrangler secret put GOOGLE_CLIENT_ID
     npx wrangler secret put GOOGLE_CLIENT_SECRET
     npx wrangler secret put GOOGLE_REDIRECT_URI
@@ -26,7 +26,7 @@ From the notifications-worker folder, set the following Cloudflare Worker secret
     npx wrangler secret put GOOGLE_PICKER_API_KEY
     npx wrangler secret put GOOGLE_CLOUD_PROJECT_NUMBER
 
-OPENAI_MODEL must be a model identifier enabled for the OpenAI API project associated with OPENAI_API_KEY. The service sends requests through the OpenAI Responses API with response storage disabled (store: false). The learner's Tutor chat history is retained in the browser's local storage for that device. The request text and any selected source excerpts are still sent to the configured OpenAI service to obtain an answer; do not submit passwords, private identifiers or sensitive documents.
+Eduvia sends Tutor questions and learner-selected source excerpts to the configured Cloudflare Workers AI model to generate an answer. The learner's Tutor chat history remains in the browser's local storage for that device. The selected default model is marked by Cloudflare as zero-data-retention; nevertheless, do not submit passwords, private identifiers or sensitive documents.
 
 Generate the AES-GCM encryption key with:
 
@@ -73,7 +73,7 @@ Google may require OAuth consent-screen testing or app verification for the requ
 4. Deploy the Eduvia web bundle. The push-config.js URL already points to the existing Worker.
 5. Open Ask Eduvia in the web app. Tutor is available to the web app and Android app once the Worker is configured. Connect Google Workspace from the web app.
 
-The health endpoint GET /v1/intelligence/health reports whether the AI and Google configuration values are present. It never returns the credentials. AI usage is limited to 35 requests per device session per day and 240 requests per source network per day; new sessions are limited to 20 per network per day. The network limit can affect learners sharing a campus or public Wi-Fi connection, so review these values before a broad campus rollout.
+The health endpoint `GET /v1/intelligence/health` reports whether the Workers AI binding and Google configuration values are present. It never returns credentials. AI usage is limited to 35 requests per device session per day and 240 requests per source network per day; new sessions are limited to 20 per network per day. The network limit can affect learners sharing a campus or public Wi-Fi connection, so review these values before a broad campus rollout.
 
 ## Platform and feature boundaries
 

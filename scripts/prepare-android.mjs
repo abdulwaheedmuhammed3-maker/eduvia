@@ -23,11 +23,20 @@ if (!mainActivity.includes('registerPlugin(EduviaFileExportPlugin.class)')) {
   }
   mainActivity = mainActivity.replace(
     'import com.getcapacitor.BridgeActivity;',
-    'import android.os.Bundle;\nimport com.getcapacitor.BridgeActivity;'
+    ['import android.os.Bundle;', 'import com.getcapacitor.BridgeActivity;'].join('\n')
   );
+  const activityBody = [
+    'public class MainActivity extends BridgeActivity {',
+    '  @Override',
+    '  public void onCreate(Bundle savedInstanceState) {',
+    '    registerPlugin(EduviaFileExportPlugin.class);',
+    '    super.onCreate(savedInstanceState);',
+    '  }',
+    '}'
+  ].join('\n');
   mainActivity = mainActivity.replace(
-    /public class MainActivity extends BridgeActivity\s*\{/,
-    'public class MainActivity extends BridgeActivity {\\n  @Override\\n  public void onCreate(Bundle savedInstanceState) {\\n    registerPlugin(EduviaFileExportPlugin.class);\\n    super.onCreate(savedInstanceState);\\n  }'
+    /public class MainActivity extends BridgeActivity\s*\{\s*\}/,
+    activityBody
   );
   if (!mainActivity.includes('registerPlugin(EduviaFileExportPlugin.class)')) {
     throw new Error('Could not register the Eduvia file exporter in MainActivity.');

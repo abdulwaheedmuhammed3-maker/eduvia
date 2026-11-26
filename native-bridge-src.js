@@ -1,5 +1,5 @@
 import { App } from '@capacitor/app';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { SpeechRecognition } from '@capgo/capacitor-speech-recognition';
@@ -10,6 +10,7 @@ const CAMERA_TARGET_KEY = 'eduvia-camera-target-v1';
 const TEST_NOTIFICATION_ID = 2147480000;
 const MAX_LOCAL_REMINDERS = 300;
 const CHANNEL_ID = 'eduvia-study-alarms-v2';
+const EduviaFileExportPlugin = registerPlugin('EduviaFileExport');
 
 if (isNative) document.documentElement.classList.add('native-app');
 
@@ -111,6 +112,31 @@ const EduviaNative = {
 
   async disableAlerts() {
     await clearPendingNotifications();
+  },
+
+  async saveFile(blob, fileName) {
+    if (!isNative || !isAndroid) throw new Error('Direct Downloads saving is only available in the Eduvia Android app.');
+    if (!(blob instanceof Blob)) throw new Error('Eduvia could not prepare this file for saving.');
+    const started = await EduviaFileExportPlugin.beginSave({
+      fileName: String(fileName || 'eduvia-backup.zip'),
+      mimeType: blob.type || 'application/octet-stream'
+    });
+    const fileId = started.fileId;
+    try {
+      const chunkSize = 192 * 1024;
+      for (let offset = 0; offset < blob.size; offset += chunkSize) {
+        const bytes = new Uint8Array(await blob.slice(offset, offset + chunkSize).arrayBuffer());
+        let binary = '';
+        for (let index = 0; index < bytes.length; index += 0x8000) {
+          binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
+        }
+        await EduviaFileExportPlugin.writeChunk({ fileId, data: btoa(binary) });
+      }
+      return await EduviaFileExportPlugin.finishSave({ fileId });
+    } catch (error) {
+      try { await EduviaFileExportPlugin.cancelSave({ fileId }); } catch {}
+      throw error;
+    }
   },
 
   async capturePhoto(target = 'document') {

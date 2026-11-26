@@ -210,7 +210,7 @@ window.eduDownloadCourseMaterial=async function(materialId){
   const record=await readMaterial(materialId);
   if(!record){toast('This material is not available on this device.');return}
   const blob=new Blob([String(record.text||'')],{type:'text/plain;charset=utf-8'});
-  download(blob,(String(record.name||'course-material').replace(/\.[^.]+$/,'')||'course-material')+'-extracted.txt');
+  await download(blob,(String(record.name||'course-material').replace(/\.[^.]+$/,'')||'course-material')+'-extracted.txt');
  }catch(error){toast('Could not download this material: '+(error.message||'storage is unavailable'))}
 };
 
@@ -472,7 +472,7 @@ async function previewMaterial(file,text,linkedCourseId=''){
  });
 }
 
-function downloadCsv(content,name){const blob=new Blob([content],{type:'text/csv;charset=utf-8'});download(blob,name)}
+async function downloadCsv(content,name){const blob=new Blob([content],{type:'text/csv;charset=utf-8'});try{const result=await download(blob,name);toast(result?.directory?'Saved to '+result.directory+'.':'Download started. Check your Downloads folder.')}catch(error){toast('Could not save the file: '+(error.message||'device storage is unavailable'))}}
 function courseTemplate(){downloadCsv('code,name,credits,topics\nSUBJ 101,Sample course,3,"Topic one; Topic two; Topic three"\n','eduvia-course-list-template.csv')}
 function timetableTemplate(){downloadCsv('day,start,end,title,courseCode,location\nMonday,09:00,10:00,Sample class,SUBJ 101,Room or online\nWednesday,14:00,15:30,Sample tutorial,SUBJ 102,Online\n','eduvia-school-timetable-template.csv')}
 
@@ -1011,7 +1011,7 @@ async function openPersonalDocument(documentId){
   try{const record=await getStudioRecord('personalDocuments',documentId),blob=record?.blob||record?.file;if(!blob){tab.close();toast('This file is not available in this browser. Import the portable backup that contains it.');return}const url=URL.createObjectURL(blob);tab.location.href=url;setTimeout(()=>URL.revokeObjectURL(url),120000)}catch(error){tab.close();toast('Could not open this file: '+(error.message||'storage is unavailable'))}
 }
 async function downloadPersonalDocument(documentId){
-  try{const record=await getStudioRecord('personalDocuments',documentId),blob=record?.blob||record?.file;if(!blob){toast('This file is not available in this browser. Import the portable backup that contains it.');return}download(blob,record.name||'personal-document')}catch(error){toast('Could not download this file: '+(error.message||'storage is unavailable'))}
+  try{const record=await getStudioRecord('personalDocuments',documentId),blob=record?.blob||record?.file;if(!blob){toast('This file is not available in this browser. Import the portable backup that contains it.');return}const result=await download(blob,record.name||'personal-document');toast(result?.directory?'File saved to '+result.directory+'.':'Download started. Check your Downloads folder.')}catch(error){toast('Could not download this file: '+(error.message||'storage is unavailable'))}
 }
 async function deletePersonalDocument(documentId){
   if(!confirm('Remove this document from your personal cabinet?'))return;
@@ -1053,8 +1053,8 @@ async function exportPortableBackup(){
       materials.file(String(metadata.id)+'.json',JSON.stringify(record));
     }
     const bundle=await zip.generateAsync({type:'blob',compression:'STORE'});
-    download(bundle,'eduvia-portable-backup-'+todayISO()+'.zip');
-    toast('Portable backup ready. Keep the file private.');
+    const result=await download(bundle,'eduvia-portable-backup-'+todayISO()+'.zip');
+    toast(result?.directory?'Portable backup saved to '+result.directory+'. Keep the file private.':'Backup download started. Check your phone Downloads folder or browser downloads list. Keep the file private.');
   }catch(error){toast('Could not create the backup: '+(error.message||'storage is unavailable'))}
 }
 async function importPlannerJsonBackup(file){

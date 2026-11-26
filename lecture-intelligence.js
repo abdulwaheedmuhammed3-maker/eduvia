@@ -109,6 +109,7 @@
     if(!raw)return '';
     let url;
     try{url=new URL(raw)}catch{throw new Error('Enter a complete Google Drive, Docs or Meet link beginning with https://.')}
+    if(url.username||url.password)throw new Error('Google source links cannot contain embedded usernames or passwords.');
     const host=url.hostname.toLowerCase();
     const allowed=['drive.google.com','docs.google.com','meet.google.com','calendar.google.com'];
     if(url.protocol!=='https:'||!allowed.some(domain=>host===domain||host.endsWith('.'+domain))){
@@ -137,7 +138,9 @@
   }
   function sourceLinkMarkup(value){
     if(!value)return '';
-    const safe=escapeHtml(value);
+    let validated='';
+    try{validated=validateGoogleSource(value)}catch{return ''}
+    const safe=escapeHtml(validated);
     return '<a class="lecture-source-link" href="'+safe+'" target="_blank" rel="noopener noreferrer">Open saved Google source ↗</a>';
   }
   function renderCourseSection(courseId,providedRecords){

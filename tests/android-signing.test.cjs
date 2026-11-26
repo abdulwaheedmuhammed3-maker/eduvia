@@ -25,7 +25,7 @@ test('Eduvia retains the package ID and requires one persistent signing identity
   }
   assert.ok(workflow.includes('node scripts/configure-android-signing.mjs'));
   assert.ok(workflow.includes("if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'"));
-  assert.ok(workflow.includes('signingConfigs'));
+  assert.ok(configScript.includes('signingConfigs'));
   assert.ok(configScript.includes('signingConfig signingConfigs.eduviaBeta'));
 });
 
@@ -110,6 +110,6 @@ test('the signing documentation warns against key regeneration and protects old 
   assert.ok(docs.includes('Never regenerate this key'));
   assert.ok(docs.includes('Download portable backup'));
   assert.ok(docs.includes('class voice recordings'));
-  assert.match(docs, /Pull-request builds always use an ephemeral runner-generated debug key/);
+  assert.match(docs, /Pull-request builds always use the runner-generated temporary Android debug key/);
   assert.match(docs, /never receive the persistent signing secrets/);
 });

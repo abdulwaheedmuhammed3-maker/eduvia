@@ -66,3 +66,12 @@ test('major points are selected from exact source sentences rather than rewritte
   assert.ok(result.keyPoints.length>0);
   for(const point of result.keyPoints)assert.ok(sentences.some(sentence=>sentence.includes(point.text)||point.text.includes(sentence)));
 });
+
+test('recorded lecture notes expose AI summaries through the configured intelligence client', () => {
+  const fs = require('node:fs');
+  const source = fs.readFileSync(require.resolve('../lecture-intelligence.js'), 'utf8');
+  assert.ok(source.includes('data-lecture-action="ai-summary"'));
+  assert.ok(source.includes('root.eduIntelligenceClient?.summarizeLecture'));
+  assert.ok(source.includes('record.aiSummary=result.summary'));
+  assert.ok(source.includes('Review this AI-generated summary against the original lecture material.'));
+});

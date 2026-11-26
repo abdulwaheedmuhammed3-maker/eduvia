@@ -219,7 +219,7 @@ function configuredAiModel(env) {
   return model;
 }
 
-async function runEduviaAi(env, instructions, input, maxOutputTokens = 1400) {
+export async function runEduviaAi(env, instructions, input, maxOutputTokens = 1400) {
   if (!env.AI || typeof env.AI.run !== 'function') {
     throw new IntelligenceRequestError('Eduvia AI is not enabled on the service yet.', 503);
   }
@@ -228,9 +228,8 @@ async function runEduviaAi(env, instructions, input, maxOutputTokens = 1400) {
   try {
     payload = await env.AI.run(model, {
       messages: [{ role: 'system', content: instructions }, ...input],
-      max_completion_tokens: maxOutputTokens,
-      chat_template_kwargs: { enable_thinking: false },
-      store: false
+      max_tokens: maxOutputTokens,
+      chat_template_kwargs: { enable_thinking: false }
     });
   } catch (error) {
     const upstreamStatus = Number(error?.status || error?.statusCode || 0);

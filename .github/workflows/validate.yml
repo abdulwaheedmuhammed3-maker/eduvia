@@ -125,7 +125,12 @@ jobs:
           grep -q 'EDUVIA_ANDROID_KEYSTORE_PASSWORD' .github/workflows/build-android.yml
           grep -q 'EDUVIA_ANDROID_KEY_ALIAS' .github/workflows/build-android.yml
           grep -q 'EDUVIA_ANDROID_KEY_PASSWORD' .github/workflows/build-android.yml
-          grep -q "if: github.event_name != 'pull_request'" .github/workflows/build-android.yml
+          grep -q "if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'" .github/workflows/build-android.yml
+          grep -q "if: github.event_name == 'pull_request' || github.ref != 'refs/heads/main'" .github/workflows/build-android.yml
+          grep -q 'permissions:' .github/workflows/build-android.yml
+          grep -q 'contents: write' .github/workflows/build-android.yml
+          grep -q "if: github.event_name == 'push'" .github/workflows/build-android.yml || grep -q "github.event_name == 'push'" .github/workflows/build-android.yml
+          grep -q "if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')" .github/workflows/build-android.yml
           grep -q 'experience.css' service-worker.js
           grep -q 'entry-flow.js' scripts/build-web.mjs
           grep -q 'feature-hub.js' scripts/build-web.mjs

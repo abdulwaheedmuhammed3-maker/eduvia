@@ -7,13 +7,16 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# The build job only needs read access. Release write access is isolated below.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
-    name: Build and publish Android beta
+    name: Build Android APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Check out Eduvia
         uses: actions/checkout@v7
@@ -41,24 +44,32 @@ jobs:
       - name: Prepare the app and native permissions
         run: npm run android:prepare
 
+      # Never expose the production signing key to pull-request or non-main code.
       - name: Configure the persistent Eduvia beta signing key
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         env:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REF: ${{ github.ref }}
           EDUVIA_ANDROID_KEYSTORE_BASE64: ${{ secrets.EDUVIA_ANDROID_KEYSTORE_BASE64 }}
           EDUVIA_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.EDUVIA_ANDROID_KEYSTORE_PASSWORD }}
           EDUVIA_ANDROID_KEY_ALIAS: ${{ secrets.EDUVIA_ANDROID_KEY_ALIAS }}
           EDUVIA_ANDROID_KEY_PASSWORD: ${{ secrets.EDUVIA_ANDROID_KEY_PASSWORD }}
         run: node scripts/configure-android-signing.mjs
 
-      - name: Build installable APK
+      - name: Build pull-request or non-main APK with an ephemeral debug key
+        if: github.event_name == 'pull_request' || github.ref != 'refs/heads/main'
+        run: cd android && ./gradlew assembleDebug
+
+      - name: Build installable APK with the persistent beta key
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         env:
+          GITHUB_REF: ${{ github.ref }}
           EDUVIA_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.EDUVIA_ANDROID_KEYSTORE_PASSWORD }}
           EDUVIA_ANDROID_KEY_ALIAS: ${{ secrets.EDUVIA_ANDROID_KEY_ALIAS }}
           EDUVIA_ANDROID_KEY_PASSWORD: ${{ secrets.EDUVIA_ANDROID_KEY_PASSWORD }}
         run: cd android && ./gradlew assembleDebug
 
-      - name: Upload APK artifact
-        if: github.event_name != 'pull_request'
+      - name: Upload APK build artifact
         uses: actions/upload-artifact@v7
         with:
           name: eduvia-android-apk
@@ -66,8 +77,21 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
+  publish:
+    name: Publish Android beta
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download the APK built from trusted main
+        uses: actions/download-artifact@v7
+        with:
+          name: eduvia-android-apk
+          path: release
+
       - name: Publish the latest Android beta APK
-        if: github.event_name != 'pull_request'
         uses: softprops/action-gh-release@v3
         with:
           tag_name: android-beta
@@ -77,9 +101,8 @@ jobs:
           make_latest: false
           overwrite_files: true
           body: >-
-            Direct-install Android beta build of Eduvia. First-time setup offers a
-            one-time notification invitation; if dismissed, enable phone alarms
-            and notifications later in Settings. Camera permission is requested only
-            when you choose Take a photo. This debug-signed APK is for direct
-            installation and is not a Google Play release.
-          files: android/app/build/outputs/apk/debug/app-debug.apk
+            Direct-install Android beta build of Eduvia. Pull-request and non-main
+            builds use an ephemeral debug key and are never published. The main
+            branch beta uses the persistent Eduvia signing key. This APK is for
+            direct installation and is not a Google Play release.
+          files: release/app-debug.apk

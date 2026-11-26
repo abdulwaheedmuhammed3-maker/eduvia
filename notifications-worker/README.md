@@ -1,6 +1,6 @@
 # Eduvia phone notification service
 
-This is a small, serverless push service for Eduvia. It uses Cloudflare Workers and D1 on their free plan. It does not use Google Calendar and does not need an always-on server.
+This is a small, serverless service for Eduvia. It uses Cloudflare Workers and D1, with optional Cloudflare Workers AI for Eduvia Tutor and lecture summaries. Workers AI's Free plan includes 10,000 Neurons per day; usage beyond that requires a Workers Paid plan. The service does not need an always-on server.
 
 The Worker checks due reminders once per minute and can send up to ten per run. Lecture and study reminders are scheduled for the event's actual start time (not five minutes before), so browser push delivery may arrive up to roughly one scheduler interval late. It claims each reminder before sending so overlapping checks do not send the same alert twice. Alerts more than ten minutes late are discarded. Phone operating-system notification settings still control whether an alert makes a sound.
 
@@ -36,13 +36,13 @@ Recall questions are built on the learner's device from saved flashcards, course
 
 ## AI Tutor and Google Workspace integrations
 
-The Worker also provides Eduvia's optional AI Tutor, AI lecture summaries, user-selected Drive import, Google Meet transcript import and manual Calendar sync. Setup, required secrets, Google APIs, OAuth scopes, deployment, privacy and current limitations are documented in [docs/ai-tutor-google-workspace.md](../docs/ai-tutor-google-workspace.md).
+The Worker also provides Eduvia's optional AI Tutor, AI lecture summaries, user-selected Drive import, Google Meet transcript import and manual Calendar sync. Tutor and summaries use the Cloudflare Workers AI `AI` binding and need no OpenAI API key or separate model-provider subscription. Google Workspace still requires Google OAuth and Picker configuration. Setup, required Google secrets, APIs, OAuth scopes, deployment, privacy and current limitations are documented in [docs/ai-tutor-google-workspace.md](../docs/ai-tutor-google-workspace.md).
 
 After merging the integration changes:
 
 1. From this folder, run `npm run db:migrate` to apply migration `0004_intelligence_integrations.sql`.
-2. Add the required Worker secrets described in the integration guide. At minimum, configure `OPENAI_API_KEY` and `OPENAI_MODEL` before making AI Tutor available.
-3. Configure the Google OAuth client, Picker API key, Cloud project number and token-encryption key before enabling Google Workspace.
+2. The `AI` binding and `AI_MODEL` default are already configured in `wrangler.jsonc`; no OpenAI API key is required.
+3. Configure the Google OAuth client, Picker API key, Cloud project number and token-encryption key only when enabling Google Workspace.
 4. Deploy the Worker and then deploy the Eduvia web bundle.
 
 The Worker never receives an OpenAI API key from the browser. Google refresh tokens are encrypted in D1. The Tutor uses a per-device daily allowance and a per-source-network daily allowance; learners sharing a campus or public Wi-Fi network share that network limit. Google OAuth is currently enabled only in the web app. Android Google sign-in remains disabled pending the external-browser and deep-link flow.

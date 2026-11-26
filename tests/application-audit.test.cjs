@@ -101,6 +101,10 @@ test('changed assets are versioned identically in HTML and the new offline cache
  assert.ok(sw.includes('first-run-alerts-6'));
  assert.ok(sw.includes('first-run-alert-optin-2'));
  assert.ok(sw.includes('./styles.css?v=entry-flow-4&rev=application-audit-1'));
+ assert.ok(html.includes('ai-tutor.js?v=ai-tutor-1'));
+ assert.ok(html.includes('ai-tutor.css?v=ai-tutor-1'));
+ assert.ok(sw.includes('./ai-tutor.js?v=ai-tutor-1'));
+ assert.ok(sw.includes('./ai-tutor.css?v=ai-tutor-1'));
  assert.ok(workerCacheVersion(sw)==='eduvia-v109-ai-tutor-google');
 });
 function workerCacheVersion(source){return source.match(/const CACHE = '([^']+)'/)?.[1]||''}

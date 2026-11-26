@@ -42,7 +42,7 @@ test('theme asset URLs and service-worker cache are versioned together',()=>{
   const worker=read('service-worker.js');
   assert.ok(html.includes('rev=theme-audit-2'));
   assert.ok(worker.includes('eduvia-v109-ai-tutor-google'));
-  for(const asset of ['entry-flow.css','visual-refresh.css','experience.css','icon-system.css']){
+  for(const asset of ['entry-flow.css','visual-refresh.css','experience.css','icon-system.css','ai-tutor.css']){
     const htmlVersion=html.split('href="'+asset)[1]?.split('"')[0];
     const workerVersion=worker.split("'./"+asset)[1]?.split("'")[0];
     assert.ok(htmlVersion,asset+' is linked in index.html');

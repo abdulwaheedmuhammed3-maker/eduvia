@@ -104,7 +104,7 @@ test('voice reflection assets are built, cached and syntax-checked', () => {
     assert.ok(html.includes(asset)); assert.ok(sw.includes(asset)); assert.ok(build.includes(asset));
   }
   assert.ok(workflow.includes('node --check voice-reflection.js'));
-  assert.ok(workflow.includes("eduvia-v108-cache-isolation"));
+  assert.ok(workflow.includes("eduvia-v109-ai-tutor-google"));
 });
 test('Android build declares the native microphone capture permissions requested by Capacitor WebView', () => {
   assert.ok(androidPrep.includes('android.permission.RECORD_AUDIO'));

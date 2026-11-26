@@ -61,3 +61,14 @@ test('Google OAuth callback does not report a successful connection on denial', 
   assert.equal(response.status, 302);
   assert.equal(response.headers.get('location'), 'https://eduvia.example/?google=cancelled#ask');
 });
+
+test('AI Tutor is attached to the existing Ask Eduvia renderer without replacing local search', () => {
+  const fs = require('node:fs');
+  const index = fs.readFileSync('index.html', 'utf8');
+  const tutor = fs.readFileSync('ai-tutor.js', 'utf8');
+  const expansion = fs.readFileSync('learning-expansions.js', 'utf8');
+  assert.ok(index.includes('ai-tutor.js?v=ai-tutor-1'));
+  assert.ok(tutor.includes("const originalAsk = pageRenderers.ask"));
+  assert.ok(tutor.includes("return originalAsk() + renderExtras()"));
+  assert.ok(expansion.includes('ask:renderExpandedAsk'));
+});
